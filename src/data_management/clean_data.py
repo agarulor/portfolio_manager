@@ -167,3 +167,4 @@ def clean_and_align_data(
 
     # Return the aligned and cleaned df with the reports
     return aligned_df, cleaned_report, aligned_summary
+

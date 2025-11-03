@@ -39,6 +39,6 @@ def save_preprocessed_data(df: pd.DataFrame,
     file_path = os.path.join(save_path, file_name)
 
     # Finally we save the DataFrame
-    df.to_csv(file_path, index_label=False)
+    df.to_csv(file_path, index_label="Date")
 
     print(f"Saved preprocessed data to {file_path}")
