@@ -1,1 +1,26 @@
-/src/
+# =========================================================
+#   Files and folders that are excluded from Git repository
+# =========================================================
+
+# We exclude Python virual environment
+.venv/
+venv/
+
+# We exclude the compiled bytecode files (by Python)
+__pycache__/
+*.py[cod]
+
+# As we are using PyCharm, we also exclude its IDE configuration files
+.idea/
+
+# We exclude metadada generated automatically by Windows Explorer
+# This is irrelevant for our project
+Thumbs.db
+desktop.ini
+
+# We also exclude temporary backups created by Jupyter
+.ipynb_checkpoints/
+
+# We also exclude temporary dumps of data and generated outputs
+*.log
+*.tmp
