@@ -1,3 +1,5 @@
+import pandas as pd
+from typing import Tuple
 def clean_stock_data(prices: pd.DataFrame) -> Tuple[pd.DataFrame, pd.DataFrame]:
     """
     Clean a dataframe with stock prices. It removes empty columns (when no data available)
