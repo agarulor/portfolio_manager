@@ -42,10 +42,7 @@ def minimize_volatility(target_return: float,
     # Portfolio expected return is equal to the target return
     constraints = (
         {"type": "eq", "fun": lambda w: np.sum(w) - 1},
-        {"type": "eq", "fun": lambda w: portfolio_returns(w,
-                                                          returns,
-                                                          method=method,
-                                                          periods_per_year=periods_per_year) - target_return}
+        {"type": "eq", "fun": lambda w: portfolio_returns(w, returns, method, periods_per_year) - target_return}
     )
     result = minimize(portfolio_volatility, init_guess,
                       args=(covmat, periods_per_year), method='SLSQP',
@@ -54,6 +51,53 @@ def minimize_volatility(target_return: float,
                       bounds=bounds)
 
     return result.x
+
+
+def maximize_return(target_volatility: float,
+                    returns: pd.DataFrame,
+                        covmat: np.ndarray,
+                        method: Literal["simple", "log"] = "simple",
+                        periods_per_year: int =252) -> np.ndarray:
+    """
+    Returns the optimal weight of the portfolio assets that maximize
+    return for a given target volatility, returns and a covariance matrix.
+
+    Parameters
+    ----------
+    target_volatility: float. Expected return of the portfolio.
+    returns: pd.DataFrame. Expected return of the portfolio.
+    covmat: np.ndarray. Covariance matrix of the portfolio.
+    method: str. "simple" or "log
+    periods_per_year: int. Number of years over which to calculate volatility.
+    Returns
+    -------
+    np.ndarray: Optimal weight of the portfolio.
+    """
+
+    # Number of assets in the spectrum of assets
+    n = returns.shape[1]
+
+    # Initial guess of weights (we start with evenly weights)
+    init_guess = np.ones(n) / n
+
+    # We ensure that there is no short-selling (i.e. no short positions)
+    bounds = [(0, 1)] * n
+
+    # We add the constraints to the model
+    # Weights must sum 1 (fully invested)
+    # Volatility constraint
+    constraints = (
+        {"type": "eq", "fun": lambda w: np.sum(w) - 1},
+        {"type": "eq", "fun": lambda w: portfolio_volatility(w, covmat, periods_per_year) - target_volatility}
+    )
+    result = minimize(portfolio_returns, init_guess,
+                      args=(-returns, method, periods_per_year), method='SLSQP',
+                      options={'disp': False},
+                      constraints=constraints,
+                      bounds=bounds)
+
+    return result.x
+
 
 def get_weights(n_returns: int,
                 returns: pd.DataFrame,
