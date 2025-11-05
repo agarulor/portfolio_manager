@@ -1,6 +1,6 @@
 import pandas as pd
 import numpy as np
-
+from portfolio_tools.return_metrics import portfolio_returns
 
 def calculate_variance(returns: pd.DataFrame) -> pd.DataFrame:
 
@@ -118,17 +118,61 @@ def portfolio_volatility(
     annualized_covmat = annualize_covariance(covmat, periods_per_year)
     return (weights.T @ annualized_covmat @ weights) ** 0.5
 
-def sharpe_ratio(annualized_returns: float, annualized_volatility: float, rf: float = 0.03) -> float:
+def sharpe_ratio(
+        weights: np.ndarray,
+        returns: pd.DataFrame,
+        covmat: np.ndarray,
+        rf: float = 0,
+        method="simple",
+        periods_per_year: int = 252
+) -> float:
     """
     It calculates the Sharpe Ratio.
     Parameters
     ----------
-    annualized_returns : float. annualized return of the portfolio.
-    annualized_volatility : float. annualized volatility of the portfolio.
-    rf : float. risk-free interest rate.
+    weights: np.ndarray. Portfolio of weights allocated to each asset in the portfolio.
+    returns: pd.DataFrame. Expected return of the portfolio.
+    covmat: np.ndarray. Covariance matrix of the portfolio.
+    rf: float. Risk-free rate.
+    method: str. "simple" or "log
+    periods_per_year: int. Number of years over which to calculate volatility.
 
     Returns
     -------
     float: Sharpe Ratio.
     """
-    return (annualized_returns - rf) / annualized_volatility
+
+
+    returns_portfolio = portfolio_returns(weights, returns, method, periods_per_year)
+    volatility_portfolio = portfolio_volatility(weights, covmat, periods_per_year)
+
+    return (returns_portfolio - rf) / volatility_portfolio
+
+
+def neg_sharpe_ratio(
+        weights: np.ndarray,
+        returns: pd.DataFrame,
+        covmat: np.ndarray,
+        rf: float = 0,
+        method = "simple",
+        periods_per_year: int = 252
+        ) -> float:
+    """
+    It calculates the negative Sharpe Ratio.
+    Parameters
+    ----------
+    weights: np.ndarray. Portfolio of weights allocated to each asset in the portfolio.
+    returns: pd.DataFrame. Expected return of the portfolio.
+    covmat: np.ndarray. Covariance matrix of the portfolio.
+    rf: float. Risk-free rate.
+    method: str. "simple" or "log
+    periods_per_year: int. Number of years over which to calculate volatility.
+
+    Returns
+    -------
+    float: Sharpe Ratio.
+    """
+    returns_portfolio = portfolio_returns(weights, returns, method, periods_per_year)
+    volatility_portfolio = portfolio_volatility(weights, covmat, periods_per_year)
+
+    return -(returns_portfolio - rf) / volatility_portfolio
