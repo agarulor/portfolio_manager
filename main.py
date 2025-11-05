@@ -15,10 +15,9 @@ if __name__ == "__main__":
     e = read_price_file("data/processed/prices_20251105-013748.csv")
     f = calculate_daily_returns(e, method="simple")
     h = calculate_covariance(f)
-    n = 50
 
-    n = annualize_returns(f, method="simple")
-    l = minimize_volatility(0.10, n , h)
+    l = minimize_volatility(0.30, f , h)
+    print(l.round(3))
 
 
 
