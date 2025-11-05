@@ -7,11 +7,33 @@ from scipy.optimize import minimize
 import matplotlib.pyplot as plt
 
 
+def min_percentage_renormalize(w: np.ndarray, min_w: float = 0.00) -> np.ndarray:
+    """
+        Obtains the minimal percentage renormalized weight for the assets
+
+        Parameters
+        ----------
+        w: np.ndarray. Expected return of the portfolio.
+        min_w: float. Minimum weight of the portfolio.
+
+        Returns
+        -------
+        np.ndarray: Optimal weight of the portfolio adjusted
+        """
+
+    w2 = w.copy()
+    w2[w2 < min_w] = 0.0
+    s = w2.sum()
+    return w2 / s if s > 0 else w2
+
+
+
 def minimize_volatility(target_return: float,
                         returns: pd.DataFrame,
                         covmat: np.ndarray,
                         method: Literal["simple", "log"] = "simple",
-                        periods_per_year: int =252) -> np.ndarray:
+                        periods_per_year: int =252,
+                        min_w: float = 0.01) -> np.ndarray:
     """
     Returns the optimal weight of the portfolio assets that minimize
     volatility for a given target return, returns and a covariance matrix.
@@ -23,6 +45,8 @@ def minimize_volatility(target_return: float,
     covmat: np.ndarray. Covariance matrix of the portfolio.
     method: str. "simple" or "log
     periods_per_year: int. Number of years over which to calculate volatility.
+    min_w: float. Minimum weight of the portfolio.
+
     Returns
     -------
     np.ndarray: Optimal weight of the portfolio.
@@ -44,20 +68,23 @@ def minimize_volatility(target_return: float,
         {"type": "eq", "fun": lambda w: np.sum(w) - 1},
         {"type": "eq", "fun": lambda w: portfolio_returns(w, returns, method, periods_per_year) - target_return}
     )
-    result = minimize(portfolio_volatility, init_guess,
-                      args=(covmat, periods_per_year), method='SLSQP',
+    result = minimize(lambda w: (portfolio_volatility(w, covmat, periods_per_year)),
+                      init_guess,
+                      method='SLSQP',
                       options={'disp': False},
                       constraints=constraints,
                       bounds=bounds)
 
-    return result.x
+    weights = min_percentage_renormalize(result.x, min_w)
+    return weights
 
 
 def maximize_return(target_volatility: float,
                     returns: pd.DataFrame,
-                        covmat: np.ndarray,
-                        method: Literal["simple", "log"] = "simple",
-                        periods_per_year: int =252) -> np.ndarray:
+                    covmat: np.ndarray,
+                    method: Literal["simple", "log"] = "simple",
+                    periods_per_year: int =252,
+                    min_w: float = 0.01) -> np.ndarray:
     """
     Returns the optimal weight of the portfolio assets that maximize
     return for a given target volatility, returns and a covariance matrix.
@@ -69,6 +96,8 @@ def maximize_return(target_volatility: float,
     covmat: np.ndarray. Covariance matrix of the portfolio.
     method: str. "simple" or "log
     periods_per_year: int. Number of years over which to calculate volatility.
+    min_w: float. Minimum weight of the portfolio.
+
     Returns
     -------
     np.ndarray: Optimal weight of the portfolio.
@@ -90,13 +119,15 @@ def maximize_return(target_volatility: float,
         {"type": "eq", "fun": lambda w: np.sum(w) - 1},
         {"type": "eq", "fun": lambda w: portfolio_volatility(w, covmat, periods_per_year) - target_volatility}
     )
-    result = minimize(portfolio_returns, init_guess,
-                      args=(-returns, method, periods_per_year), method='SLSQP',
+    result = minimize(lambda w: -portfolio_returns(w, returns, method, periods_per_year),
+                      init_guess,
+                      method='SLSQP',
                       options={'disp': False},
                       constraints=constraints,
                       bounds=bounds)
 
-    return result.x
+    weights = min_percentage_renormalize(result.x, min_w)
+    return weights
 
 
 def get_weights(n_returns: int,
@@ -124,8 +155,6 @@ def get_weights(n_returns: int,
 
     annualized_returns = annualize_returns(returns, method, periods_per_year)
     # We obtain a series of points based on the min and max returns
-    print(annualized_returns.max())
-    print(annualized_returns.min())
     target_returns = np.linspace(annualized_returns.min(), annualized_returns.max(), n_returns)
     # We now obtain the weights for each of the target_returns
     weights = [minimize_volatility(target_return,
@@ -134,6 +163,8 @@ def get_weights(n_returns: int,
                                     method=method,
                                     periods_per_year=periods_per_year) for target_return in target_returns]
 
+
+    print(weights)
     return weights
 
 

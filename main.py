@@ -16,17 +16,15 @@ if __name__ == "__main__":
     f = calculate_daily_returns(e, method="simple")
     h = calculate_covariance(f)
 
-    l = minimize_volatility(0.2, f , h)
+    l = minimize_volatility(0.1, f , h)
     portfolio_ret = portfolio_returns(l, f)
     portfolio_vol = portfolio_volatility(l, h)
     print(portfolio_ret)
     print(portfolio_vol)
-    m = maximize_return(portfolio_vol, f, h)
-    print(portfolio_returns(m, f))
-    print(portfolio_volatility(m, h))
+    print(l)
 
-    #a = plot_basic_frontier(20, f, h)
-    #print(a)
+    a = plot_basic_frontier(20, f, h)
+    print(a)
 
 
 
