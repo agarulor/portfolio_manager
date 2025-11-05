@@ -31,3 +31,104 @@ def calculate_standard_deviation(returns: pd.DataFrame) -> pd.DataFrame:
     pd.Series: Standard deviation per asset.
     """
     return returns.std(axis=0)
+
+
+def annualize_variance(variances: pd.DataFrame, periods_per_year: int = 252) -> pd.DataFrame:
+
+    """
+    Annualize variances.
+
+    Parameters
+    ----------
+    variances : pd.Series. Variance per asset.
+    periods_per_year : int, default 252. Number of periods per year.
+
+    Returns
+    -------
+    pd.Series: Annualized variance (Var × periods_per_year).
+    """
+    return variances * periods_per_year
+
+def annualize_standard_deviation(standard_deviations: pd.DataFrame, periods_per_year: int = 252) -> pd.DataFrame:
+
+    """
+    Annualize standard deviations.
+
+    Parameters
+    ----------
+    standard_deviations : pd.Series. Standard deviations per asset.
+    periods_per_year : int, default 252. Number of periods per year.
+
+    Returns
+    -------
+    pd.Series: Annualized Standard deviations (Var × periods_per_year).
+    """
+    return standard_deviations * periods_per_year**0.5
+
+def calculate_covariance(returns: pd.DataFrame) -> pd.DataFrame:
+    """
+    Calculates the covariance matrix of asset returns
+
+    Parameters
+    ----------
+    returns : pd.DataFrame with returns from assets
+
+    Returns
+    -------
+    pd.Series : covariance matrix
+    """
+    return returns.cov()
+
+
+def annualize_covariance(covmat: pd.DataFrame, periods_per_year: int = 252) -> pd.DataFrame:
+    """
+    It annualizes a covariance matrix
+
+     Parameters
+    ----------
+    covmat : pd.DataFrame. Covariance matrix of asset returns.
+    periods_per_year : int, default 252. Number of periods per year.
+
+    Returns
+    -------
+    float: Annualized covariance matrix.
+
+    """
+    return covmat * periods_per_year
+
+
+
+def portfolio_volatility(
+        weights: np.ndarray,
+        covmat: pd.DataFrame,
+        periods_per_year: int = 252) -> float:
+    """
+    Computes the portfolio volatility from asset weights and a covariance matrix.
+
+    Parameters
+    ----------
+    weights : np.ndarray. Portfolio of weights allocated to each asset in the portfolio.
+    covmat : pd.DataFrame. Covariance matrix of asset returns.
+    periods_per_year : int, default 252. Number of periods per year.
+
+    Returns
+    -------
+    float: Portfolio volatility (standard deviation).
+    """
+    annualized_covmat = annualize_covariance(covmat, periods_per_year)
+    return (weights.T @ annualized_covmat @ weights) ** 0.5
+
+def sharpe_ratio(annualized_returns: float, annualized_volatility: float, rf: float = 0.03) -> float:
+    """
+    It calculates the Sharpe Ratio.
+    Parameters
+    ----------
+    annualized_returns : float. annualized return of the portfolio.
+    annualized_volatility : float. annualized volatility of the portfolio.
+    rf : float. risk-free interest rate.
+
+    Returns
+    -------
+    float: Sharpe Ratio.
+    """
+    return (annualized_returns - rf) / annualized_volatility

@@ -52,7 +52,7 @@ def calculate_daily_returns(
 
 def annualize_returns(
     returns: pd.DataFrame,
-    method: str = "simple",
+    method: Literal["simple", "log"] = "simple",
     periods_per_year: int = 252
 ) -> pd.Series:
     """
@@ -97,10 +97,49 @@ def annualize_returns(
         # For each column: compounded_growth = prod(1 + r)
         compounded_growth = (1 + returns).prod(skipna=True)
         # Effective T per column = count of non-NaN observations
-        T = returns.notna().sum(axis=0).astype(float)
-        annualized_returns = compounded_growth.pow(periods_per_year / T) - 1
+        t = returns.notna().sum(axis=0).astype(float)
+        annualized_returns = compounded_growth.pow(periods_per_year / t) - 1
     else:  # log returns
         mean_log = returns.mean(skipna=True)
         annualized_returns = np.exp(mean_log * periods_per_year) - 1
 
     return annualized_returns
+
+def portfolio_returns(
+        weights: np.ndarray,
+        returns: pd.DataFrame,
+        method: Literal["simple", "log"] = "simple",
+        periods_per_year=252) -> float:
+    """
+    Computes the portfolio return from asset weights and returns of assets.
+
+    Parameters
+    ----------
+    weights : np.ndarray. Portfolio of weights allocated to each asset in the portfolio.
+    returns : pd.DataFrame. Returns of the assets
+    method : {"simple", "log"}, default "simple"
+        Return type:
+        - "simple": (∏(1 + R_t))^(periods_per_year / T) - 1
+        - "log": exp(periods_per_year × mean(r_t)) - 1
+    periods_per_year : int, default 252
+        Typical number of trading days or other periods
+        Typical values:
+        - 252 → on a daily basis
+        - 52 → on a weekly basis
+        - 12 → on a monthly basis
+
+    Returns
+    -------
+    float: Portfolio return.
+    """
+
+
+    # We calculate the annualized returns
+    annualized_returns = annualize_returns(returns,
+                                           method=method,
+                                           periods_per_year=periods_per_year)
+    # We check length of weights and returns
+    if len(weights) != len(annualized_returns):
+        raise ValueError("Weights and returns must have same length.")
+    # We calculate the portfolio returns
+    return weights.T @ annualized_returns
