@@ -279,6 +279,7 @@ def plot_frontier(n_returns: int,
                   periods_per_year: int = 252,
                   min_w: float = 0.00,
                   plot_msr = True,
+                  plot_cml = True,
                   plot_gmv = True,
                   style: str = '.-',
                   legend: bool = False) -> plt.Figure:
@@ -296,6 +297,13 @@ def plot_frontier(n_returns: int,
         msr_return = portfolio_returns(msr_w, returns, method, periods_per_year)
         msr_volatility = portfolio_volatility(msr_w, covmat, periods_per_year)
         ax.plot(msr_volatility, msr_return, color='midnightblue', marker='o', markersize=12)
+
+        if plot_cml:
+            ax.set_xlim(left=0)
+            cml_x = [0, msr_volatility]
+            cml_y = [rf, msr_return]
+            ax.plot(cml_x, cml_y, color='green', marker='o', linestyle='dashed', linewidth=2, markersize=10)
+
     if plot_gmv:
         gmv_w = gmv(covmat, min_w)
         print(gmv_w)
