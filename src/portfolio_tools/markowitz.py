@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 from typing import Literal
 from portfolio_tools.return_metrics import portfolio_returns, annualize_returns
-from portfolio_tools.risk_metrics import portfolio_volatility, neg_sharpe_ratio
+from portfolio_tools.risk_metrics import portfolio_volatility, neg_sharpe_ratio, sharpe_ratio
 from scipy.optimize import minimize
 import matplotlib.pyplot as plt
 
@@ -157,7 +157,7 @@ def get_weights(n_returns: int,
 
     annualized_returns = annualize_returns(returns, method, periods_per_year)
     # We obtain a series of points based on the min and max returns
-    target_returns = np.linspace(annualized_returns.min(), annualized_returns.max(), n_returns, min_w)
+    target_returns = np.linspace(annualized_returns.min(), annualized_returns.max(), n_returns)
     # We now obtain the weights for each of the target_returns
     weights = [minimize_volatility(target_return,
                                    returns,
@@ -169,7 +169,7 @@ def get_weights(n_returns: int,
     return weights
 
 
-def msr(returns: pd.DataFrame,
+def msr(returns,
         covmat: np.ndarray,
         rf: float = 0,
         method: Literal["simple", "log"] = "simple",
@@ -209,7 +209,6 @@ def msr(returns: pd.DataFrame,
         {"type": "eq", "fun": lambda w: np.sum(w) - 1},
     )
 
-
     # For the function, we need to create a function that gives us the
     # negative Sharpe Ratio
     weights = minimize(neg_sharpe_ratio,
@@ -228,31 +227,47 @@ def msr(returns: pd.DataFrame,
 
 
 
-def gmv(returns: pd. DataFrame,
-        covmat: np.ndarray,
-        rf: float = 0.0,
-        method: Literal["simple", "log"] = "simple",
-        periods_per_year: int = 252,
-        min_w: float = 0.00)->np.ndarray:
+def gmv(covmat: pd.DataFrame,
+        min_w: float = 0.0) -> np.ndarray:
     """
-    Returns the weights of the Global Minimum Volatility portfolio (GMV)
+    Returns the weights of the portfolio assets that helps to meet the GMV
 
     Parameters
     ----------
-    returns: pd.DataFrame. Expected return of the portfolio.
     covmat: np.ndarray. Covariance matrix of the portfolio.
-    rf: float. Risk-free rate.
-    method: str. "simple" or "log
-    periods_per_year: int. Number of years over which to calculate volatility.
     min_w: float. Minimum weight of the portfolio.
 
     Returns
     -------
-    np.ndarray: Weights of the gmv portfolio.
+    np.ndarray: Weights of the portfolio.
     """
-    n = covmat.shape[0]
-    weights = msr(returns, np.repeat(1, n), covmat)
-    weights = min_percentage_renormalize(weights, min_w)
+    # We extract values
+    covmat_values = covmat.values
+
+    # We get the number of assets
+    n = covmat_values.shape[0]
+
+    # Create initial guess
+    init_guess = np.ones(n) / n
+
+    # We ensure that there is no short-selling (i.e. no short positions)
+    bounds = [(0, 1.0)] * n
+
+    # constraints
+    # Weights must sum 1 (fully invested)
+    constraints = (
+        {"type": "eq", "fun": lambda w: np.sum(w) - 1.0},
+    )
+
+    # Minimize the function to get the MGV
+    weights = minimize(lambda w: float(w @ covmat_values @ w),
+                   init_guess,
+                   method='COBYLA',
+                   bounds=bounds,
+                   constraints=constraints,
+                   options={'maxiter': 1000})
+
+    weights = min_percentage_renormalize(weights.x, min_w)
     return weights
 
 
@@ -280,7 +295,15 @@ def plot_frontier(n_returns: int,
         msr_w = msr(returns, covmat, rf, method, periods_per_year, min_w)
         msr_return = portfolio_returns(msr_w, returns, method, periods_per_year)
         msr_volatility = portfolio_volatility(msr_w, covmat, periods_per_year)
-        ax.plot([msr_return], [msr_volatility], color='midnightblue', marker='o', markersize=12)
+        ax.plot(msr_volatility, msr_return, color='midnightblue', marker='o', markersize=12)
+    if plot_gmv:
+        gmv_w = gmv(covmat, min_w)
+        print(gmv_w)
+        gmv_return = portfolio_returns(gmv_w, returns, method, periods_per_year)
+        print(gmv_return)
+        gmv_volatility = portfolio_volatility(gmv_w, covmat, periods_per_year)
+        print(gmv_volatility)
+        ax.plot(gmv_volatility, gmv_return, color='red', marker='o', markersize=12)
     plt.show()
     return ax
 

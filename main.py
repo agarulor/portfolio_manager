@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 from data_management.get_data import get_stock_prices, read_price_file
 from data_management.clean_data import clean_and_align_data
 from data_management.save_data import save_preprocessed_data
@@ -14,9 +15,10 @@ if __name__ == "__main__":
     #print(b.head())
     #save_preprocessed_data(b)
     e = read_price_file("data/processed/prices_20251105-014012.csv")
+
     f = calculate_daily_returns(e, method="simple")
     h = calculate_covariance(f)
-    annulized_returns = annualize_returns(f, method="simple")
+
     annualized_volatility = annualize_covariance(h)
 
 
@@ -25,12 +27,10 @@ if __name__ == "__main__":
     portfolio_vol = portfolio_volatility(l, h)
     print(portfolio_ret)
     print(portfolio_vol)
-    print(l)
 
-    a = plot_frontier(20, f, h)
+    a = plot_frontier(100, f, h)
     #print(a)
-    print(neg_sharpe_ratio(l, f, h, 0.1))
-    print(sharpe_ratio(l, f, h, 0.1))
+
 
 
 
