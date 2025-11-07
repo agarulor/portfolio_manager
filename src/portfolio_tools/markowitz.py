@@ -1,8 +1,8 @@
 import pandas as pd
 import numpy as np
-from typing import Literal
+from typing import Literal, Tuple
 from portfolio_tools.return_metrics import portfolio_returns, annualize_returns
-from portfolio_tools.risk_metrics import portfolio_volatility, neg_sharpe_ratio, sharpe_ratio
+from portfolio_tools.risk_metrics import portfolio_volatility, neg_sharpe_ratio, sharpe_ratio, calculate_max_drawdown
 from scipy.optimize import minimize
 import matplotlib.pyplot as plt
 
@@ -277,7 +277,7 @@ def portfolio_output(returns: pd.DataFrame,
                      rf: float = 0.0,
                      method: Literal["simple", "log"] = "simple",
                      periods_per_year: int = 252,
-                     min_w: float = 0.00) -> np.ndarray:
+                     min_w: float = 0.00) -> Tuple[float, float, float]:
     """
     Returns the returns and volatility of a portfolio given weights of the portfolio
 
@@ -319,45 +319,10 @@ def portfolio_output(returns: pd.DataFrame,
     # We get the volatility
     pf_volatility = portfolio_volatility(weights, covmat, periods_per_year)
 
-    return pf_return, pf_volatility
-
-
-
-
-
-def equal_weight_portfolio_output(returns: pd.DataFrame,
-                                  covmat: pd.DataFrame,
-                                  method: Literal["simple", "log"] = "simple",
-                                  periods_per_year: int = 252) -> np.ndarray:
-
-    """
-    Returns the returns and volatility of a portfolio given weights of the portfolio
-
-    Parameters
-    ----------
-    returns: pd.DataFrame. Expected return of the portfolio.
-    covmat: np.ndarray. Covariance matrix of the portfolio.
-    type: Literal["msr", "gmv", "portfolio", "ew", "random"] = "msr"
-    method: str. "simple" or "log
-    periods_per_year: int. Number of years over which to calculate volatility.
-
-    Returns
-    -------
-    np.ndarray: Weights of the portfolio.
-    """
-
-    # We get the number of assets
-    n = returns.shape[1]
-
-    # We calculate the weights for an equally weighted portfolio
-    weights = np.ones(n) / n
-    # We get the returns
-    ew_return = portfolio_returns(weights, returns, method, periods_per_year)
-    # We get the volatility
-    ew_volatility = portfolio_volatility(weights, covmat, periods_per_year)
-
-    return ew_return, ew_volatility
-
+    # We get the maximum drawdown
+    max_drawdown = calculate_max_drawdown(weights, returns)
+    print(f"Max Drawdown: {max_drawdown}")
+    return pf_return, pf_volatility, max_drawdown
 
 
 def plot_frontier(n_returns: int,
@@ -383,7 +348,7 @@ def plot_frontier(n_returns: int,
     })
     ax = ef.plot.line(x="Volatility", y="Returns", style=style, legend=legend)
     if plot_msr:
-        msr_return, msr_volatility = portfolio_output(returns, covmat, "msr", rf, method, periods_per_year, min_w)
+        msr_return, msr_volatility, msr_drawdown = portfolio_output(returns, covmat, "msr", rf, method, periods_per_year, min_w)
         ax.plot(msr_volatility, msr_return, color='midnightblue', marker='o', markersize=12)
 
         if plot_cml:
@@ -393,9 +358,15 @@ def plot_frontier(n_returns: int,
             ax.plot(cml_x, cml_y, color='green', marker='o', linestyle='dashed', linewidth=2, markersize=10)
 
     if plot_gmv:
-        gmv_return, gmv_volatility = portfolio_output(returns, covmat, "gmv")
-
+        gmv_return, gmv_volatility, gmv_drawdown = portfolio_output(returns, covmat, "gmv")
         ax.plot(gmv_volatility, gmv_return, color='red', marker='o', markersize=12)
+
+    ew_return, ew_volatility, ew_drawdown = portfolio_output(returns, covmat, "ew")
+    ax.plot(ew_volatility, ew_return, color='salmon', marker='o', markersize=12)
+
+    random_return, random_volatility, random_drawdown = portfolio_output(returns, covmat, "random")
+    ax.plot(random_volatility, random_return, color='black', marker='o', markersize=12)
+
     plt.show()
     return ax
 

@@ -177,20 +177,27 @@ def neg_sharpe_ratio(
 
     return -(returns_portfolio - rf) / volatility_portfolio
 
-def calculate_max_drawdown(returns: pd.Series)-> float:
+def calculate_max_drawdown(weights: np.ndarray, returns: pd.Series)-> float:
     """
     Calculates the maximum drawdown from the temp returns.
 
     Parameters
     ----------
+    weights: np.ndarray. Portfolio of weights allocated to each asset in the portfolio.
     returns: pd.DataFrame. Expected return of the portfolio.
 
     Returns
     -------
     float: maximum drawdown from the returns.
     """
+
+    returns_portfolio = returns.copy()
+
+    returns_portfolio = returns.mul(weights, axis=1).sum(axis=1)
+
     # first we create the wealth index
-    wealth_index = 1000*(1+returns).cumprod()
+    wealth_index = 1000*(1+returns_portfolio).cumprod()
+
     # Calculate previous max
     running_max = wealth_index.cummax()
     # calculate drawdowns

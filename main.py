@@ -31,7 +31,7 @@ if __name__ == "__main__":
 
     a = plot_frontier(100, f, h)
     #print(a)
-    #calculate_max_drawdown(f)
+
 
 
 
