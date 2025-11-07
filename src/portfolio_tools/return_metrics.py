@@ -143,3 +143,26 @@ def portfolio_returns(
         raise ValueError("Weights and returns must have same length.")
     # We calculate the portfolio returns
     return weights.T @ annualized_returns
+
+
+def daily_portfolio_returns(
+        weights: np.ndarray,
+        returns: pd.DataFrame) -> pd.Series:
+    """
+    Computes the daily portfolio return from asset weights and returns of assets.
+
+    Parameters
+    ----------
+    weights : np.ndarray. Portfolio of weights allocated to each asset in the portfolio.
+    returns : pd.DataFrame. Returns of the assets
+
+    Returns
+    -------
+    pd.Series: Portfolio daily return.
+    """
+
+    # We check length of weights and returns
+    if len(weights) != returns.shape[1]:
+        raise ValueError("Weights and returns must have same length.")
+    # We calculate the portfolio returns
+    return weights @ returns.T

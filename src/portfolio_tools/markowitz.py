@@ -271,6 +271,40 @@ def gmv(covmat: pd.DataFrame,
     return weights
 
 
+def equal_weight_portfolio_output(returns: pd.DataFrame,
+                                  covmat: pd.DataFrame,
+                                  method: Literal["simple", "log"] = "simple",
+                                  periods_per_year: int = 252) -> np.ndarray:
+
+    """
+    Returns the returns and volatility of a portfolio given weights of the portfolio
+
+    Parameters
+    ----------
+    returns: pd.DataFrame. Expected return of the portfolio.
+    covmat: np.ndarray. Covariance matrix of the portfolio.
+    method: str. "simple" or "log
+    periods_per_year: int. Number of years over which to calculate volatility.
+
+    Returns
+    -------
+    np.ndarray: Weights of the portfolio.
+    """
+
+    # We get the number of assets
+    n = returns.shape[1]
+
+    # We calculate the weights for an equally weighted portfolio
+    weights = np.ones(n) / n
+    # We get the returns
+    ew_return = portfolio_returns(weights, returns, method, periods_per_year)
+    # We get the volatility
+    ew_volatility = portfolio_volatility(weights, covmat, periods_per_year)
+
+    return ew_return, ew_volatility
+
+
+
 def plot_frontier(n_returns: int,
                   returns: pd.DataFrame,
                   covmat: np.ndarray,
@@ -283,6 +317,7 @@ def plot_frontier(n_returns: int,
                   plot_gmv = True,
                   style: str = '.-',
                   legend: bool = False) -> plt.Figure:
+
 
     weights = get_weights(n_returns, returns, covmat, method, periods_per_year, min_w)
     retornos = [portfolio_returns(w, returns, method,periods_per_year) for w in weights]
@@ -306,11 +341,10 @@ def plot_frontier(n_returns: int,
 
     if plot_gmv:
         gmv_w = gmv(covmat, min_w)
-        print(gmv_w)
         gmv_return = portfolio_returns(gmv_w, returns, method, periods_per_year)
-        print(gmv_return)
+
         gmv_volatility = portfolio_volatility(gmv_w, covmat, periods_per_year)
-        print(gmv_volatility)
+
         ax.plot(gmv_volatility, gmv_return, color='red', marker='o', markersize=12)
     plt.show()
     return ax
