@@ -26,17 +26,10 @@ if __name__ == "__main__":
     l = minimize_volatility(0.5, f , h)
     portfolio_ret = portfolio_returns(l, f)
     portfolio_vol = portfolio_volatility(l, h)
-    print(portfolio_ret)
-    print(portfolio_vol)
-    msr_w = msr(f, h)
-    j = annualize_returns(f)
-    k = daily_portfolio_returns(msr_w, f)
-    plt.plot(k)
-    print(f"Max drawdown {calculate_max_drawdown(k)}")
-    plt.show()
 
 
-    #a = plot_frontier(100, f, h)
+
+    a = plot_frontier(100, f, h)
     #print(a)
     #calculate_max_drawdown(f)
 

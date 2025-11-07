@@ -149,7 +149,7 @@ def daily_portfolio_returns(
         weights: np.ndarray,
         returns: pd.DataFrame) -> pd.Series:
     """
-    Computes the daily portfolio return from asset weights and returns of assets.
+    Computes the temp portfolio return from asset weights and returns of assets.
 
     Parameters
     ----------
@@ -158,7 +158,7 @@ def daily_portfolio_returns(
 
     Returns
     -------
-    pd.Series: Portfolio daily return.
+    pd.Series: Portfolio temp return.
     """
 
     # We check length of weights and returns

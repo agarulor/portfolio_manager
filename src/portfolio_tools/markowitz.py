@@ -271,6 +271,60 @@ def gmv(covmat: pd.DataFrame,
     return weights
 
 
+def portfolio_output(returns: pd.DataFrame,
+                     covmat: pd.DataFrame,
+                     portfolio_type: Literal["msr", "gmv", "portfolio", "ew", "random"] = "msr",
+                     rf: float = 0.0,
+                     method: Literal["simple", "log"] = "simple",
+                     periods_per_year: int = 252,
+                     min_w: float = 0.00) -> np.ndarray:
+    """
+    Returns the returns and volatility of a portfolio given weights of the portfolio
+
+    Parameters
+    ----------
+    returns: pd.DataFrame. Expected return of the portfolio.
+    covmat: np.ndarray. Covariance matrix of the portfolio.
+    rf: float. Risk-free rate.
+    portfolio_type: Literal["msr", "gmv", "portfolio", "ew", "random"] = "msr"
+    method: str. "simple" or "log
+    periods_per_year: int. Number of years over which to calculate volatility.
+    min_w: float. Minimum weight of the portfolio.
+
+    Returns
+    -------
+    np.ndarray: Weights of the portfolio.
+    """
+
+    if portfolio_type == "msr":
+        weights = msr(returns, covmat, rf, method, periods_per_year)
+    elif portfolio_type == "gmv":
+        weights = gmv(covmat, min_w)
+    elif portfolio_type == "portfolio":
+        weights = 0
+    elif portfolio_type == "ew":
+        # We get the number of assets
+        n = returns.shape[1]
+        # We calculate the weights for an equally weighted portfolio
+        weights = np.ones(n) / n
+    elif portfolio_type == "random":
+        n = returns.shape[1]
+        w = np.random.random(n)
+        weights = w / w.sum()
+    else:
+        raise ValueError(f"Unknown portfolio type: {portfolio_type}")
+
+    # We get the returns
+    pf_return = portfolio_returns(weights, returns, method, periods_per_year)
+    # We get the volatility
+    pf_volatility = portfolio_volatility(weights, covmat, periods_per_year)
+
+    return pf_return, pf_volatility
+
+
+
+
+
 def equal_weight_portfolio_output(returns: pd.DataFrame,
                                   covmat: pd.DataFrame,
                                   method: Literal["simple", "log"] = "simple",
@@ -283,6 +337,7 @@ def equal_weight_portfolio_output(returns: pd.DataFrame,
     ----------
     returns: pd.DataFrame. Expected return of the portfolio.
     covmat: np.ndarray. Covariance matrix of the portfolio.
+    type: Literal["msr", "gmv", "portfolio", "ew", "random"] = "msr"
     method: str. "simple" or "log
     periods_per_year: int. Number of years over which to calculate volatility.
 
@@ -328,9 +383,7 @@ def plot_frontier(n_returns: int,
     })
     ax = ef.plot.line(x="Volatility", y="Returns", style=style, legend=legend)
     if plot_msr:
-        msr_w = msr(returns, covmat, rf, method, periods_per_year, min_w)
-        msr_return = portfolio_returns(msr_w, returns, method, periods_per_year)
-        msr_volatility = portfolio_volatility(msr_w, covmat, periods_per_year)
+        msr_return, msr_volatility = portfolio_output(returns, covmat, "msr", rf, method, periods_per_year, min_w)
         ax.plot(msr_volatility, msr_return, color='midnightblue', marker='o', markersize=12)
 
         if plot_cml:
@@ -340,10 +393,7 @@ def plot_frontier(n_returns: int,
             ax.plot(cml_x, cml_y, color='green', marker='o', linestyle='dashed', linewidth=2, markersize=10)
 
     if plot_gmv:
-        gmv_w = gmv(covmat, min_w)
-        gmv_return = portfolio_returns(gmv_w, returns, method, periods_per_year)
-
-        gmv_volatility = portfolio_volatility(gmv_w, covmat, periods_per_year)
+        gmv_return, gmv_volatility = portfolio_output(returns, covmat, "gmv")
 
         ax.plot(gmv_volatility, gmv_return, color='red', marker='o', markersize=12)
     plt.show()
