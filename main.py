@@ -8,6 +8,7 @@ from portfolio_tools.risk_metrics import calculate_covariance, portfolio_volatil
     annualize_covariance, calculate_max_drawdown
 from portfolio_tools.markowitz import minimize_volatility, plot_frontier, maximize_return, msr
 import matplotlib.pyplot as plt
+from portfolio_tools.portfolio_allocation import split_data_markowtiz
 if __name__ == "__main__":
     #a = get_stock_prices("data/input/eurostoxx50_csv.csv", "ticker_yahoo", "name",
     #                     start_date = "2024-11-03", end_date = "2025-11-03"
@@ -15,7 +16,7 @@ if __name__ == "__main__":
     #b, c, d = clean_and_align_data(a)
     #print(b.head())
     #save_preprocessed_data(b)
-    e = read_price_file("data/processed/prices_20251105-014012.csv")
+    e = read_price_file("data/processed/prices_20251105-013615.csv")
 
     f = calculate_daily_returns(e, method="simple")
     h = calculate_covariance(f)
@@ -23,13 +24,20 @@ if __name__ == "__main__":
     annualized_volatility = annualize_covariance(h)
 
 
-    l = minimize_volatility(0.5, f , h)
-    portfolio_ret = portfolio_returns(l, f)
-    portfolio_vol = portfolio_volatility(l, h)
+    #l = minimize_volatility(0.5, f , h)
+    #portfolio_ret = portfolio_returns(l, f)
+    #portfolio_vol = portfolio_volatility(l, h)
 
+    #print(f.head())
+    train, test = split_data_markowtiz(f)
+    train.iloc[:, ]
+    covmat_train = calculate_covariance(train)
+    print(train.head())
+    print(train.tail())
+    #print(test.head())
+    #print(test.tail())
 
-
-    a = plot_frontier(100, f, h)
+    a = plot_frontier(100, train, covmat_train)
     #print(a)
 
 

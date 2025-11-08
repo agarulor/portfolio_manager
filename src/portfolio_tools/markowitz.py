@@ -309,8 +309,8 @@ def portfolio_output(returns: pd.DataFrame,
         weights = np.ones(n) / n
     elif portfolio_type == "random":
         n = returns.shape[1]
-        w = np.random.random(n)
-        weights = w / w.sum()
+        weights = np.random.dirichlet([0.15] * n)
+
     else:
         raise ValueError(f"Unknown portfolio type: {portfolio_type}")
 
