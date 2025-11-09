@@ -91,7 +91,7 @@ def annualize_covariance(covmat: pd.DataFrame, periods_per_year: int = 252) -> p
 
     Returns
     -------
-    float: Annualized covariance matrix.
+    pd.DataFrame: Annualized covariance matrix.
 
     """
     return covmat * periods_per_year

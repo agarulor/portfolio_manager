@@ -7,6 +7,7 @@ from portfolio_tools.return_metrics import calculate_daily_returns, annualize_re
 from portfolio_tools.risk_metrics import calculate_covariance, portfolio_volatility, sharpe_ratio, neg_sharpe_ratio, \
     annualize_covariance, calculate_max_drawdown
 from portfolio_tools.markowitz import minimize_volatility, plot_frontier, maximize_return, msr
+from portfolio_management.markowitz_portfolios import get_markowtiz_results
 import matplotlib.pyplot as plt
 from portfolio_tools.portfolio_allocation import split_data_markowtiz, split_data_ml
 if __name__ == "__main__":
@@ -16,7 +17,7 @@ if __name__ == "__main__":
     #b, c, d = clean_and_align_data(a)
     #print(b.head())
     #save_preprocessed_data(b)
-    e = read_price_file("data/processed/prices_20251105-013441.csv")
+    e = read_price_file("data/processed/prices_20251105-013233.csv")
 
     f = calculate_daily_returns(e, method="simple")
     h = calculate_covariance(f)
@@ -31,20 +32,19 @@ if __name__ == "__main__":
     #print(f.head())
     train, test = split_data_markowtiz(f)
     covmat_train = calculate_covariance(train)
+    covmat_test = calculate_covariance(test)
+    pruba = get_markowtiz_results(train, test, covmat_train, "gmv")
+    print(pruba)
+
+
     #print(train.head())
     #print(train.tail())
     #print(test.head())
     #print(test.tail())
 
-    a= plot_frontier(100, train, covmat_train)
+   # a= plot_frontier(100, train, covmat_train)
     #print(a)
 
     train_2, val_2, test_2, warm_1, warm_2 = split_data_ml(f, "2024-12-30", "2025-06-30")
-
-
-
-
-
-
 
 
