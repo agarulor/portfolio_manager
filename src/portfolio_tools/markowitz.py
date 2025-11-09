@@ -270,6 +270,42 @@ def gmv(covmat: pd.DataFrame,
     weights = min_percentage_renormalize(weights.x, min_w)
     return weights
 
+def ew(returns: pd.DataFrame) -> np.ndarray:
+    """
+    Returns the weights of the portfolio assets for an equally weighted portfolio
+
+    Parameters
+    ----------
+    returns: np.ndarray. Returns of the portfolio.
+
+    Returns
+    -------
+    np.ndarray: Weights of the portfolio.
+    """
+    # We get the number of assets
+    n = returns.shape[1]
+    # We calculate the weights for an equally weighted portfolio
+    return np.ones(n) / n
+
+
+def random_weights(returns: pd.DataFrame) -> np.ndarray:
+    """
+    Returns the weights of the portfolio assets for a random weighted portfolio
+
+    Parameters
+    ----------
+    returns: np.ndarray. Returns of the portfolio.
+
+    Returns
+    -------
+    np.ndarray: Weights of the portfolio.
+    """
+    n = returns.shape[1]
+
+    # We return the weights
+    return np.random.dirichlet([0.15] * n)
+
+
 
 def portfolio_output(returns: pd.DataFrame,
                      covmat: pd.DataFrame,
@@ -303,13 +339,10 @@ def portfolio_output(returns: pd.DataFrame,
     elif portfolio_type == "portfolio":
         weights = 0
     elif portfolio_type == "ew":
-        # We get the number of assets
-        n = returns.shape[1]
         # We calculate the weights for an equally weighted portfolio
-        weights = np.ones(n) / n
+        weights = ew(returns)
     elif portfolio_type == "random":
-        n = returns.shape[1]
-        weights = np.random.dirichlet([0.15] * n)
+        weights = random_weights(returns)
 
     else:
         raise ValueError(f"Unknown portfolio type: {portfolio_type}")

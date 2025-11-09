@@ -16,7 +16,7 @@ if __name__ == "__main__":
     #b, c, d = clean_and_align_data(a)
     #print(b.head())
     #save_preprocessed_data(b)
-    e = read_price_file("data/processed/prices_20251105-014012.csv")
+    e = read_price_file("data/processed/prices_20251105-013441.csv")
 
     f = calculate_daily_returns(e, method="simple")
     h = calculate_covariance(f)
@@ -29,24 +29,17 @@ if __name__ == "__main__":
     #portfolio_vol = portfolio_volatility(l, h)
 
     #print(f.head())
-    #train, test = split_data_markowtiz(f)
-    #train.iloc[:, ]
-    #covmat_train = calculate_covariance(train)
+    train, test = split_data_markowtiz(f)
+    covmat_train = calculate_covariance(train)
     #print(train.head())
     #print(train.tail())
     #print(test.head())
     #print(test.tail())
 
-    #a = plot_frontier(100, train, covmat_train)
+    a= plot_frontier(100, train, covmat_train)
     #print(a)
 
     train_2, val_2, test_2, warm_1, warm_2 = split_data_ml(f, "2024-12-30", "2025-06-30")
-    print(train_2.head())
-    print(train_2.tail())
-    print(val_2.head())
-    print(val_2.tail())
-    print(test_2.head())
-    print(test_2.tail())
 
 
 

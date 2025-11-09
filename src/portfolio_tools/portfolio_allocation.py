@@ -1,4 +1,3 @@
-from portfolio_tools.markowitz import portfolio_output
 import pandas as pd
 
 
@@ -118,4 +117,5 @@ def split_data_ml(
     test_warm = sorted_returns.loc[time_test_start:].iloc[:lookback] if lookback > 0 else sorted_returns.iloc[0:0]
 
     return train_set, val_set, test_set, val_warm, test_warm
+
 
