@@ -17,7 +17,7 @@ def split_data_markowtiz(
 
     Returns
     ----------
-    training_set : pd.DataFrame. Training set with returns.
+    train_set : pd.DataFrame. Training set with returns.
     test_set : pd.DataFrame. Test set with returns.
     """
     # we sort the returns in case they are not shorted
@@ -32,7 +32,7 @@ def split_data_markowtiz(
 
     # We adjust data if not in the data shared
     if time_start not in sorted_returns.index:
-        pos = sorted_returns.index.searchsorted(time_start)  # sin +1
+        pos = sorted_returns.index.searchsorted(time_start)
         if pos >= len(sorted_returns.index):
             raise ValueError("time_start is after the available data range.")
         time_start = sorted_returns.index[pos]
@@ -48,7 +48,74 @@ def split_data_markowtiz(
         print(f"time_end adjusted to: {time_end.date()}")
 
     # We now divide data into training and test
-    training_set = sorted_returns.loc[:time_start - pd.Timedelta(days=1)]
+    train_set = sorted_returns.loc[:time_start - pd.Timedelta(days=1)]
     test_set = sorted_returns.loc[time_start : time_end]
 
-    return training_set, test_set
+    return train_set, test_set
+
+def split_data_ml(
+        returns: pd.DataFrame,
+        train_date_end: str = "2022-09-30",
+        val_date_end: str = "2024-09-30",
+        test_date_end: str = "2025-09-30",
+        lookback: int = 0) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+    """
+    Splits data into training, validation and test sets
+
+    Parameters
+    ----------
+    returns : pd.DataFrame. Dataset with returns.
+    train_date_end : str. End day for train data (YYYY-MM-DD).
+    val_date_end : str. Ending day for validation data (YYYY-MM-DD).
+    test_date_end : str. Ending day for test data (YYYY-MM-DD).
+    lookback : int. Number of days to look back.
+
+    Returns
+    ----------
+    train_set : pd.DataFrame. Training set with returns.
+    val_set : pd.DataFrame. Validation set with returns.
+    test_set : pd.DataFrame. Test set with returns.
+    """
+    # we sort the returns in case they are not shorted
+    sorted_returns = returns.sort_index()
+
+    # We convert to datetime the index
+    sorted_returns.index = pd.to_datetime(sorted_returns.index)
+
+    # Now we check if the date exists
+    time_train_end = pd.to_datetime(train_date_end)
+    time_val_end = pd.to_datetime(val_date_end)
+    time_test_end = pd.to_datetime(test_date_end)
+
+    if time_train_end not in sorted_returns.index:
+        pos = sorted_returns.index.searchsorted(time_train_end) - 1
+        if pos < 0:
+            raise ValueError(f"No available data on or before {time_train_end}.")
+        time_train_end = sorted_returns.index[pos]
+
+    if time_val_end not in sorted_returns.index:
+        pos = sorted_returns.index.searchsorted(time_val_end) - 1
+        if pos < 0:
+            raise ValueError(f"No available data on or before {time_val_end}.")
+        time_val_end = sorted_returns.index[pos]
+
+    if time_test_end not in sorted_returns.index:
+        pos = sorted_returns.index.searchsorted(time_test_end) - 1
+        if pos < 0:
+            raise ValueError(f"No available data on or before {time_test_end}.")
+        time_test_end = sorted_returns.index[pos]
+
+    time_val_start = sorted_returns.index[sorted_returns.index.get_loc(time_train_end) + 1]
+    time_test_start = sorted_returns.index[sorted_returns.index.get_loc(time_val_end) + 1]
+
+    # We split the main sets
+    train_set = sorted_returns.loc[: train_date_end]
+    val_set = sorted_returns.loc[ time_val_start: time_val_end]
+    test_set = sorted_returns.loc[time_test_start: time_test_end]
+
+    # We add the warming-up
+    val_warm = sorted_returns.loc[time_val_start:].iloc[:lookback] if lookback > 0 else sorted_returns.iloc[0:0]
+    test_warm = sorted_returns.loc[time_test_start:].iloc[:lookback] if lookback > 0 else sorted_returns.iloc[0:0]
+
+    return train_set, val_set, test_set, val_warm, test_warm
+
