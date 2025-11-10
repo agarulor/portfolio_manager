@@ -20,7 +20,8 @@ def get_markowtiz_results(train_returns: pd.DataFrame,
 
     Parameters
     ----------
-    returns: pd.DataFrame. Expected return of the portfolio.
+    train_returns: pd.DataFrame. Expected return of the portfolio.
+    test_returns: pd.DataFrame. Expected return of the portfolio.
     covmat: np.ndarray. Covariance matrix of the portfolio.
     rf: float. Risk-free rate.
     portfolio_type: Literal["msr", "gmv", "portfolio", "ew", "random"] = "msr"
@@ -63,12 +64,64 @@ def get_markowtiz_results(train_returns: pd.DataFrame,
     max_drawdown = calculate_max_drawdown(weights, test_returns)
     print(f"Max Drawdown: {max_drawdown}")
 
+    # Lo pasamos a un diccionario multiplicado por 100 para tenerlo en porcentaje
     portfolio_information = {"Model": portfolio_type,
-                   "Returns": float(pf_return),
-                   "Volatility": float(pf_volatility),
+                   "Returns": float(pf_return * 100),
+                   "Volatility": float(pf_volatility * 100),
                     "Sharpe Ratio": float(portfolio_sharpe_ratio),
-                   "max_drawdown": float(max_drawdown),
-                   "weights": [weights]}
+                   "max_drawdown": float(max_drawdown * 100),
+                   "weights": [weights] * 100}
 
     return portfolio_information
 
+
+def create_markowitz_table(train_returns: pd.DataFrame,
+                           test_returns: pd.DataFrame,
+                           covmat: pd.DataFrame,
+                           portfolio_types=None,
+                           rf: float = 0.0,
+                           method: Literal["simple", "log"] = "simple",
+                           periods_per_year: int = 252,
+                           min_w: float = 0.00) -> pd.DataFrame:
+    """
+    Returns the returns and volatility of a portfolio given weights of the portfolio
+
+    Parameters
+    ----------
+    train_returns: pd.DataFrame. Expected return of the portfolio.
+    test_returns: pd.DataFrame. Expected return of the portfolio.
+    covmat: np.ndarray. Covariance matrix of the portfolio.
+    rf: float. Risk-free rate.
+    portfolio_types: List with they type of portfolio names.
+    method: str. "simple" or "log
+    periods_per_year: int. Number of years over which to calculate volatility.
+    min_w: float. Minimum weight of the portfolio.
+
+    Returns
+    -------
+    List: With name of the type of model, returns, volatility, max drawdown and weights
+    """
+
+    portfolio_results = []
+
+    # extraemos el nombre de las columnas
+    tickers = train_returns.columns
+
+    if portfolio_types is None:
+        portfolio_types = ["msr", "gmv", "ew", "random"]
+
+    for portfolio in portfolio_types:
+        resultados = get_markowtiz_results(
+            train_returns,
+            test_returns,
+            covmat,
+            portfolio,
+            rf,
+            method,
+            periods_per_year,
+            min_w)
+        portfolio_results.append(resultados)
+
+
+
+    return pd.DataFrame(portfolio_results)
