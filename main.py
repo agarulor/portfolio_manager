@@ -26,7 +26,9 @@ def main():
     train, test = split_data_markowtiz(f)
     covmat_train = calculate_covariance(train)
 
-    pruba = create_markowitz_table(train, test, covmat_train)
+    pruba = create_markowitz_table(train, test, covmat_train, min_w=0.0)
+
+    #a = plot_frontier(20, train, covmat_train)
 
     show_table(pruba, caption="Resultados Markowitz")
 

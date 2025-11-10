@@ -288,7 +288,7 @@ def ew(returns: pd.DataFrame) -> np.ndarray:
     return np.ones(n) / n
 
 
-def random_weights(returns: pd.DataFrame) -> np.ndarray:
+def random_weights(returns: pd.DataFrame, min_w) -> np.ndarray:
     """
     Returns the weights of the portfolio assets for a random weighted portfolio
 
@@ -333,7 +333,7 @@ def portfolio_output(returns: pd.DataFrame,
     """
 
     if portfolio_type == "msr":
-        weights = msr(returns, covmat, rf, method, periods_per_year)
+        weights = msr(returns, covmat, rf, method, periods_per_year, min_w)
     elif portfolio_type == "gmv":
         weights = gmv(covmat, min_w)
     elif portfolio_type == "portfolio":
@@ -342,7 +342,7 @@ def portfolio_output(returns: pd.DataFrame,
         # We calculate the weights for an equally weighted portfolio
         weights = ew(returns)
     elif portfolio_type == "random":
-        weights = random_weights(returns)
+        weights = random_weights(returns, min_w)
 
     else:
         raise ValueError(f"Unknown portfolio type: {portfolio_type}")

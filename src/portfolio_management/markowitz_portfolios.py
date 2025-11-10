@@ -1,6 +1,9 @@
 import pandas as pd
 import numpy as np
 from typing import Literal, Tuple
+
+from scipy.constants import precision
+
 from portfolio_tools.markowitz import gmv, msr, ew, random_weights
 from portfolio_tools.return_metrics import portfolio_returns
 from portfolio_tools.risk_metrics import portfolio_volatility, calculate_max_drawdown, calculate_covariance, sharpe_ratio
@@ -14,7 +17,8 @@ def get_markowtiz_results(train_returns: pd.DataFrame,
                           rf: float = 0.0,
                           method: Literal["simple", "log"] = "simple",
                           periods_per_year: int = 252,
-                          min_w: float = 0.00) -> Tuple[float, float, float]:
+                          min_w: float = 0.00,
+                          weight_name: str = "weights") -> Tuple[float, float, float]:
     """
     Returns the returns and volatility of a portfolio given weights of the portfolio
 
@@ -35,7 +39,7 @@ def get_markowtiz_results(train_returns: pd.DataFrame,
     """
 
     if portfolio_type == "msr":
-        weights = msr(train_returns, covmat, rf, method, periods_per_year)
+        weights = msr(train_returns, covmat, rf, method, periods_per_year, min_w)
     elif portfolio_type == "gmv":
         weights = gmv(covmat, min_w)
     elif portfolio_type == "portfolio":
@@ -44,7 +48,7 @@ def get_markowtiz_results(train_returns: pd.DataFrame,
         # We calculate the weights for an equally weighted portfolio
         weights = ew(train_returns)
     elif portfolio_type == "random":
-        weights = random_weights(train_returns)
+        weights = random_weights(train_returns, min_w)
 
     else:
         raise ValueError(f"Unknown portfolio type: {portfolio_type}")
@@ -62,15 +66,14 @@ def get_markowtiz_results(train_returns: pd.DataFrame,
 
     # We get the maximum drawdown
     max_drawdown = calculate_max_drawdown(weights, test_returns)
-    print(f"Max Drawdown: {max_drawdown}")
 
     # Lo pasamos a un diccionario multiplicado por 100 para tenerlo en porcentaje
     portfolio_information = {"Model": portfolio_type,
-                   "Returns": float(pf_return * 100),
-                   "Volatility": float(pf_volatility * 100),
-                    "Sharpe Ratio": float(portfolio_sharpe_ratio),
-                   "max_drawdown": float(max_drawdown * 100),
-                   "weights": [weights] * 100}
+                   "Returns": float(round(pf_return * 100, 3)),
+                   "Volatility": float(round(pf_volatility * 100, 3)),
+                    "Sharpe Ratio": float(round(portfolio_sharpe_ratio, 3)),
+                   "max_drawdown": float(round(max_drawdown * 100, 3)),
+                   weight_name: np.round(weights * 100, 3) }
 
     return portfolio_information
 
@@ -82,7 +85,9 @@ def create_markowitz_table(train_returns: pd.DataFrame,
                            rf: float = 0.0,
                            method: Literal["simple", "log"] = "simple",
                            periods_per_year: int = 252,
-                           min_w: float = 0.00) -> pd.DataFrame:
+                           min_w: float = 0.00,
+                           weight_name: str = "weights"
+                           ) -> pd.DataFrame:
     """
     Returns the returns and volatility of a portfolio given weights of the portfolio
 
@@ -122,6 +127,15 @@ def create_markowitz_table(train_returns: pd.DataFrame,
             min_w)
         portfolio_results.append(resultados)
 
+    df_resultados = pd.DataFrame(portfolio_results)
 
+    # We extract the column weights
+    new_columns = df_resultados[weight_name].apply(pd.Series)
 
-    return pd.DataFrame(portfolio_results)
+    # we add the ticker names
+    new_columns.columns = tickers
+
+    # We join it to the dataframe replacing weights
+    df_resultados = pd.concat([df_resultados.drop(weight_name, axis=1), new_columns], axis=1)
+
+    return df_resultados
