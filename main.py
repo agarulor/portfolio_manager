@@ -1,5 +1,7 @@
 import sys
 import os
+from pkgutil import get_data
+
 sys.path.append(os.path.join(os.path.dirname(__file__), "src"))
 import numpy as np
 import pandas as pd
@@ -18,19 +20,33 @@ from outputs.tables import show_table
 
 
 def main():
+
+    """
+    datos = get_stock_prices("data/input/eurostoxx50_csv.csv",
+                             "ticker_yahoo",
+                             "name",
+                             )
+    datos_2, report, summary = clean_and_align_data(datos, beginning_data=True)
+
+    save_preprocessed_data(datos_2)
+
+    print(datos_2.head())
+
+    """
     st.title("Análisis de Carteras Markowitz")
 
-    e = read_price_file("data/processed/prices_20251105-013441.csv")
+    e = read_price_file("data/processed/prices_20251110-201334.csv")
 
     f = calculate_daily_returns(e, method="simple")
     train, test = split_data_markowtiz(f)
     covmat_train = calculate_covariance(train)
 
-    pruba = create_markowitz_table(train, test, covmat_train, rf = 0.06, min_w=0.0)
+    pruba = create_markowitz_table(train, test, covmat_train, rf = 0.00, min_w=0.0)
 
-    a = plot_frontier(20, train, covmat_train, rf= 0.06)
+    a = plot_frontier(30, train, covmat_train, rf= 0.0)
 
     show_table(pruba, caption="Resultados Markowitz")
+
 
 if __name__ == "__main__":
     main()

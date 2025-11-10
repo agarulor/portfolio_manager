@@ -215,7 +215,7 @@ def msr(returns,
                        init_guess,
                        args=(returns, covmat, rf, method, periods_per_year),
                        method='SLSQP',
-                       options={'disp': False},
+                       options={'disp': False, 'maxiter': 1000},
                        constraints=constraints,
                        bounds=bounds
                        )

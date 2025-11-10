@@ -3,7 +3,7 @@ import pandas as pd
 
 def split_data_markowtiz(
         returns: pd.DataFrame,
-        test_date_start: str = "2024-10-01",
+        test_date_start: str = "2024-01-01",
         test_date_end: str = "2025-09-30") -> tuple[pd.DataFrame, pd.DataFrame]:
     """
     Splits data into training and test sets
@@ -49,6 +49,8 @@ def split_data_markowtiz(
     # We now divide data into training and test
     train_set = sorted_returns.loc[:time_start - pd.Timedelta(days=1)]
     test_set = sorted_returns.loc[time_start : time_end]
+
+    print(test_set)
 
     return train_set, test_set
 

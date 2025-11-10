@@ -53,6 +53,7 @@ def get_markowtiz_results(train_returns: pd.DataFrame,
     else:
         raise ValueError(f"Unknown portfolio type: {portfolio_type}")
 
+    print(portfolio_returns(weights, train_returns, method, periods_per_year))
     # We get the returns
     pf_return = portfolio_returns(weights, test_returns, method, periods_per_year)
 

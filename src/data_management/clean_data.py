@@ -1,8 +1,11 @@
 import pandas as pd
 from typing import Tuple
-def clean_stock_data(prices: pd.DataFrame) -> Tuple[pd.DataFrame, pd.DataFrame]:
+def clean_stock_data(prices: pd.DataFrame,
+        beginning_data=True) -> Tuple[pd.DataFrame, pd.DataFrame]:
     """
-    Clean a dataframe with stock prices. It removes empty columns (when no data available)
+    Clean a dataframe with stock prices. It removes empty columns (when no data available). In
+    addition, if beggining data = True, it also removes columns where the first date is empty
+    (i.e. if not all data is available)
     It also generates a report on the availability of data, por decision-making purposes
 
     It removes all tickers (columns) with no valid prices at all
@@ -33,6 +36,11 @@ def clean_stock_data(prices: pd.DataFrame) -> Tuple[pd.DataFrame, pd.DataFrame]:
     # First we drop all tickers, i.e. columns, that don´t have any price
     df = df.dropna(how="all")
 
+    if beginning_data:
+        first_row = df.iloc[0]
+        columns_to_remove = first_row[first_row.isna()].index
+        df = df.drop(columns=columns_to_remove)
+
     # We create a report which provides information about the cleaning process
     # It is a useful tool for reviewing and understanding issues
     report = df.notna().agg(
@@ -52,7 +60,7 @@ def clean_stock_data(prices: pd.DataFrame) -> Tuple[pd.DataFrame, pd.DataFrame]:
 # We create a function that will help with that
 def align_dates(prices: pd.DataFrame,
                 max_ffill_days: int = 5,
-                min_row_coverage: float = 0.5) -> Tuple[pd.DataFrame, pd.DataFrame]:
+                min_row_coverage: float = 0.0) -> Tuple[pd.DataFrame, pd.DataFrame]:
     """
     Align trading dates across markets by forward-filling short gaps. It removes days with insufficient coverage.
 
@@ -129,7 +137,8 @@ def align_dates(prices: pd.DataFrame,
 def clean_and_align_data(
         prices: pd.DataFrame,
         max_ffill_days: int = 5,
-        min_row_coverage: float = 0.5)-> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+        min_row_coverage: float = 0.0,
+        beginning_data=True)-> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
 
     """
     End-to-end preprocessing pipeline for price data:
@@ -149,6 +158,8 @@ def clean_and_align_data(
     min_row_coverage : float, default 0.5
         Minimum % of non-missing columns required to keep a row.
         Example: 0.5 means at least 50% of tickers must have data on that date.
+    beginning_data : bool, default True.
+        If True, means that only keeps columns with data from the beginning
 
     Returns
     -------
@@ -161,7 +172,7 @@ def clean_and_align_data(
     """
 
     # We clean the df
-    cleaned_df, cleaned_report = clean_stock_data(prices)
+    cleaned_df, cleaned_report = clean_stock_data(prices, beginning_data)
     # We align the calendars
     aligned_df, aligned_summary = align_dates(cleaned_df, max_ffill_days, min_row_coverage)
 
