@@ -20,15 +20,15 @@ from outputs.tables import show_table
 def main():
     st.title("Análisis de Carteras Markowitz")
 
-    e = read_price_file("data/processed/prices_20251105-013233.csv")
+    e = read_price_file("data/processed/prices_20251105-013441.csv")
 
     f = calculate_daily_returns(e, method="simple")
     train, test = split_data_markowtiz(f)
     covmat_train = calculate_covariance(train)
 
-    pruba = create_markowitz_table(train, test, covmat_train, min_w=0.0)
+    pruba = create_markowitz_table(train, test, covmat_train, rf = 0.06, min_w=0.0)
 
-    #a = plot_frontier(20, train, covmat_train)
+    a = plot_frontier(20, train, covmat_train, rf= 0.06)
 
     show_table(pruba, caption="Resultados Markowitz")
 

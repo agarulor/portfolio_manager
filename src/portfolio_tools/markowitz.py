@@ -357,6 +357,62 @@ def portfolio_output(returns: pd.DataFrame,
     print(f"Max Drawdown: {max_drawdown}")
     return pf_return, pf_volatility, max_drawdown
 
+def get_cml(target_volatility: float,
+            returns: pd.DataFrame,
+            covmat: pd.DataFrame,
+            rf: float = 0.0,
+            method: Literal["simple", "log"] = "simple",
+            periods_per_year: int = 252,
+            min_w: float = 0.00):
+
+    """
+    It helps an investor to select a point of the CML given a
+    volatility target
+
+    Parameters
+    ----------
+    target_volatility: float. Target volatility of the portfolio.
+    returns: pd.DataFrame. Expected return of the portfolio.
+    covmat: np.ndarray. Covariance matrix of the portfolio.
+    rf: float. Risk-free rate.
+    method: str. "simple" or "log
+    periods_per_year: int. Number of years over which to calculate volatility.
+    min_w: float. Minimum weight of the portfolio.
+
+    Returns
+    -------
+    w_risky : np.ndarray. Weights over risk assets in the CML.
+    w_rf : float. Weight of the risk-free asset
+    port_return : float. Annualized return of the portfolio.
+    port_vol : float Annualized volatility of the portfolio.
+    sharpe : float
+        Ratio de Sharpe del punto en la CML, usando rf.
+    """
+    # We first obtain the msr
+    sharpe_w = msr(returns, covmat, rf, method, periods_per_year, min_w)
+
+    # We get the returns
+    pf_return = portfolio_returns(sharpe_w, returns, method, periods_per_year)
+    # We get the volatility
+    pf_volatility = portfolio_volatility(sharpe_w, covmat, periods_per_year)
+
+    # We check if vol is lesser than 0
+    if pf_volatility <= 0:
+        raise ValueError("Volatility cannot be less than zero")
+
+    # We escalate to meet target volatility
+    a = target_volatility / pf_volatility
+    weight_risky = a * sharpe_w
+    weight_risk_free = 1.0 - a
+
+
+    # We get the reamining information
+    cml_pf_volatility = float(abs(a) * pf_volatility)
+    cml_pf_return = float(rf + a * (pf_return - rf))
+
+    return weight_risky, weight_risk_free, cml_pf_return, cml_pf_volatility
+
+
 
 def plot_frontier(n_returns: int,
                   returns: pd.DataFrame,
@@ -388,7 +444,14 @@ def plot_frontier(n_returns: int,
             ax.set_xlim(left=0)
             cml_x = [0, msr_volatility]
             cml_y = [rf, msr_return]
+            cml_weights, cml_rf_weight, cml_return, cml_volatility = get_cml(0.12,
+                                                                             returns,
+                                                                             covmat,
+                                                                             rf, method,
+                                                                             periods_per_year,
+                                                                             min_w)
             ax.plot(cml_x, cml_y, color='green', marker='o', linestyle='dashed', linewidth=2, markersize=10)
+            ax.plot(cml_volatility, cml_return, color='yellow', marker='o', markersize=16)
 
     if plot_gmv:
         gmv_return, gmv_volatility, gmv_drawdown = portfolio_output(returns, covmat, "gmv")
