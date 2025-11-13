@@ -1,21 +1,14 @@
 import sys
 import os
-from pkgutil import get_data
 
 sys.path.append(os.path.join(os.path.dirname(__file__), "src"))
-import numpy as np
-import pandas as pd
 import streamlit as st
-from data_management.get_data import get_stock_prices, read_price_file
-from data_management.clean_data import clean_and_align_data
-from data_management.save_data import save_preprocessed_data
-from portfolio_tools.return_metrics import calculate_daily_returns, annualize_returns, portfolio_returns, daily_portfolio_returns
-from portfolio_tools.risk_metrics import calculate_covariance, portfolio_volatility, sharpe_ratio, neg_sharpe_ratio, \
-    annualize_covariance, calculate_max_drawdown
-from portfolio_tools.markowitz import minimize_volatility, plot_frontier, maximize_return, msr
-from portfolio_management.markowitz_portfolios import get_markowtiz_results, create_markowitz_table
-import matplotlib.pyplot as plt
-from portfolio_tools.portfolio_allocation import split_data_markowtiz, split_data_ml
+from data_management.get_data import read_price_file
+from portfolio_tools.return_metrics import calculate_daily_returns
+from portfolio_tools.risk_metrics import calculate_covariance
+from portfolio_tools.markowitz import plot_frontier
+from portfolio_management.markowitz_portfolios import create_markowitz_table
+from data_management.split_and_normalize_data import split_data_markowtiz
 from outputs.tables import show_table
 
 

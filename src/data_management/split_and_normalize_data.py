@@ -1,5 +1,6 @@
 import pandas as pd
-
+from typing import Tuple
+from sklearn.preprocessing import StandardScaler
 
 def split_data_markowtiz(
         returns: pd.DataFrame,
@@ -121,3 +122,36 @@ def split_data_ml(
     return train_set, val_set, test_set, val_warm, test_warm
 
 
+def normalize_data(X_train: pd.DataFrame,
+                   X_val: pd.DataFrame,
+                   X_test: pd.DataFrame,
+                   ) ->  Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, StandardScaler]:
+
+    """
+    Normalizes data
+
+    Parameters
+    ----------
+    X_train : pd.DataFrame. Dataset with training data.
+    X_val : pd.DataFrame. Dataset with valuation data.
+    X_test : pd.DataFrame. Dataset with test data.
+
+    Returns
+    ----------
+    train_scaled : pd.DataFrame. Training set train scaled data.
+    val_scaled : pd.DataFrame. Validation set with val scaled data.
+    test_scaled : pd.DataFrame. Test set with trest scaled data.
+    scaler : StandardScaler. Scaled adjusted on train_df.
+    """
+    scaler = StandardScaler()
+    scaler.fit(X_train.values)
+
+    train_scaled = scaler.transform(X_train.values)
+    val_scaled = scaler.transform(X_val.values)
+    test_scaled = scaler.transform(X_test.values)
+
+    train_scaled_df = pd.DataFrame(train_scaled, index=X_train.index, columns=X_train.columns)
+    val_scaled_df   = pd.DataFrame(val_scaled,   index=X_val.index,   columns=X_val.columns)
+    test_scaled_df  = pd.DataFrame(test_scaled,  index=X_test.index,  columns=X_test.columns)
+
+    return train_scaled, val_scaled, test_scaled, scaler
