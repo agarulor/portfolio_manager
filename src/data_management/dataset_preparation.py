@@ -157,6 +157,7 @@ def normalize_data(X_train: pd.DataFrame,
 
     return train_scaled_df, val_scaled_df, test_scaled_df, scaler
 
+
 def create_rolling_window(df_scaled: pd.DataFrame,
                           window_size: int = 60,
                           horizon_shift: int = 1)-> Tuple[np.ndarray, np.ndarray, pd.Index]:
@@ -214,7 +215,11 @@ def create_rolling_window(df_scaled: pd.DataFrame,
 
     print(X)
     # index with dates for target (y)
-    y_index = df_scaled.index[window_size + horizon - 1: window_size + horizon - 1 + X.shape[0]]
+    y_index = df_scaled.index[window_size + horizon_shift - 1: window_size + horizon_shift - 1 + X.shape[0]]
     return X, y, y_index
 
-
+def prepare_data_sets_ml(train_df: pd.DataFrame,
+                         val_df: pd.DataFrame,
+                         test_df: pd.DataFrame,
+                         window_size: int = 60,
+                         horizon_shift: int = 1)
