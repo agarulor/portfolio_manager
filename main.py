@@ -8,8 +8,7 @@ from portfolio_tools.return_metrics import calculate_daily_returns
 from portfolio_tools.risk_metrics import calculate_covariance
 from portfolio_tools.markowitz import plot_frontier
 from portfolio_management.markowitz_portfolios import create_markowitz_table
-from data_management.dataset_preparation import split_data_markowtiz, normalize_data, split_data_ml, \
-    create_rolling_window
+from data_management.dataset_preparation import split_data_markowtiz, prepare_datasets_ml
 from outputs.tables import show_table
 
 
@@ -33,12 +32,8 @@ def main():
 
     f = calculate_daily_returns(e, method="simple")
     #train, test = split_data_markowtiz(f)
-    train, val, test, val_warm, test_warm = split_data_ml(f)
+    prepare_datasets_ml(f)
 
-
-    x_train, x_val, x_test, scaler = normalize_data(train, val, test)
-
-    create_rolling_window(x_train)
 
 
 

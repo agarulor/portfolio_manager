@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 from typing import Tuple
+
 from sklearn.preprocessing import StandardScaler
 
 def split_data_markowtiz(
@@ -218,8 +219,47 @@ def create_rolling_window(df_scaled: pd.DataFrame,
     y_index = df_scaled.index[window_size + horizon_shift - 1: window_size + horizon_shift - 1 + X.shape[0]]
     return X, y, y_index
 
-def prepare_data_sets_ml(train_df: pd.DataFrame,
-                         val_df: pd.DataFrame,
-                         test_df: pd.DataFrame,
+def prepare_datasets_ml(returns: pd.DataFrame,
+                         train_date_end: str = "2022-09-30",
+                         val_date_end: str = "2024-09-30",
+                         test_date_end: str = "2025-09-30",
+                         lookback: int = 0,
                          window_size: int = 60,
-                         horizon_shift: int = 1)
+                         horizon_shift: int = 1) \
+        -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, StandardScaler]:
+
+    """
+    Normalizes data based on the train DataSet
+    it creates rolling windows 
+
+    Parameters
+    ----------
+    returns : pd.DataFrame. Dataset with returns.
+    train_date_end : str. End day for train data (YYYY-MM-DD).
+    val_date_end : str. Ending day for validation data (YYYY-MM-DD).
+    test_date_end : str. Ending day for test data (YYYY-MM-DD).
+    lookback : int. Number of days to look back.
+    window_size : int. Size of rolling window. 60 by default
+    horizon_shift : int. Size of rolling window. 1 by default
+
+    Returns
+    ----------
+    X_train, y_train, X_val, y_val, X_test, y_test : np.ndarray. Data ready for ml algorith
+    scaler : StandardScaler. Scaled adjusted on train_df.
+    """
+    # we first split the data
+    train, val, test, val_warm, test_warm = split_data_ml(returns,
+                                                          train_date_end,
+                                                          val_date_end,
+                                                          test_date_end,
+                                                          lookback)
+    # normalize data
+    train_norm, val_norm, test_norm, scaler = normalize_data(train, val, test)
+
+    # We create rolling windows for each split
+
+    X_train, y_train, y_train_index = create_rolling_window(train_norm, window_size, horizon_shift)
+    X_val, y_val, y_val_index = create_rolling_window(val_norm, window_size, horizon_shift)
+    X_test, y_test, y_test_index = create_rolling_window(test_norm, window_size, horizon_shift)
+
+    return X_train, y_train, X_val, y_val, X_test, y_test, scaler
