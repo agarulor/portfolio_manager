@@ -161,18 +161,60 @@ def create_rolling_window(df_scaled: pd.DataFrame,
                           window_size: int = 60,
                           horizon_shift: int = 1)-> Tuple[np.ndarray, np.ndarray, pd.Index]:
     """
-        Creates rolling window based on window_size from a scaled DataFrame.
+    Creates rolling window based on window_size from a scaled DataFrame.
 
-        Parameters
-        ----------
-        df_scaled : pd.DataFrame. Dataset with training data.
-        window_size : int. Size of rolling window. 60 by default
-        horizon_shift : int. Size of rolling window. 1 by default
+    Parameters
+    ----------
+    df_scaled : pd.DataFrame. Dataset with training data.
+    window_size : int. Size of rolling window. 60 by default
+    horizon_shift : int. Size of rolling window. 1 by default
 
-        Returns
-        ----------
-        X : np.ndarray. Rolling window data. To be used with the algorithm
-            (n_samples, window_size, n_features).
-        y : np.ndarray. return in T+1 period. (n_samples, n_features).
-        y_index : pd.Index. Return index of y (dates), useful for testing
-        """
+    Returns
+    ----------
+    X : np.ndarray. Rolling window data. To be used with the algorithm
+        (n_samples, window_size, n_features).
+    y : np.ndarray. return in T+1 period. (n_samples, n_features).
+    y_index : pd.Index. Return index of y (dates), useful for testing
+    """
+
+    # first we extract the values from the datasets
+    values = df_scaled.values
+
+    # we then get the number of files (or timesteps)
+    n_timesteps = values.shape[0]
+
+    # We then extract the features
+    n_features = values.shape[1]
+
+    # We get the last index allowed by the rolling window
+    last_start = n_timesteps - window_size - horizon_shift + 1
+
+    # We then create the supporting lists for the process
+    X_list = []
+    y_list = []
+
+    # And now we iterate
+    for start in range(last_start):
+        # Last day of current window
+        end = start + window_size
+        # We get the day to predict
+        target_index = end + horizon_shift - 1
+
+        # We get the time sequence and the features
+        X_window = values[start:end, :]
+        y_window = values[target_index, :]
+
+        # We append the date
+        X_list.append(X_window)
+        y_list.append(y_window)
+
+    # We create 3-d array with n_samples, window_size and n_features
+    X = np.stack(X_list)
+    y = np.stack(y_list)
+
+    print(X)
+    # index with dates for target (y)
+    y_index = df_scaled.index[window_size + horizon - 1: window_size + horizon - 1 + X.shape[0]]
+    return X, y, y_index
+
+

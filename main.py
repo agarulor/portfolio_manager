@@ -8,7 +8,8 @@ from portfolio_tools.return_metrics import calculate_daily_returns
 from portfolio_tools.risk_metrics import calculate_covariance
 from portfolio_tools.markowitz import plot_frontier
 from portfolio_management.markowitz_portfolios import create_markowitz_table
-from data_management.dataset_preparation import split_data_markowtiz, normalize_data, split_data_ml
+from data_management.dataset_preparation import split_data_markowtiz, normalize_data, split_data_ml, \
+    create_rolling_window
 from outputs.tables import show_table
 
 
@@ -28,7 +29,7 @@ def main():
     """
     #st.title("Análisis de Carteras Markowitz")
 
-    e = read_price_file("data/processed/prices_20251110-201334.csv")
+    e = read_price_file("data/processed/prices_20251110-193638.csv")
 
     f = calculate_daily_returns(e, method="simple")
     #train, test = split_data_markowtiz(f)
@@ -37,7 +38,8 @@ def main():
 
     x_train, x_val, x_test, scaler = normalize_data(train, val, test)
 
-    print(x_test["ABI.BR"].std())
+    create_rolling_window(x_train)
+
 
 
     #covmat_train = calculate_covariance(train)
