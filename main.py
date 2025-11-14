@@ -9,6 +9,7 @@ from portfolio_tools.risk_metrics import calculate_covariance
 from portfolio_tools.markowitz import plot_frontier
 from portfolio_management.markowitz_portfolios import create_markowitz_table
 from data_management.dataset_preparation import split_data_markowtiz, prepare_datasets_ml
+from portfolio_management.ml_portfolio import run_lstm_model
 from outputs.tables import show_table
 
 
@@ -32,9 +33,10 @@ def main():
 
     f = calculate_daily_returns(e, method="simple")
     #train, test = split_data_markowtiz(f)
-    prepare_datasets_ml(f)
 
+    retorno = run_lstm_model(f, learning_rate=0.0003, batch_size=32, epochs=50)
 
+    print(retorno["test_loss"])
 
 
     #covmat_train = calculate_covariance(train)
