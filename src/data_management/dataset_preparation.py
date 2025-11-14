@@ -1,3 +1,4 @@
+import numpy as np
 import pandas as pd
 from typing import Tuple
 from sklearn.preprocessing import StandardScaler
@@ -128,7 +129,7 @@ def normalize_data(X_train: pd.DataFrame,
                    ) ->  Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, StandardScaler]:
 
     """
-    Normalizes data
+    Normalizes data based on the train DataSet
 
     Parameters
     ----------
@@ -154,4 +155,24 @@ def normalize_data(X_train: pd.DataFrame,
     val_scaled_df   = pd.DataFrame(val_scaled,   index=X_val.index,   columns=X_val.columns)
     test_scaled_df  = pd.DataFrame(test_scaled,  index=X_test.index,  columns=X_test.columns)
 
-    return train_scaled, val_scaled, test_scaled, scaler
+    return train_scaled_df, val_scaled_df, test_scaled_df, scaler
+
+def create_rolling_window(df_scaled: pd.DataFrame,
+                          window_size: int = 60,
+                          horizon_shift: int = 1)-> Tuple[np.ndarray, np.ndarray, pd.Index]:
+    """
+        Creates rolling window based on window_size from a scaled DataFrame.
+
+        Parameters
+        ----------
+        df_scaled : pd.DataFrame. Dataset with training data.
+        window_size : int. Size of rolling window. 60 by default
+        horizon_shift : int. Size of rolling window. 1 by default
+
+        Returns
+        ----------
+        X : np.ndarray. Rolling window data. To be used with the algorithm
+            (n_samples, window_size, n_features).
+        y : np.ndarray. return in T+1 period. (n_samples, n_features).
+        y_index : pd.Index. Return index of y (dates), useful for testing
+        """

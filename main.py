@@ -8,7 +8,7 @@ from portfolio_tools.return_metrics import calculate_daily_returns
 from portfolio_tools.risk_metrics import calculate_covariance
 from portfolio_tools.markowitz import plot_frontier
 from portfolio_management.markowitz_portfolios import create_markowitz_table
-from data_management.split_and_normalize_data import split_data_markowtiz
+from data_management.dataset_preparation import split_data_markowtiz, normalize_data, split_data_ml
 from outputs.tables import show_table
 
 
@@ -26,19 +26,27 @@ def main():
     print(datos_2.head())
 
     """
-    st.title("Análisis de Carteras Markowitz")
+    #st.title("Análisis de Carteras Markowitz")
 
     e = read_price_file("data/processed/prices_20251110-201334.csv")
 
     f = calculate_daily_returns(e, method="simple")
-    train, test = split_data_markowtiz(f)
-    covmat_train = calculate_covariance(train)
+    #train, test = split_data_markowtiz(f)
+    train, val, test, val_warm, test_warm = split_data_ml(f)
 
-    pruba = create_markowitz_table(train, test, covmat_train, rf = 0.00, min_w=0.0)
 
-    a = plot_frontier(30, train, covmat_train, rf= 0.0)
+    x_train, x_val, x_test, scaler = normalize_data(train, val, test)
 
-    show_table(pruba, caption="Resultados Markowitz")
+    print(x_test["ABI.BR"].std())
+
+
+    #covmat_train = calculate_covariance(train)
+
+    #pruba = create_markowitz_table(train, test, covmat_train, rf = 0.00, min_w=0.0)
+
+    #a = plot_frontier(30, train, covmat_train, rf= 0.0)
+
+    #show_table(pruba, caption="Resultados Markowitz")
 
 
 if __name__ == "__main__":
