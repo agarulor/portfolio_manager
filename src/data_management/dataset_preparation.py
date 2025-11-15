@@ -226,7 +226,7 @@ def prepare_datasets_ml(returns: pd.DataFrame,
                          lookback: int = 0,
                          window_size: int = 60,
                          horizon_shift: int = 1) \
-        -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, StandardScaler]:
+        -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, StandardScaler, np.ndarray]:
 
     """
     Normalizes data based on the train DataSet
@@ -262,4 +262,4 @@ def prepare_datasets_ml(returns: pd.DataFrame,
     X_val, y_val, y_val_index = create_rolling_window(val_norm, window_size, horizon_shift)
     X_test, y_test, y_test_index = create_rolling_window(test_norm, window_size, horizon_shift)
 
-    return X_train, y_train, X_val, y_val, X_test, y_test, scaler
+    return X_train, y_train, X_val, y_val, X_test, y_test, scaler, y_test_index

@@ -1,5 +1,6 @@
 import tensorflow as tf
 import pandas as pd
+import numpy as np
 from keras.src.optimizers import Adam, RMSprop, SGD, AdamW
 
 from data_management.dataset_preparation import prepare_datasets_ml
@@ -60,9 +61,9 @@ def train_lstm_model(model:tf.keras.models.Sequential,
     return history
 
 def run_lstm_model(returns: pd.DataFrame,
-                   train_date_end: str = "2020-09-30",
-                   val_date_end: str = "2022-09-30",
-                   test_date_end: str = "2024-09-30",
+                   train_date_end: str = "2021-09-30",
+                   val_date_end: str = "2024-09-30",
+                   test_date_end: str = "2025-09-30",
                    lookback: int = 0,
                    window_size: int = 60,
                    horizon_shift: int = 1,
@@ -93,7 +94,7 @@ def run_lstm_model(returns: pd.DataFrame,
         scaler : StandardScaler. Scaled adjusted on train_df.
         """
         # we first split the data
-        X_train, y_train, X_val, y_val, X_test, y_test, scaler = prepare_datasets_ml(
+        X_train, y_train, X_val, y_val, X_test, y_test, scaler, y_test_index = prepare_datasets_ml(
             returns,
             train_date_end,
             val_date_end,
@@ -129,5 +130,103 @@ def run_lstm_model(returns: pd.DataFrame,
             "scaler": scaler,  # StandardScaler ajustado al train
             "X_test": X_test,  # Últimas ventanas para predecir el futuro (test)
             "y_test": y_test,  # Target real del test (normalizado)
-            "test_loss": test_loss  # Pérdida RMSE/MSE/MAE en test
+            "test_loss": test_loss,  # Pérdida RMSE/MSE/MAE en test,
+            "y_test_index" :  y_test_index
+
+
         }
+
+
+def get_predictions_and_denormalize(
+    model,
+    X_test: np.ndarray,
+    y_test: np.ndarray,
+    scaler,
+):
+    """
+    Obtiene predicciones del modelo y las des-normaliza
+    usando el mismo scaler que se ajustó en train.
+
+    Parameters
+    ----------
+    model : tf.keras.Model
+    X_test : np.ndarray, shape (n_samples, window_size, n_features)
+    y_test : np.ndarray, shape (n_samples, n_features)
+    scaler : StandardScaler
+
+    Returns
+    -------
+    y_test_inv : np.ndarray
+        y_test desescalado (retornos originales).
+    y_pred_inv : np.ndarray
+        predicciones desescaladas (retornos originales).
+    """
+    # Predicciones en el espacio normalizado
+    y_pred = model.predict(X_test)
+
+    # Desescalar ambos: y_test y y_pred
+    y_test_inv = scaler.inverse_transform(y_test)
+    y_pred_inv = scaler.inverse_transform(y_pred)
+
+    return y_test_inv, y_pred_inv
+
+
+import matplotlib.pyplot as plt
+
+def plot_real_vs_predicted(
+    y_test_inv: np.ndarray,
+    y_pred_inv: np.ndarray,
+    dates=None,
+    asset_idx: int = 0,
+    asset_name: str | None = None,
+    n_points: int | None = 200
+):
+    """
+    Grafica retornos reales vs predichos para una acción concreta.
+
+    Parameters
+    ----------
+    y_test_inv : np.ndarray, shape (n_samples, n_features)
+        Retornos reales desescalados.
+    y_pred_inv : np.ndarray, shape (n_samples, n_features)
+        Retornos predichos desescalados.
+    dates : array-like o pd.DatetimeIndex, opcional
+        Fechas asociadas a cada fila de y_test/y_pred.
+        Si es None, se usa un simple rango 0...n-1.
+    asset_idx : int
+        Índice de la columna (acción) a representar.
+    asset_name : str, opcional
+        Nombre para el gráfico (si no, usa f"Asset {asset_idx}").
+    n_points : int, opcional
+        Si no es None, limita el gráfico a los últimos n_points
+        para que no quede demasiado cargado.
+    """
+    n_samples = y_test_inv.shape[0]
+
+    if dates is None:
+        x_axis = np.arange(n_samples)
+    else:
+        x_axis = np.array(dates)
+
+    # Si queremos limitar a los últimos n_points
+    if (n_points is not None) and (n_samples > n_points):
+        x_axis = x_axis[-n_points:]
+        real_series = y_test_inv[-n_points:, asset_idx]
+        pred_series = y_pred_inv[-n_points:, asset_idx]
+    else:
+        real_series = y_test_inv[:, asset_idx]
+        pred_series = y_pred_inv[:, asset_idx]
+
+    if asset_name is None:
+        asset_name = f"Asset {asset_idx}"
+
+    plt.figure(figsize=(12, 5))
+    plt.plot(x_axis, real_series, label="Real", linewidth=1)
+    plt.plot(x_axis, pred_series, label="Predicho", linewidth=1, linestyle="--")
+    plt.title(f"Retornos reales vs predichos - {asset_name}")
+    plt.xlabel("Tiempo")
+    plt.ylabel("Retorno")
+    plt.legend()
+    plt.grid(True)
+    plt.tight_layout()
+    plt.show()

@@ -9,7 +9,7 @@ from portfolio_tools.risk_metrics import calculate_covariance
 from portfolio_tools.markowitz import plot_frontier
 from portfolio_management.markowitz_portfolios import create_markowitz_table
 from data_management.dataset_preparation import split_data_markowtiz, prepare_datasets_ml
-from portfolio_management.ml_portfolio import run_lstm_model
+from portfolio_management.ml_portfolio import run_lstm_model, get_predictions_and_denormalize, plot_real_vs_predicted
 from outputs.tables import show_table
 
 
@@ -34,11 +34,32 @@ def main():
     f = calculate_daily_returns(e, method="simple")
     #train, test = split_data_markowtiz(f)
 
-    retorno = run_lstm_model(f, learning_rate=0.0003, batch_size=32, epochs=50)
+    result = run_lstm_model(f, lstm_units=128,
+                            learning_rate=0.0003,
+                            batch_size=32,
+                            epochs=50,
+                            optimizer_name="rmsprop")
 
-    print(retorno["test_loss"])
+    model = result["model"]
+    scaler = result["scaler"]
+    X_test = result["X_test"]
+    y_test = result["y_test"]
+    dates = result["y_test_index"]
 
+    y_test_inv, y_pred_inv = get_predictions_and_denormalize(
+        model=model,
+        X_test=X_test,
+        y_test=y_test,
+        scaler=scaler)
 
+    plot_real_vs_predicted(
+        y_test_inv=y_test_inv,
+        y_pred_inv=y_pred_inv,
+        dates=dates,
+        asset_idx=0,
+        asset_name=f.columns[0],
+        n_points=None  # para ver todo el test
+    )
     #covmat_train = calculate_covariance(train)
 
     #pruba = create_markowitz_table(train, test, covmat_train, rf = 0.00, min_w=0.0)
