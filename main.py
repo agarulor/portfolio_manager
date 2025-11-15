@@ -58,7 +58,7 @@ def main():
         dates=dates,
         asset_idx=0,
         asset_name=f.columns[0],
-        n_points=None  # para ver todo el test
+        n_points=None
     )
     #covmat_train = calculate_covariance(train)
 
