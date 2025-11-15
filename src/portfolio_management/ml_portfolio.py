@@ -1,22 +1,28 @@
 import tensorflow as tf
 import pandas as pd
 import numpy as np
+import itertools
 from keras.src.optimizers import Adam, RMSprop, SGD, AdamW
 
 from data_management.dataset_preparation import prepare_datasets_ml
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import LSTM, Dense
+from typing import Dict, Any, Tuple, List
+
 
 
 def create_lstm_model(window_size: int,
                       n_features: int,
                       lstm_units: int = 64,
                       learning_rate: float = 0.001,
+                      dropout_rate: float = 0.2,
                       optimizer_name: str = "adam",
                       loss = "mse") -> tf.keras.models.Sequential:
     # We define the model
     inputs = tf.keras.Input(shape=(window_size, n_features))
-    x = LSTM(lstm_units)(inputs)
+    x = LSTM(lstm_units,
+             dropout=dropout_rate,
+             recurrent_dropout=dropout_rate)(inputs)
     outputs = tf.keras.layers.Dense(n_features)(x)
     model = tf.keras.Model(inputs=inputs, outputs=outputs)
 
@@ -69,6 +75,7 @@ def run_lstm_model(returns: pd.DataFrame,
                    horizon_shift: int = 1,
                    lstm_units: int = 64,
                    learning_rate: float = 0.001,
+                   dropout_rate: float = 0.2,
                    optimizer_name: str = "adam",
                    loss="mse",
                    epochs: int = 25,
@@ -110,6 +117,7 @@ def run_lstm_model(returns: pd.DataFrame,
             n_features,
             lstm_units,
             learning_rate,
+            dropout_rate,
             optimizer_name,
             loss)
 
@@ -230,3 +238,215 @@ def plot_real_vs_predicted(
     plt.grid(True)
     plt.tight_layout()
     plt.show()
+
+
+def grid_search_lstm(
+    returns: pd.DataFrame,
+    train_date_end: str,
+    val_date_end: str,
+    test_date_end: str,
+    window_size_list: List[int],
+    horizon_shift: int,
+    lstm_units_list: List[int],
+    learning_rate_list: List[float],
+    dropout_rate_list: List[float],
+    optimizer_name_list: List[str],
+    epochs: int,
+    batch_size_list: List[int],
+    lookback: int = 0,
+    loss: str = "mse",
+    verbose: int = 0
+) -> Tuple[pd.DataFrame, Dict[str, Any]]:
+    """
+    Hace una búsqueda en rejilla (grid search) sobre varios hiperparámetros
+    de la LSTM y devuelve un DataFrame con los resultados y el mejor set.
+    """
+
+    results = []
+
+    # Todas las combinaciones de hiperparámetros
+    for (window_size,
+         lstm_units,
+         learning_rate,
+         dropout_rate,
+         optimizer_name,
+         batch_size) in itertools.product(
+            window_size_list,
+            lstm_units_list,
+            learning_rate_list,
+            dropout_rate_list,
+            optimizer_name_list,
+            batch_size_list
+    ):
+        print(
+            f"Probando: window_size={window_size}, lstm_units={lstm_units}, "
+            f"lr={learning_rate}, dropout={dropout_rate}, opt={optimizer_name}, "
+            f"batch_size={batch_size}"
+        )
+
+        # 1) Preparar datasets con ESTA ventana y este horizonte
+        X_train, y_train, X_val, y_val, X_test, y_test, scaler, y_test_index = prepare_datasets_ml(
+            returns=returns,
+            train_date_end=train_date_end,
+            val_date_end=val_date_end,
+            test_date_end=test_date_end,
+            lookback=lookback,
+            window_size=window_size,
+            horizon_shift=horizon_shift
+        )
+
+        n_features = X_train.shape[2]
+
+        # 2) Crear modelo con ESTA combinación
+        model = create_lstm_model(
+            window_size=window_size,
+            n_features=n_features,
+            lstm_units=lstm_units,
+            learning_rate=learning_rate,
+            dropout_rate=dropout_rate,
+            optimizer_name=optimizer_name,
+            loss=loss
+        )
+
+        # 3) Entrenar
+        history = train_lstm_model(
+            model,
+            X_train, y_train,
+            X_val, y_val,
+            epochs=epochs,
+            batch_size=batch_size,
+            verbose=verbose
+        )
+
+        # 4) Métricas: usamos la pérdida de validación mínima como criterio
+        val_loss_history = history.history.get("val_loss", None)
+        if val_loss_history is not None:
+            best_val_loss = float(np.min(val_loss_history))
+        else:
+            # por si acaso no se guarda val_loss
+            best_val_loss = float(history.history["loss"][-1])
+
+        # 5) Evaluación en test (opcional pero útil)
+        test_loss = float(model.evaluate(X_test, y_test, verbose=0))
+
+        # 6) Guardamos resultados de esta combinación
+        results.append({
+            "train_date_end": train_date_end,
+            "val_date_end": val_date_end,
+            "test_date_end": test_date_end,
+            "lookback": lookback,
+            "window_size": window_size,
+            "horizon_shift": horizon_shift,
+            "lstm_units": lstm_units,
+            "learning_rate": learning_rate,
+            "dropout_rate": dropout_rate,
+            "optimizer_name": optimizer_name,
+            "epochs": epochs,
+            "batch_size": batch_size,
+            "val_loss": best_val_loss,
+            "test_loss": test_loss,
+        })
+
+    # Pasamos a DataFrame
+    results_df = pd.DataFrame(results)
+
+    # Elegimos el mejor por val_loss (menor es mejor)
+    best_row = results_df.sort_values("val_loss", ascending=True).iloc[0]
+    best_params: Dict[str, Any] = best_row.to_dict()
+
+    return results_df, best_params
+
+def run_best_lstm_and_plot(
+    returns: pd.DataFrame,
+    results_df: pd.DataFrame,
+    best_params: Dict[str, Any],
+    asset_idx: int = 0,
+    asset_name: str | None = None,
+    n_points: int | None = 200,
+    loss: str = "mse",
+    verbose: int = 1
+):
+    """
+    Reentrena un modelo LSTM con los mejores hiperparámetros encontrados
+    y muestra un gráfico de real vs predicho para un activo concreto.
+    """
+
+    # Extraemos parámetros (mismos nombres que en grid_search_lstm)
+    window_size    = int(best_params["window_size"])
+    horizon_shift  = int(best_params["horizon_shift"])
+    train_date_end = best_params["train_date_end"]
+    val_date_end   = best_params["val_date_end"]
+    test_date_end  = best_params["test_date_end"]
+    lookback       = int(best_params["lookback"])
+
+    lstm_units     = int(best_params["lstm_units"])
+    learning_rate  = float(best_params["learning_rate"])
+    dropout_rate   = float(best_params["dropout_rate"])
+    optimizer_name = str(best_params["optimizer_name"])
+    epochs         = int(best_params["epochs"])
+    batch_size     = int(best_params["batch_size"])
+
+    # 1) Preparamos datasets (idéntico a grid search)
+    X_train, y_train, X_val, y_val, X_test, y_test, scaler, y_test_index = prepare_datasets_ml(
+        returns=returns,
+        train_date_end=train_date_end,
+        val_date_end=val_date_end,
+        test_date_end=test_date_end,
+        lookback=lookback,
+        window_size=window_size,
+        horizon_shift=horizon_shift
+    )
+
+    n_features = X_train.shape[2]
+
+    # 2) Creamos modelo con los mejores hiperparámetros
+    model = create_lstm_model(
+        window_size=window_size,
+        n_features=n_features,
+        lstm_units=lstm_units,
+        learning_rate=learning_rate,
+        dropout_rate=dropout_rate,
+        optimizer_name=optimizer_name,
+        loss=loss
+    )
+
+    # 3) Entrenamos
+    history = train_lstm_model(
+        model,
+        X_train, y_train,
+        X_val, y_val,
+        epochs=epochs,
+        batch_size=batch_size,
+        verbose=verbose
+    )
+
+    # 4) Evaluamos en test
+    test_loss = float(model.evaluate(X_test, y_test, verbose=verbose))
+    print(f"Test loss con mejores hiperparámetros: {test_loss:.6f}")
+
+    # 5) Predicciones y des-normalización
+    y_test_inv, y_pred_inv = get_predictions_and_denormalize(
+        model=model,
+        X_test=X_test,
+        y_test=y_test,
+        scaler=scaler
+    )
+
+    # 6) Gráfico real vs predicho
+    plot_real_vs_predicted(
+        y_test_inv=y_test_inv,
+        y_pred_inv=y_pred_inv,
+        dates=y_test_index,
+        asset_idx=asset_idx,
+        asset_name=asset_name,
+        n_points=n_points
+    )
+
+    return {
+        "model": model,
+        "history": history,
+        "test_loss": test_loss,
+        "y_test_inv": y_test_inv,
+        "y_pred_inv": y_pred_inv,
+        "y_test_index": y_test_index
+    }
