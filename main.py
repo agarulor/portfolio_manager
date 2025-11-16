@@ -9,7 +9,7 @@ from portfolio_tools.risk_metrics import calculate_covariance
 from portfolio_tools.markowitz import plot_frontier
 from portfolio_management.markowitz_portfolios import create_markowitz_table
 from data_management.dataset_preparation import split_data_markowtiz, prepare_datasets_ml
-from portfolio_management.ml_portfolio import run_lstm_model, get_predictions_and_denormalize, plot_real_vs_predicted, grid_search_lstm, run_best_lstm_and_plot
+from portfolio_management.ml_portfolio import run_lstm_model, get_predictions_and_denormalize, plot_real_vs_predicted
 from outputs.tables import show_table
 
 
@@ -34,34 +34,59 @@ def main():
     f = calculate_daily_returns(e, method="simple")
     #train, test = split_data_markowtiz(f)
 
-    results_df, best_params = grid_search_lstm(
-        returns=f,
-        train_date_end="2022-09-30",
-        val_date_end="2024-09-30",
-        test_date_end="2025-09-30",
-        window_size_list=[30, 60, 90],
-        horizon_shift=1,
-        lstm_units_list=[32, 64, 128],
-        learning_rate_list=[1e-3, 5e-4],
-        dropout_rate_list=[0.0, 0.1, 0.2],
-        optimizer_name_list=["adam", "rmsprop"],
-        epochs=75,
-        batch_size_list=[16, 32, 64],
-        verbose=0
+    result = run_lstm_model(f, window_size=30,
+                            lstm_units=64,
+                            learning_rate=0.0005,
+                            dropout_rate=0.1,
+                            batch_size=32,
+                            epochs=150,
+                            loss="mae",
+                            optimizer_name="adamw")
+
+    model = result["model"]
+    scaler = result["scaler"]
+    X_test = result["X_test"]
+    y_test = result["y_test"]
+    dates = result["y_test_index"]
+    X_val = result["X_val"]
+    y_val = result["y_val"]
+
+    y_test_inv, y_pred_inv = get_predictions_and_denormalize(
+        model=model,
+        X_test=X_test,
+        y_test=y_test,
+        scaler=scaler)
+
+    y_val_inv, y_pred_val = get_predictions_and_denormalize(
+        model=model,
+        X_test=X_val,
+        y_test=y_val,
+        scaler=scaler)
+
+    plot_real_vs_predicted(
+        y_test_inv=y_test_inv,
+        y_pred_inv=y_pred_inv,
+        dates=dates,
+        asset_idx=0,
+        asset_name=f.columns[0],
+        n_points=None
     )
 
-    print(results_df.sort_values("val_loss").head())
-    print("Mejores hiperparámetros:", best_params)
+    plot_real_vs_predicted(
+        y_test_inv=y_val_inv,
+        y_pred_inv=y_pred_val,
 
-    # 2) Reentrenar con los mejores y graficar
-    exp_results = run_best_lstm_and_plot(
-        returns=f,
-        results_df=results_df,
-        best_params=best_params,
-        asset_idx=0,  # por ejemplo, primera acción
-        asset_name="Asset 0",  # o el ticker
-        n_points=200
+        asset_idx=0,
+        asset_name=f.columns[0],
+        n_points=None
     )
+    #covmat_train = calculate_covariance(train)
+
+    #pruba = create_markowitz_table(train, test, covmat_train, rf = 0.00, min_w=0.0)
+
+    #a = plot_frontier(30, train, covmat_train, rf= 0.0)
+
+    #show_table(pruba, caption="Resultados Markowitz")
 
 
 if __name__ == "__main__":

@@ -22,7 +22,9 @@ def create_lstm_model(window_size: int,
     inputs = tf.keras.Input(shape=(window_size, n_features))
     x = LSTM(lstm_units,
              dropout=dropout_rate,
-             recurrent_dropout=dropout_rate)(inputs)
+             recurrent_dropout=dropout_rate,
+             return_sequences=False)(inputs)
+
     outputs = tf.keras.layers.Dense(n_features)(x)
     model = tf.keras.Model(inputs=inputs, outputs=outputs)
 
@@ -67,7 +69,7 @@ def train_lstm_model(model:tf.keras.models.Sequential,
     return history
 
 def run_lstm_model(returns: pd.DataFrame,
-                   train_date_end: str = "2021-09-30",
+                   train_date_end: str = "2023-09-30",
                    val_date_end: str = "2024-09-30",
                    test_date_end: str = "2025-09-30",
                    lookback: int = 0,
@@ -138,10 +140,10 @@ def run_lstm_model(returns: pd.DataFrame,
             "scaler": scaler,  # StandardScaler ajustado al train
             "X_test": X_test,  # Últimas ventanas para predecir el futuro (test)
             "y_test": y_test,  # Target real del test (normalizado)
+            "X_val": X_val,
+            "y_val": y_val,
             "test_loss": test_loss,  # Pérdida RMSE/MSE/MAE en test,
             "y_test_index" :  y_test_index
-
-
         }
 
 
