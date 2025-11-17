@@ -11,6 +11,7 @@ from portfolio_management.markowitz_portfolios import create_markowitz_table
 from data_management.dataset_preparation import split_data_markowtiz, prepare_datasets_ml
 from portfolio_management.ml_portfolio import run_lstm_model, get_predictions_and_denormalize, plot_real_vs_predicted
 from outputs.tables import show_table
+from portfolio_management.XGBoost import run_xgb_experiment
 
 
 def main():
@@ -33,11 +34,11 @@ def main():
 
     f = calculate_daily_returns(e, method="simple")
     #train, test = split_data_markowtiz(f)
-
-    result = run_lstm_model(f, window_size=30,
-                            lstm_units=64,
+"""
+    result = run_lstm_model(f, window_size=22,
+                            lstm_units=128,
                             learning_rate=0.0005,
-                            dropout_rate=0.1,
+                            dropout_rate=0.05,
                             batch_size=32,
                             epochs=150,
                             loss="mae",
@@ -87,6 +88,39 @@ def main():
     #a = plot_frontier(30, train, covmat_train, rf= 0.0)
 
     #show_table(pruba, caption="Resultados Markowitz")
+"""
+e = read_price_file("data/processed/prices_20251110-193638.csv")
+
+f = calculate_daily_returns(e, method="simple")
+
+
+xgb_results = run_xgb_experiment(
+    returns=f,  # tu DataFrame de retornos
+    train_date_end="2023-09-30",
+    val_date_end="2024-09-30",
+    test_date_end="2025-09-30",
+    window_size=60,
+    horizon_shift=1,
+    n_estimators=400,
+    learning_rate=0.03,
+    max_depth=4,
+    subsample=0.8,
+    colsample_bytree=0.8,
+)
+
+# Escogemos un activo, por ejemplo el primero (columna 0)
+asset_idx = 0
+asset_name = f.columns[asset_idx] if hasattr(f, "columns") else f"Asset {asset_idx}"
+
+plot_real_vs_predicted(
+    y_test_inv=xgb_results["y_test_inv"],
+    y_pred_inv=xgb_results["y_pred_inv"],
+    dates=xgb_results["y_test_index"],
+    asset_idx=asset_idx,
+    asset_name=asset_name,
+    n_points=200
+)
+
 
 
 if __name__ == "__main__":

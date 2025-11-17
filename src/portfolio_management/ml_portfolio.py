@@ -192,7 +192,10 @@ def plot_real_vs_predicted(
     n_points: int | None = 200
 ):
     """
-    Grafica retornos reales vs predichos para una acción concreta.
+    1) Grafica retornos reales vs predichos para una acción concreta.
+    2) Calcula un portfolio equiponderado (igual peso en todas las acciones),
+       y grafica su retorno acumulado real vs predicho.
+    3) Muestra rentabilidades anualizadas del portfolio equiponderado.
 
     Parameters
     ----------
@@ -206,11 +209,15 @@ def plot_real_vs_predicted(
     asset_idx : int
         Índice de la columna (acción) a representar.
     asset_name : str, opcional
-        Nombre para el gráfico (si no, usa f"Asset {asset_idx}").
+        Nombre para el gráfico (si no, usa f"Asset {asset_idx}".
     n_points : int, opcional
-        Si no es None, limita el gráfico a los últimos n_points
-        para que no quede demasiado cargado.
+        Si no es None, limita los gráficos a los últimos n_points
+        para que no queden demasiado cargados.
     """
+
+    # -------------------------
+    # 0) Preparar ejes de tiempo
+    # -------------------------
     n_samples = y_test_inv.shape[0]
 
     if dates is None:
@@ -218,28 +225,89 @@ def plot_real_vs_predicted(
     else:
         x_axis = np.array(dates)
 
-    # Si queremos limitar a los últimos n_points
-    if (n_points is not None) and (n_samples > n_points):
-        x_axis = x_axis[-n_points:]
-        real_series = y_test_inv[-n_points:, asset_idx]
-        pred_series = y_pred_inv[-n_points:, asset_idx]
+    # Aseguramos misma longitud por seguridad
+    n = min(len(x_axis), n_samples)
+    x_axis = x_axis[:n]
+    y_test_inv = y_test_inv[:n, :]
+    y_pred_inv = y_pred_inv[:n, :]
+
+    # Aplicar recorte a últimos n_points si se pide
+    if (n_points is not None) and (n > n_points):
+        x_axis_slice = x_axis[-n_points:]
+        y_test_slice = y_test_inv[-n_points:, :]
+        y_pred_slice = y_pred_inv[-n_points:, :]
     else:
-        real_series = y_test_inv[:, asset_idx]
-        pred_series = y_pred_inv[:, asset_idx]
+        x_axis_slice = x_axis
+        y_test_slice = y_test_inv
+        y_pred_slice = y_pred_inv
+
+    # ------------------------------------------------------------------
+    # 1) Gráfico de retornos diarios real vs predicho para una sola acción
+    # ------------------------------------------------------------------
+    real_series = y_test_slice[:, asset_idx]
+    pred_series = y_pred_slice[:, asset_idx]
 
     if asset_name is None:
         asset_name = f"Asset {asset_idx}"
 
     plt.figure(figsize=(12, 5))
-    plt.plot(x_axis, real_series, label="Real", linewidth=1)
-    plt.plot(x_axis, pred_series, label="Predicho", linewidth=1, linestyle="--")
-    plt.title(f"Retornos reales vs predichos - {asset_name}")
+    plt.plot(x_axis_slice, real_series, label="Real", linewidth=1)
+    plt.plot(x_axis_slice, pred_series, label="Predicho", linewidth=1, linestyle="--")
+    plt.title(f"Retornos diarios reales vs predichos - {asset_name}")
     plt.xlabel("Tiempo")
-    plt.ylabel("Retorno")
+    plt.ylabel("Retorno diario")
     plt.legend()
     plt.grid(True)
     plt.tight_layout()
     plt.show()
+
+    # ------------------------------------------------------------
+    # 2) Portfolio equiponderado real vs predicho (todas las acciones)
+    #    - retorno diario
+    #    - retorno acumulado
+    # ------------------------------------------------------------
+    # Retorno diario equiponderado = media de columnas (igual peso)
+    real_port_daily = y_test_slice.mean(axis=1)
+    pred_port_daily = y_pred_slice.mean(axis=1)
+
+    # Retorno acumulado
+    real_port_cum = (1.0 + real_port_daily).cumprod() - 1.0
+    pred_port_cum = (1.0 + pred_port_daily).cumprod() - 1.0
+
+    # Gráfico de retorno acumulado equiponderado
+    plt.figure(figsize=(12, 5))
+    plt.plot(x_axis_slice, real_port_cum, label="Portfolio Real (EW)", linewidth=1)
+    plt.plot(x_axis_slice, pred_port_cum, label="Portfolio Predicho (EW)", linewidth=1, linestyle="--")
+    plt.axhline(0.0, color="black", linewidth=1, linestyle="--")
+    plt.title("Retorno acumulado - Portfolio equiponderado (real vs predicho)")
+    plt.xlabel("Tiempo")
+    plt.ylabel("Retorno acumulado")
+    plt.legend()
+    plt.grid(True)
+    plt.tight_layout()
+    plt.show()
+
+    # ------------------------------------------------------------
+    # 3) Rentabilidad anualizada del portfolio equiponderado
+    # ------------------------------------------------------------
+    # número de días en el periodo mostrado
+    n_days = len(real_port_daily)
+    if n_days > 0:
+        real_total = real_port_cum[-1]
+        pred_total = pred_port_cum[-1]
+
+        # Anualización asumiendo 252 días de mercado
+        ann_factor = 252.0 / n_days
+        real_ann = (1.0 + real_total) ** ann_factor - 1.0
+        pred_ann = (1.0 + pred_total) ** ann_factor - 1.0
+
+        print("=== Portfolio equiponderado (sobre ventana mostrada) ===")
+        print(f"Retorno total REAL:     {real_total: .4%}")
+        print(f"Retorno total PREDICHO: {pred_total: .4%}")
+        print(f"Retorno anualizado REAL:     {real_ann: .4%}")
+        print(f"Retorno anualizado PREDICHO: {pred_ann: .4%}")
+    else:
+        print("No hay suficientes datos para calcular rentabilidades del portfolio.")
 
 
 def grid_search_lstm(
