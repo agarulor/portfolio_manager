@@ -131,15 +131,16 @@ results_df, best_params = grid_search_lstm(
     train_date_end="2022-09-30",
     val_date_end="2024-09-30",
     test_date_end="2025-09-30",
-    window_size_list=[20, 30, 60, 120],
+    window_size_list=[20, 30, 60, 90],
     horizon_shift=1,
-    lstm_units_list=[64, 128],
-    learning_rate_list=[0.001, 0.0005],
+    lstm_units_list=[32, 64, 128],
+    learning_rate_list=[1e-3, 5e-4],
     dropout_rate_list=[0, 0.1, 0.2],
     optimizer_name_list=["adam", "rmsprop"],
     epochs=50,
     batch_size_list=[16, 32, 64],
-    ma_windows=[30]   # <-- aquí activas la media móvil 30 días
+    ma_windows=[30],
+    verbose=0
 )
 
 best_run = run_best_lstm_and_plot(
@@ -150,6 +151,8 @@ best_run = run_best_lstm_and_plot(
     asset_name=f.columns[0],
     ma_windows=[30]
 )
+
+print(best_run)
 if __name__ == "__main__":
     main()
 

@@ -5,8 +5,7 @@ import itertools
 from keras.src.optimizers import Adam, RMSprop, SGD, AdamW
 
 from data_management.dataset_preparation import prepare_datasets_ml
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import LSTM, Dense
+from tensorflow.keras.layers import LSTM
 from typing import Dict, Any, Tuple, List, Optional
 
 import matplotlib.pyplot as plt
@@ -28,19 +27,6 @@ def add_moving_average_features(
         'ACS.MC' -> 'ACS.MC_ma30'
 
     Las primeras filas donde no se pueda calcular la MA (NaN) se eliminan.
-
-    Parameters
-    ----------
-    returns : pd.DataFrame
-        DataFrame de retornos diarios (n_días x n_activos).
-    ma_windows : list[int], opcional
-        Ventanas de medias móviles a añadir. Por defecto [30].
-
-    Returns
-    -------
-    df_with_ma : pd.DataFrame
-        DataFrame con retornos originales + columnas de medias móviles,
-        sin filas con NaNs (por el cálculo de rolling).
     """
     if ma_windows is None:
         ma_windows = [30]  # por defecto, 30 días
@@ -50,13 +36,10 @@ def add_moving_average_features(
 
     for w in ma_windows:
         ma_df = returns.rolling(window=w).mean()
-        # renombramos columnas con sufijo
         ma_df = ma_df.add_suffix(f"_ma{w}")
         df_list.append(ma_df)
 
     df_with_ma = pd.concat(df_list, axis=1)
-
-    # Quitamos filas iniciales con NaNs (por el rolling)
     df_with_ma = df_with_ma.dropna()
 
     return df_with_ma
@@ -73,12 +56,16 @@ def create_lstm_model(window_size: int,
                       dropout_rate: float = 0.2,
                       optimizer_name: str = "adam",
                       loss="mse") -> tf.keras.models.Sequential:
-    # Definimos el modelo con API funcional
+    """
+    Crea un modelo LSTM sencillo para predecir todos los activos a la vez.
+    """
     inputs = tf.keras.Input(shape=(window_size, n_features))
-    x = LSTM(lstm_units,
-             dropout=dropout_rate,
-             recurrent_dropout=dropout_rate,
-             return_sequences=False)(inputs)
+    x = LSTM(
+        lstm_units,
+        dropout=dropout_rate,
+        recurrent_dropout=dropout_rate,
+        return_sequences=False
+    )(inputs)
 
     outputs = tf.keras.layers.Dense(n_features)(x)
     model = tf.keras.Model(inputs=inputs, outputs=outputs)
@@ -93,7 +80,7 @@ def create_lstm_model(window_size: int,
     elif optimizer_name.lower() == "sgd":
         optimizer = SGD(learning_rate=learning_rate, momentum=0.9)
     else:
-        raise ValueError("Please, enter a valid optimizer")
+        raise ValueError("Please, enter a valid optimizer name")
 
     model.compile(
         loss=loss,
@@ -111,7 +98,9 @@ def train_lstm_model(model: tf.keras.models.Sequential,
                      epochs: int = 25,
                      batch_size: int = 64,
                      verbose: int = 1) -> tf.keras.callbacks.History:
-
+    """
+    Entrena el modelo LSTM.
+    """
     history = model.fit(
         X_train,
         y_train,
@@ -178,27 +167,29 @@ def run_lstm_model(returns: pd.DataFrame,
     )
 
     # 4) Entrenamos
-    history = train_lstm_model(model,
-                               X_train, y_train,
-                               X_val, y_val,
-                               epochs=epochs,
-                               batch_size=batch_size,
-                               verbose=verbose)
+    history = train_lstm_model(
+        model,
+        X_train, y_train,
+        X_val, y_val,
+        epochs=epochs,
+        batch_size=batch_size,
+        verbose=verbose
+    )
 
     # 5) Evaluamos en test
     test_loss = model.evaluate(X_test, y_test, verbose=verbose)
 
     return {
-        "model": model,          # Modelo LSTM entrenado
-        "history": history,      # Historial de entrenamiento
-        "scaler": scaler,        # StandardScaler ajustado al train
-        "X_test": X_test,        # Ventanas de test
-        "y_test": y_test,        # Target real del test (normalizado)
+        "model": model,
+        "history": history,
+        "scaler": scaler,
+        "X_test": X_test,
+        "y_test": y_test,
         "X_val": X_val,
         "y_val": y_val,
-        "test_loss": test_loss,  # Métrica de test
+        "test_loss": test_loss,
         "y_test_index": y_test_index,
-        "returns_with_ma": returns_with_ma  # por si quieres reusar
+        "returns_with_ma": returns_with_ma
     }
 
 
@@ -216,10 +207,8 @@ def get_predictions_and_denormalize(
     Obtiene predicciones del modelo y las des-normaliza
     usando el mismo scaler que se ajustó en train.
     """
-    # Predicciones en el espacio normalizado
-    y_pred = model.predict(X_test)
+    y_pred = model.predict(X_test, verbose=0)
 
-    # Desescalar ambos: y_test y y_pred
     y_test_inv = scaler.inverse_transform(y_test)
     y_pred_inv = scaler.inverse_transform(y_pred)
 
@@ -253,13 +242,12 @@ def plot_real_vs_predicted(
     else:
         x_axis = np.array(dates)
 
-    # Aseguramos misma longitud
     n = min(len(x_axis), n_samples)
     x_axis = x_axis[:n]
     y_test_inv = y_test_inv[:n, :]
     y_pred_inv = y_pred_inv[:n, :]
 
-    # Recorte a últimos n_points si se pide
+    # Recorte a últimos n_points
     if (n_points is not None) and (n > n_points):
         x_axis_slice = x_axis[-n_points:]
         y_test_slice = y_test_inv[-n_points:, :]
@@ -287,7 +275,7 @@ def plot_real_vs_predicted(
     plt.tight_layout()
     plt.show()
 
-    # 2) Portfolio equiponderado real vs predicho (todas las acciones)
+    # 2) Portfolio equiponderado real vs predicho
     real_port_daily = y_test_slice.mean(axis=1)
     pred_port_daily = y_pred_slice.mean(axis=1)
 
@@ -306,7 +294,7 @@ def plot_real_vs_predicted(
     plt.tight_layout()
     plt.show()
 
-    # 3) Rentabilidad anualizada del portfolio equiponderado
+    # 3) Rentabilidad anualizada
     n_days = len(real_port_daily)
     if n_days > 0:
         real_total = real_port_cum[-1]
@@ -326,7 +314,7 @@ def plot_real_vs_predicted(
 
 
 # =========================================================
-# 5) GRID SEARCH LSTM (USANDO MEDIAS MÓVILES COMO FEATURES)
+# 5) GRID SEARCH LSTM (CON LOG LIMPIO DE ESCENARIOS)
 # =========================================================
 
 def grid_search_lstm(
@@ -349,7 +337,12 @@ def grid_search_lstm(
 ) -> Tuple[pd.DataFrame, Dict[str, Any]]:
     """
     Grid search sobre varios hiperparámetros de la LSTM.
-    Ahora añade medias móviles como features antes de preparar datasets.
+    - NO imprime pesos ni arrays.
+    - Solo muestra:
+        * Número de escenario (k / N)
+        * Hiperparámetros del escenario
+        * Cuántos escenarios quedan
+    - Al final, imprime los mejores hiperparámetros.
     """
 
     # Añadimos medias móviles una única vez
@@ -357,26 +350,38 @@ def grid_search_lstm(
 
     results = []
 
-    for (window_size,
-         lstm_units,
-         learning_rate,
-         dropout_rate,
-         optimizer_name,
-         batch_size) in itertools.product(
-            window_size_list,
-            lstm_units_list,
-            learning_rate_list,
-            dropout_rate_list,
-            optimizer_name_list,
-            batch_size_list
-    ):
+    # Todas las combinaciones de hiperparámetros
+    combos = list(itertools.product(
+        window_size_list,
+        lstm_units_list,
+        learning_rate_list,
+        dropout_rate_list,
+        optimizer_name_list,
+        batch_size_list
+    ))
+    total_scenarios = len(combos)
+
+    for scen_idx, (window_size,
+                   lstm_units,
+                   learning_rate,
+                   dropout_rate,
+                   optimizer_name,
+                   batch_size) in enumerate(combos, start=1):
+
+        remaining = total_scenarios - scen_idx
+
         print(
-            f"Probando: window_size={window_size}, lstm_units={lstm_units}, "
-            f"lr={learning_rate}, dropout={dropout_rate}, opt={optimizer_name}, "
+            f"\nEscenario {scen_idx}/{total_scenarios} "
+            f"(quedan {remaining} por correr)"
+        )
+        print(
+            f"  params -> window_size={window_size}, "
+            f"lstm_units={lstm_units}, lr={learning_rate}, "
+            f"dropout={dropout_rate}, opt={optimizer_name}, "
             f"batch_size={batch_size}"
         )
 
-        # 1) Preparar datasets con ESTA ventana y este horizonte
+        # 1) Preparar datasets
         X_train, y_train, X_val, y_val, X_test, y_test, scaler, y_test_index = prepare_datasets_ml(
             returns_with_ma,
             train_date_end=train_date_end,
@@ -441,6 +446,13 @@ def grid_search_lstm(
     best_row = results_df.sort_values("val_loss", ascending=True).iloc[0]
     best_params: Dict[str, Any] = best_row.to_dict()
 
+    # Mensaje final con los mejores hiperparámetros
+    print("\n==============================")
+    print(" Mejores hiperparámetros LSTM ")
+    print("==============================")
+    for k, v in best_params.items():
+        print(f"{k}: {v}")
+
     return results_df, best_params
 
 
@@ -464,7 +476,6 @@ def run_best_lstm_and_plot(
     y muestra gráficos de real vs predicho (acción + portfolio EW).
     """
 
-    # Parámetros
     window_size = int(best_params["window_size"])
     horizon_shift = int(best_params["horizon_shift"])
     train_date_end = best_params["train_date_end"]
@@ -518,7 +529,7 @@ def run_best_lstm_and_plot(
 
     # 4) Evaluar en test
     test_loss = float(model.evaluate(X_test, y_test, verbose=verbose))
-    print(f"Test loss con mejores hiperparámetros: {test_loss:.6f}")
+    print(f"\nTest loss con mejores hiperparámetros: {test_loss:.6f}")
 
     # 5) Predicciones desnormalizadas
     y_test_inv, y_pred_inv = get_predictions_and_denormalize(

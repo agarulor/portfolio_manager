@@ -217,7 +217,7 @@ def create_rolling_window(df_scaled: pd.DataFrame,
     X = np.stack(X_list)
     y = np.stack(y_list)
 
-    print(X)
+
     # index with dates for target (y)
     y_index = df_scaled.index[window_size + horizon_shift - 1: window_size + horizon_shift - 1 + X.shape[0]]
     return X, y, y_index
