@@ -8,23 +8,52 @@ from sklearn.metrics import mean_squared_error
 from data_management.dataset_preparation import prepare_datasets_ml
 import matplotlib.pyplot as plt
 
-def flatten_windows(X: np.ndarray) -> np.ndarray:
-    """
-    Convierte X de shape (n_samples, window_size, n_features)
-    a shape (n_samples, window_size * n_features) para modelos tipo árbol.
 
-    Param
+def make_lag_features_from_windows(
+    X: np.ndarray,
+    lags: List[int]
+) -> np.ndarray:
+    """
+    A partir de ventanas 3D (n_samples, window_size, n_features),
+    construye una matriz 2D con retornos 'lagged' por activo.
+
+    Cada fila de salida contiene, para cada activo:
+      [ret_(t-1), ret_(t-2), ret_(t-5), ret_(t-10), ret_(t-21), ret_(t-63), ...]
+
+    Parameters
     ----------
     X : np.ndarray
-        Tensor 3D (n_samples, window_size, n_features)
+        Shape (n_samples, window_size, n_features)
+    lags : List[int]
+        Lags en días, por ejemplo [1, 2, 5, 10, 21, 63].
 
     Returns
     -------
-    X_flat : np.ndarray
-        Matriz 2D (n_samples, window_size * n_features)
+    X_lags : np.ndarray
+        Shape (n_samples, n_features * n_lags_validos)
     """
-    n_samples = X.shape[0]
-    return X.reshape(n_samples, -1)
+    n_samples, window_size, n_features = X.shape
+
+    # Nos quedamos solo con los lags que caben en la ventana
+    valid_lags = [lag for lag in lags if lag <= window_size]
+    if len(valid_lags) < len(lags):
+        print(f"[make_lag_features_from_windows] Aviso: algunos lags no caben en la ventana "
+              f"(window_size={window_size}). Lags usados: {valid_lags}")
+
+    feature_blocks = []
+
+    # Para cada lag, cogemos el valor correspondiente desde el final de la ventana
+    # Ej: lag=1 => X[:, -1, :] (ayer), lag=2 => X[:, -2, :], etc.
+    for lag in valid_lags:
+        idx = -lag  # posición relativa desde el final
+        lag_block = X[:, idx, :]  # shape (n_samples, n_features)
+        feature_blocks.append(lag_block)
+
+    # Concatenamos a lo largo del eje de características
+    # Resultado: (n_samples, n_features * n_lags_validos)
+    X_lags = np.concatenate(feature_blocks, axis=1)
+    return X_lags
+
 
 def train_xgb_models_per_asset(
     X_train: np.ndarray,
@@ -97,6 +126,7 @@ def train_xgb_models_per_asset(
     mean_val_mse = float(np.mean(val_mses))
     return models, mean_val_mse
 
+
 def predict_xgb_models(
     models: List[XGBRegressor],
     X: np.ndarray
@@ -122,6 +152,7 @@ def predict_xgb_models(
 
     return y_pred
 
+
 def denormalize_targets(
     y: np.ndarray,
     scaler
@@ -132,6 +163,7 @@ def denormalize_targets(
     """
     return scaler.inverse_transform(y)
 
+
 def run_xgb_experiment(
     returns: pd.DataFrame,
     train_date_end: str = "2023-09-30",
@@ -140,26 +172,32 @@ def run_xgb_experiment(
     lookback: int = 0,
     window_size: int = 60,
     horizon_shift: int = 1,
-    # Hiperparámetros XGBoost
-    n_estimators: int = 1000,
-    learning_rate: float = 0.005,
+    # Lags que quieres usar (en días)
+    lags: List[int] | None = None,
+    # Hiperparámetros XGBoost (los que tú querías)
+    n_estimators: int = 800,
+    learning_rate: float = 0.03,
     max_depth: int = 4,
     subsample: float = 0.8,
     colsample_bytree: float = 0.8,
-    reg_lambda: float = 1.0,
-    reg_alpha: float = 0.0,
+    reg_lambda: float = 3.0,
+    reg_alpha: float = 0.1,
     random_state: int = 42,
     verbosity: int = 0,
 ):
     """
-    Pipeline completo con XGBoost:
+    Pipeline completo con XGBoost + lags:
 
     1) Prepara datasets (usa prepare_datasets_ml)
-    2) Aplana ventanas para XGB
+    2) Construye features de lags a partir de las ventanas
     3) Entrena un modelo por activo
     4) Evalúa en test
-    5) Devuelve
+    5) Devuelve resultados y predicciones desnormalizadas
     """
+
+    if lags is None:
+        # Por defecto, los lags que comentabas:
+        lags = [1, 2, 5, 10, 21, 63]
 
     # 1) Preparamos datasets igual que con LSTM
     X_train, y_train, X_val, y_val, X_test, y_test, scaler, y_test_index = prepare_datasets_ml(
@@ -172,16 +210,17 @@ def run_xgb_experiment(
         horizon_shift=horizon_shift
     )
 
-    # 2) Aplanamos ventanas para XGBoost
-    X_train_flat = flatten_windows(X_train)
-    X_val_flat   = flatten_windows(X_val)
-    X_test_flat  = flatten_windows(X_test)
+    # 2) Creamos features de lags a partir de las ventanas
+    # X_*: (n_samples, window_size, n_features) -> (n_samples, n_features * n_lags_validos)
+    X_train_lags = make_lag_features_from_windows(X_train, lags=lags)
+    X_val_lags   = make_lag_features_from_windows(X_val,   lags=lags)
+    X_test_lags  = make_lag_features_from_windows(X_test,  lags=lags)
 
     # 3) Entrenar modelos XGBoost (uno por activo)
     models, mean_val_mse = train_xgb_models_per_asset(
-        X_train=X_train_flat,
+        X_train=X_train_lags,
         y_train=y_train,
-        X_val=X_val_flat,
+        X_val=X_val_lags,
         y_val=y_val,
         n_estimators=n_estimators,
         learning_rate=learning_rate,
@@ -195,7 +234,7 @@ def run_xgb_experiment(
     )
 
     # 4) Evaluación en test
-    y_test_pred = predict_xgb_models(models, X_test_flat)
+    y_test_pred = predict_xgb_models(models, X_test_lags)
     test_mse = float(mean_squared_error(y_test, y_test_pred))
 
     # 5) Des-normalizar para interpretar en retornos
@@ -206,6 +245,7 @@ def run_xgb_experiment(
         "models": models,
         "scaler": scaler,
         "X_test": X_test,
+        "X_test_lags": X_test_lags,
         "y_test": y_test,
         "y_test_index": y_test_index,
         "y_test_inv": y_test_inv,
@@ -214,6 +254,7 @@ def run_xgb_experiment(
         "test_mse": test_mse,
         "window_size": window_size,
         "horizon_shift": horizon_shift,
+        "lags": lags,
         "xgb_params": {
             "n_estimators": n_estimators,
             "learning_rate": learning_rate,

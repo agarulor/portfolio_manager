@@ -80,6 +80,9 @@ def split_data_ml(
     val_set : pd.DataFrame. Validation set with returns.
     test_set : pd.DataFrame. Test set with returns.
     """
+
+    if not isinstance(returns, pd.DataFrame):
+        raise TypeError(f"'returns'please, ensure that you are using a pandas DF not a {type(returns)}")
     # we sort the returns in case they are not shorted
     sorted_returns = returns.sort_index()
 
