@@ -12,7 +12,8 @@ from data_management.dataset_preparation import split_data_markowtiz, prepare_da
 from portfolio_management.ml_portfolio import run_lstm_model, get_predictions_and_denormalize, plot_real_vs_predicted, grid_search_lstm, run_best_lstm_and_plot
 from outputs.tables import show_table
 from portfolio_management.XGBoost import run_xgb_experiment
-
+from portfolio_management.ml_portfolio2 import finetuning_unistep_on_prices_and_plot
+import tensorflow as tf
 
 def main():
 
@@ -27,9 +28,9 @@ def main():
 
     print(datos_2.head())
 
-    """
+
     #st.title("Análisis de Carteras Markowitz")
-    """
+
     e = read_price_file("data/processed/prices_20251110-193424.csv")
 
     f = calculate_daily_returns(e, method="simple")
@@ -122,24 +123,25 @@ plot_real_vs_predicted(
     asset_name=asset_name,
     n_points=200
 )
-"""
-e = read_price_file("data/processed/prices_20251110-193638.csv")
-f = calculate_daily_returns(e, method="simple")
+
+
 
 results_df, best_params = grid_search_lstm(
     returns=f,
-    train_date_end="2022-09-30",
+    train_date_end="2023-09-30",
     val_date_end="2024-09-30",
     test_date_end="2025-09-30",
-    window_size_list=[20, 30, 60, 90],
+    window_size_list=[30],
     horizon_shift=1,
-    lstm_units_list=[32, 64, 128],
-    learning_rate_list=[1e-3, 5e-4],
-    dropout_rate_list=[0, 0.1, 0.2],
-    optimizer_name_list=["adam", "rmsprop"],
-    epochs=50,
-    batch_size_list=[16, 32, 64],
-    ma_windows=[30],
+    lstm_units_list=[128],
+    learning_rate_list=[0.001],
+    dropout_rate_list=[0.35],
+    optimizer_name_list=["adam"],
+    epochs=125,
+    batch_size_list=[32],
+    ma_windows=[5, 21, 63],
+    lookback= 0,
+    loss="mse",
     verbose=0
 )
 
@@ -151,8 +153,26 @@ best_run = run_best_lstm_and_plot(
     asset_name=f.columns[0],
     ma_windows=[30]
 )
+"""
 
-print(best_run)
+e = read_price_file("data/processed/prices_20251110-193638.csv")
+f = calculate_daily_returns(e, method="simple")
+result = finetuning_unistep_on_prices_and_plot(
+    prices_df=e,
+    train_date_end="2023-09-30",
+    val_date_end="2024-09-30",
+    window_size=60,
+    lstm_units=128,
+    learning_rate=0.001,
+    dropout_rate=0.0,
+    optimizer_name="rmsprop",
+    loss="mse",
+    epochs=25,
+    batch_size=32,
+    verbose=1,
+    asset_col="SAN.MC",    # o asset_idx=0,1,...
+    n_points=200        # últimos 200 días de validación
+)
 if __name__ == "__main__":
     main()
 

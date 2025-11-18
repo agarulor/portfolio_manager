@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 from typing import Tuple
 
-from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import StandardScaler, MinMaxScaler
 
 def split_data_markowtiz(
         returns: pd.DataFrame,
@@ -148,7 +148,7 @@ def normalize_data(X_train: pd.DataFrame,
     test_scaled : pd.DataFrame. Test set with trest scaled data.
     scaler : StandardScaler. Scaled adjusted on train_df.
     """
-    scaler = StandardScaler()
+    scaler = MinMaxScaler()
     scaler.fit(X_train.values)
 
     train_scaled = scaler.transform(X_train.values)
@@ -265,4 +265,4 @@ def prepare_datasets_ml(returns: pd.DataFrame,
     X_val, y_val, y_val_index = create_rolling_window(val_norm, window_size, horizon_shift)
     X_test, y_test, y_test_index = create_rolling_window(test_norm, window_size, horizon_shift)
 
-    return X_train, y_train, X_val, y_val, X_test, y_test, scaler, y_test_index
+    return X_train, y_train, X_val, y_val, X_test, y_test, scaler, y_val_index, y_test_index
