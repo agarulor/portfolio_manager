@@ -3,24 +3,41 @@ import os
 
 sys.path.append(os.path.join(os.path.dirname(__file__), "src"))
 import streamlit as st
-from data_management.get_data import read_price_file
+from data_management.get_data import read_price_file, get_stock_prices
+from data_management.save_data import save_preprocessed_data
+from data_management.clean_data import clean_and_align_data
 from portfolio_tools.return_metrics import calculate_daily_returns
 from portfolio_tools.risk_metrics import calculate_covariance
+
 from portfolio_tools.markowitz import plot_frontier
 from portfolio_management.markowitz_portfolios import create_markowitz_table
 from data_management.dataset_preparation import split_data_markowtiz, prepare_datasets_ml
 from portfolio_management.ml_portfolio import run_lstm_model, get_predictions_and_denormalize, plot_real_vs_predicted, grid_search_lstm, run_best_lstm_and_plot
 from outputs.tables import show_table
 from portfolio_management.XGBoost import run_xgb_experiment
-from portfolio_management.ml_portfolio2 import finetuning_unistep_on_prices_and_plot
+from portfolio_management.ml_portfolio2 import train_lstm_unistep_all_assets_separately, plot_validation_for_asset_from_results, plot_equal_weight_portfolio_from_results
+from portfolio_management.ml_portfolio_old import  plot_equal_weight_portfolio_on_validation
+import os
+import random
+import numpy as np
 import tensorflow as tf
 
-def main():
+SEED = 42
 
+# Para que el hashing de Python no cambie entre ejecuciones
+os.environ["PYTHONHASHSEED"] = str(SEED)
+
+# Semillas de Python, NumPy y TensorFlow
+random.seed(SEED)
+np.random.seed(SEED)
+tf.random.set_seed(SEED)
+
+def main():
     """
     datos = get_stock_prices("data/input/eurostoxx50_csv.csv",
                              "ticker_yahoo",
                              "name",
+                             start_date="2015-10-01",
                              )
     datos_2, report, summary = clean_and_align_data(datos, beginning_data=True)
 
@@ -153,26 +170,37 @@ best_run = run_best_lstm_and_plot(
     asset_name=f.columns[0],
     ma_windows=[30]
 )
-"""
 
-e = read_price_file("data/processed/prices_20251110-193638.csv")
+"""
+e = read_price_file("data/processed/prices_20251110-193424.csv")
 f = calculate_daily_returns(e, method="simple")
-result = finetuning_unistep_on_prices_and_plot(
+results = train_lstm_unistep_all_assets_separately(
     prices_df=e,
     train_date_end="2023-09-30",
     val_date_end="2024-09-30",
     window_size=60,
-    lstm_units=128,
+    lstm_units=50,
     learning_rate=0.001,
     dropout_rate=0.0,
     optimizer_name="rmsprop",
-    loss="mse",
-    epochs=25,
+    loss="huber",       # si quieres usar Huber
+    epochs=2,
     batch_size=32,
-    verbose=1,
-    asset_col="SAN.MC",    # o asset_idx=0,1,...
-    n_points=200        # últimos 200 días de validación
+    verbose=1
 )
+
+plot_validation_for_asset_from_results(
+    results=results,
+    asset="BBVA.MC",
+    n_points=200
+)
+
+plot_equal_weight_portfolio_from_results(
+    results=results,
+    n_points=252    # por ejemplo, último año de validación
+)
+
+
 if __name__ == "__main__":
     main()
 
