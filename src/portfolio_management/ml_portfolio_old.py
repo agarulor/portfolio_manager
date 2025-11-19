@@ -325,7 +325,7 @@ def finetuning_unistep_on_prices_and_plot(
     Devuelve un dict con modelo, history, datos de validación, etc.
     """
 
-    # 1) Preparar train + validación (sobre precios) CON VENTANAS SOBRE TODO EL HISTÓRICO
+    # 1) Preparar train + validación (sobre precios) CON VENTANAS SOBRE
     X_train, y_train, X_val, y_val, scaler, val_dates = prepare_train_val_unistep_prices(
         prices_df=prices_df,
         train_date_end=train_date_end,
