@@ -15,7 +15,7 @@ from data_management.dataset_preparation import split_data_markowtiz, prepare_da
 from portfolio_management.ml_portfolio import run_lstm_model, get_predictions_and_denormalize, plot_real_vs_predicted, grid_search_lstm, run_best_lstm_and_plot
 from outputs.tables import show_table
 from portfolio_management.XGBoost import run_xgb_experiment
-from portfolio_management.ml_portfolio2 import train_lstm_unistep_all_assets_separately, plot_validation_for_asset_from_results, plot_equal_weight_portfolio_from_results
+from portfolio_management.ml_portfolio2 import train_lstm_unistep_all_assets_separately, plot_validation_for_asset_from_results, plot_equal_weight_buy_and_hold_from_results
 from portfolio_management.ml_portfolio_old import  plot_equal_weight_portfolio_on_validation
 import os
 import random
@@ -179,23 +179,26 @@ results = train_lstm_unistep_all_assets_separately(
     train_date_end="2023-09-30",
     val_date_end="2024-09-30",
     window_size=60,
-    lstm_units=50,
-    learning_rate=0.001,
+    lstm_units=64,
+    learning_rate=0.0005,
     dropout_rate=0.0,
     optimizer_name="rmsprop",
-    loss="huber",       # si quieres usar Huber
-    epochs=2,
+    loss="mse",       # si quieres usar Huber
+    epochs=50,
     batch_size=32,
     verbose=1
 )
 
-plot_validation_for_asset_from_results(
-    results=results,
-    asset="BBVA.MC",
-    n_points=200
+assets = e.columns
+for asset in assets:
+
+    plot_validation_for_asset_from_results(
+        results=results,
+        asset=asset,
+        n_points=200
 )
 
-plot_equal_weight_portfolio_from_results(
+plot_equal_weight_buy_and_hold_from_results(
     results=results,
     n_points=252    # por ejemplo, último año de validación
 )

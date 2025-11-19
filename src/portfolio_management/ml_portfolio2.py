@@ -330,14 +330,12 @@ def build_validation_price_matrices_from_results(
       - real_prices_val_df: precios reales de validación (fechas x activos)
       - pred_prices_val_df: precios predichos de validación (fechas x activos)
     """
-
     if not results:
         raise ValueError("El diccionario results está vacío.")
 
     # Tomamos un activo de referencia para las fechas
     first_asset = list(results.keys())[0]
-    ref_dates = results[first_asset]["val_dates"]
-    ref_dates = pd.to_datetime(ref_dates)
+    ref_dates = pd.to_datetime(results[first_asset]["val_dates"])
     real_df = pd.DataFrame(index=ref_dates)
     pred_df = pd.DataFrame(index=ref_dates)
 
@@ -346,79 +344,91 @@ def build_validation_price_matrices_from_results(
         y_pred_inv = res["y_pred_inv"].reshape(-1)
         val_dates = pd.to_datetime(res["val_dates"])
 
-        # Convertimos cada uno en Series (indexadas por fecha)
         s_real = pd.Series(y_val_inv, index=val_dates, name=asset)
         s_pred = pd.Series(y_pred_inv, index=val_dates, name=asset)
 
-        # Reindexamos a las fechas de referencia (por si acaso difieren ligeramente)
+        # reindexamos a las fechas de referencia (por si difieren algún día)
         s_real = s_real.reindex(ref_dates)
         s_pred = s_pred.reindex(ref_dates)
 
         real_df[asset] = s_real
         pred_df[asset] = s_pred
 
+    # Quitamos filas con NaNs en alguno de los activos
+    real_df = real_df.dropna(how="any")
+    pred_df = pred_df.dropna(how="any")
+
+    # Alineamos por seguridad
+    real_df, pred_df = real_df.align(pred_df, join="inner", axis=0)
+
     return real_df, pred_df
 
-def plot_equal_weight_portfolio_from_results(
+def plot_equal_weight_buy_and_hold_from_results(
     results: Dict[str, Dict[str, Any]],
     n_points: Optional[int] = 200,
 ):
     """
-    Calcula y grafica el portfolio equiponderado REAL vs PREDICHO
-    a partir del diccionario `results` (un modelo por activo).
+    Portfolio equiponderado BUY & HOLD en validación, a partir de `results`
+    (un modelo univariante por activo, entrenado con train_lstm_unistep_all_assets_separately).
+
+    Supone que al inicio del periodo de validación se invierte el mismo capital
+    en cada activo (1/N), y luego se dejan correr los precios sin rebalancear.
     """
 
-    # 1) Construimos matrices de precios de validación (fechas x activos)
     real_prices_df, pred_prices_df = build_validation_price_matrices_from_results(results)
-
-    # Eliminamos filas donde falten precios para algún activo (por seguridad)
-    real_prices_df = real_prices_df.dropna(how="any")
-    pred_prices_df = pred_prices_df.dropna(how="any")
-
-    # Alineamos por seguridad
-    real_prices_df, pred_prices_df = real_prices_df.align(pred_prices_df, join="inner", axis=0)
 
     if real_prices_df.shape[0] <= 1:
         print("No hay suficientes datos de validación para construir el portfolio.")
         return
 
-    dates = real_prices_df.index
+    print("Rango usado para el portfolio BUY & HOLD:")
+    print("  Desde:", real_prices_df.index[0])
+    print("  Hasta:", real_prices_df.index[-1])
+    print("  Nº días:", real_prices_df.shape[0])
 
-    # 2) Retornos diarios por activo: r_t = P_t / P_{t-1} - 1
-    real_ret = real_prices_df.pct_change().iloc[1:]
-    pred_ret = pred_prices_df.pct_change().iloc[1:]
-    dates_ret = real_ret.index
+    # Fechas
+    dates = real_prices_df.index.to_numpy()
 
-    # 3) Portfolio equiponderado = media de retornos de todas las columnas
-    real_port_ret = real_ret.mean(axis=1)
-    pred_port_ret = pred_ret.mean(axis=1)
+    # Recorte final si se pide (últimos n_points días)
+    if n_points is not None and len(dates) > n_points:
+        dates = dates[-n_points:]
+        real_prices_df = real_prices_df.iloc[-n_points:, :]
+        pred_prices_df = pred_prices_df.iloc[-n_points:, :]
 
-    # Recorte opcional de los últimos n_points
-    if n_points is not None and len(real_port_ret) > n_points:
-        real_port_ret = real_port_ret[-n_points:]
-        pred_port_ret = pred_port_ret[-n_points:]
-        dates_ret = dates_ret[-n_points:]
+    # ============================
+    # BUY & HOLD EQUIPONDERADO
+    # ============================
+    # Normalizamos precios por el valor inicial de cada activo
+    # -> cada activo empieza en 1.0 el primer día de validación
+    real_norm = real_prices_df / real_prices_df.iloc[0]
+    pred_norm = pred_prices_df / pred_prices_df.iloc[0]
 
-    # 4) Valor acumulado del portfolio (empezando en 1.0)
-    real_port_val = (1.0 + real_port_ret).cumprod()
-    pred_port_val = (1.0 + pred_port_ret).cumprod()
+    # Portfolio equiponderado = media de los valores normalizados (mismo peso inicial)
+    real_port_val = real_norm.mean(axis=1)   # Series indexada por fecha
+    pred_port_val = pred_norm.mean(axis=1)
 
-    # 5) Gráfico
+    # ============================
+    # Gráfico
+    # ============================
     plt.figure(figsize=(12, 5))
-    plt.plot(dates_ret, real_port_val, label="Portfolio real (EW)", linewidth=1.5)
-    plt.plot(dates_ret, pred_port_val, label="Portfolio predicho (EW)", linestyle="--", linewidth=1.5)
+    plt.plot(real_port_val.index, real_port_val.values,
+             label="Portfolio REAL (EW buy&hold)", linewidth=1.5)
+    plt.plot(pred_port_val.index, pred_port_val.values,
+             label="Portfolio PREDICHO (EW buy&hold)", linestyle="--", linewidth=1.5)
     plt.axhline(1.0, color="black", linestyle="--", linewidth=1)
-    plt.title("Portfolio equiponderado en validación (modelos univariantes por activo)")
+    plt.title("Portfolio equiponderado BUY & HOLD (validación)\nModelos univariantes por activo")
     plt.xlabel("Fecha")
-    plt.ylabel("Valor del portfolio (normalizado a 1.0)")
+    plt.ylabel("Valor del portfolio (normalizado a 1.0 al inicio)")
     plt.grid(True)
     plt.legend()
     plt.tight_layout()
     plt.gcf().autofmt_xdate()
     plt.show()
 
-    # 6) Métricas resumen
-    n_days = len(real_port_ret)
+    # ============================
+    # Métricas: retorno total y anualizado
+    # ============================
+    n_days = len(real_port_val) - 1  # días efectivos de inversión
     if n_days > 0:
         real_total = real_port_val.iloc[-1] - 1.0
         pred_total = pred_port_val.iloc[-1] - 1.0
@@ -427,11 +437,11 @@ def plot_equal_weight_portfolio_from_results(
         real_ann = (1.0 + real_total) ** ann_factor - 1.0
         pred_ann = (1.0 + pred_total) ** ann_factor - 1.0
 
-        print("=== Portfolio equiponderado (VALIDACIÓN, modelos por activo) ===")
+        print("=== Portfolio equiponderado BUY & HOLD (VALIDACIÓN, modelos por activo) ===")
         print(f"N días: {n_days}")
         print(f"Retorno total REAL:     {real_total: .2%}")
         print(f"Retorno total PREDICHO: {pred_total: .2%}")
         print(f"Retorno anualizado REAL:     {real_ann: .2%}")
         print(f"Retorno anualizado PREDICHO: {pred_ann: .2%}")
     else:
-        print("No hay suficientes datos de validación para calcular el portfolio.")
+        print("No hay suficientes días para calcular rentabilidades.")
