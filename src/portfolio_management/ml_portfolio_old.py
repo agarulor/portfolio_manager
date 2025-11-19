@@ -315,7 +315,7 @@ def finetuning_unistep_on_prices_and_plot(
 
     1) Divide precios en TRAIN / VALIDACIÓN por fechas (según la fecha del target).
     2) Escala solo con TRAIN (StandardScaler).
-    3) Construye ventanas sobre TODO el histórico:
+    3) Construye ventanas sobre :
        - X: window_size precios anteriores (escalados)
        - y: precio del día siguiente (escalado)
     4) Entrena LSTM uniperiodo en TRAIN y calibra con VALIDACIÓN.

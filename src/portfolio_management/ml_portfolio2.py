@@ -26,7 +26,7 @@ def prepare_unistep_univariate_for_asset(
            np.ndarray]:
     """
     Prepara X_train, y_train, X_val, y_val para UNA sola acción (univariante),
-    con horizonte 1, usando Rolling Window sobre TODO el histórico de esa serie,
+    con horizonte 1, usando Rolling Window sobre ,
     y asignando cada ejemplo a TRAIN/VAL según la fecha del target.
 
     prices_series: Serie de precios de UNA acción (index = fechas).

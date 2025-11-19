@@ -184,7 +184,7 @@ results = train_lstm_unistep_all_assets_separately(
     dropout_rate=0.0,
     optimizer_name="rmsprop",
     loss="mse",       # si quieres usar Huber
-    epochs=50,
+    epochs=75,
     batch_size=32,
     verbose=1
 )
