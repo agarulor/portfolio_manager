@@ -4,7 +4,7 @@ from typing import Dict, Any, Optional, Tuple
 
 import matplotlib.pyplot as plt
 
-from sklearn.preprocessing import MinMaxScaler
+from sklearn.preprocessing import MinMaxScaler, StandardScaler
 import tensorflow as tf
 from tensorflow.keras.models import Model
 from tensorflow.keras.layers import LSTM, Dense, Input
@@ -53,7 +53,7 @@ def prepare_unistep_univariate_for_asset(
     if data_train_for_scaler.shape[0] == 0:
         raise ValueError("No hay datos anteriores o iguales a train_date_end para ajustar el scaler.")
 
-    scaler = MinMaxScaler(feature_range=(0, 1))
+    scaler = StandardScaler()
     scaler.fit(data_train_for_scaler)
 
     data_scaled = scaler.transform(data)                 # (n_days, 1)
