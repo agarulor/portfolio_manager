@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-from typing import Dict, Any, Optional, Tuple
+from typing import Optional, Tuple
 
 import matplotlib.pyplot as plt
 
@@ -238,7 +238,7 @@ def train_and_validate_asset(
     epochs: int = 25,
     batch_size: int = 32,
     verbose: int = 1,
-) -> Dict[str, Any]:
+) -> dict:
     """
     Train and validate a LSTM model
 
@@ -324,10 +324,11 @@ def train_and_validate_asset(
 
 
 # ============================================================
-# 4. ENTRENAR TODAS LAS ACCIONES POR SEPARADO
+# 4. WE NOW PUT EVERYTHING TOGETHER BY
+# TRAINING ALL THE SHARES UNDER ONE FUNCTION
 # ============================================================
 
-def train_lstm_unistep_all_assets_separately(
+def train_lstm_all_assets(
     prices_df: pd.DataFrame,
     train_date_end: str,
     val_date_end: str,
@@ -340,21 +341,45 @@ def train_lstm_unistep_all_assets_separately(
     epochs: int = 25,
     batch_size: int = 32,
     verbose: int = 1,
-) -> Dict[str, Dict[str, Any]]:
+) -> dict:
     """
-    Recorre todas las columnas de prices_df (acciones) y:
-      - prepara datos univariantes por acción,
-      - entrena una LSTM por acción,
-      - obtiene predicciones en validación.
+    Train and validate LSTM model for each of the shares under one function
 
-    Devuelve un dict:
-      results[asset] = {... info de esa acción ...}
+    Parameters
+    ----------
+    prices_df : pd.DataFrame
+    train_date_end : str
+    val_date_end : str
+    window_size : int, default 60
+    lstm_units : int, default 50
+    learning_rate : float, default 0.001
+    dropout_rate : float, default 0.0
+    optimizer_name : {"adam", "rmsprop", "sgd"}, default "rmsprop"
+    loss : {"mse", "huber", ...}, default "mse"
+    epochs : int, default 25
+    batch_size : int, default 32
+    verbose : int, default 1
+
+    Returns
+    -------
+    results : dict
+        the key is the name of the share and the value is a dictionary containing:
+            - **asset** : str
+            - **model** : keras.Model
+            - **history** : keras.callbacks.History
+            - **X_train**, **y_train** : np.ndarray
+            - **X_val**, **y_val** : np.ndarray
+            - **y_val_inv** : np.ndarray
+            - **y_pred_inv** : np.ndarray
+            - **val_dates** : np.ndarray
+            - **scaler** : StandardScaler
     """
-    results: Dict[str, Dict[str, Any]] = {}
+    # We create the dict object
+    results = {}
 
     for col in prices_df.columns:
         print(f"\n==============================")
-        print(f"Entrenando LSTM univariante para {col}")
+        print(f"Training LSTM model for {col} share")
         print(f"==============================\n")
 
         res_asset = train_and_validate_asset(
@@ -372,56 +397,79 @@ def train_lstm_unistep_all_assets_separately(
             verbose=verbose
         )
 
+        # We include both, key and value in the dictionary
         results[col] = res_asset
 
     return results
 
 
 # ============================================================
-# 5. PLOT VALIDACIÓN PARA UNA ACCIÓN (USANDO RESULTADOS)
+# 5. PLOT VALIDATION FOR A SHARE (TO CHECK PERFORMANCE)
+#   IN A VISUAL FASHION
 # ============================================================
 
-def plot_validation_for_asset_from_results(
-    results: Dict[str, Dict[str, Any]],
+def plot_validation(
+    results: dict,
     asset: str,
     n_points: Optional[int] = 200
 ):
     """
-    Dibuja precio real vs predicho en validación para una acción,
-    usando el dict devuelto por train_lstm_unistep_all_assets_separately.
+    Plot actual vs predicted validation prices for a given asset.
+
+    Parameters
+    ----------
+    results : dict. Dictionary where each key is an asset ticker and each value contains:
+    asset : str. The asset/ticker to plot.
+    n_points : int, optional (default=200). Maximum number of most recent validation points to display.
+
+    Raises
+    ------
+    ValueError
+        If the requested asset is not found in the results dictionary.
+
+    Returns
+    -------
+    None : It only displays the plot.
+
     """
 
+    # Check if the asset wit want to plot is with the results
     if asset not in results:
         raise ValueError(f"{asset} no está en results (keys: {list(results.keys())})")
 
+    # we extract the results from the asset
     res = results[asset]
+    # We extract the values predicted and the real one (for the val)
     y_val_inv = res["y_val_inv"].reshape(-1)
     y_pred_inv = res["y_pred_inv"].reshape(-1)
     val_dates = res["val_dates"]
 
-    # Alineamos
+    # We align information
     n = min(len(y_val_inv), len(y_pred_inv), len(val_dates))
     y_val_inv = y_val_inv[:n]
     y_pred_inv = y_pred_inv[:n]
     val_dates = val_dates[:n]
 
+   # We plot only the last n_points (to avoid showing too much info on the screen)
     if n_points is not None and n > n_points:
         y_val_inv = y_val_inv[-n_points:]
         y_pred_inv = y_pred_inv[-n_points:]
         val_dates = val_dates[-n_points:]
 
+    # We check that there is validation data
     if len(val_dates) == 0:
-        print(f"No hay datos de validación para {asset}")
+        print(f"There is no validation data for {asset}")
         return
 
-    print(f"[{asset}] Validación desde {val_dates[0]} hasta {val_dates[-1]} (N={len(val_dates)})")
+    print(f"[{asset}] validation from {val_dates[0]} until {val_dates[-1]} (N={len(val_dates)})")
 
+    # We create and show the plot
     plt.figure(figsize=(12, 5))
-    plt.plot(val_dates, y_val_inv, label="Precio real (validación)", linewidth=1.5)
-    plt.plot(val_dates, y_pred_inv, label="Precio predicho (validación)", linestyle="--", linewidth=1.5)
-    plt.title(f"LSTM univariante - {asset}")
-    plt.xlabel("Fecha")
-    plt.ylabel("Precio")
+    plt.plot(val_dates, y_val_inv, label="Actual share price (validation)", linewidth=1.5)
+    plt.plot(val_dates, y_pred_inv, label="Forecast Price (validation)", linestyle="--", linewidth=1.5)
+    plt.title(f"Forecasted vs. actual values - {asset}")
+    plt.xlabel("Date")
+    plt.ylabel("Share price (EUR)")
     plt.grid(True)
     plt.legend()
     plt.tight_layout()
@@ -429,7 +477,7 @@ def plot_validation_for_asset_from_results(
     plt.show()
 
 def build_validation_price_matrices_from_results(
-    results: Dict[str, Dict[str, Any]]
+    results: dict
 ) -> Tuple[pd.DataFrame, pd.DataFrame]:
     """
     A partir del dict `results` (un modelo por activo), construye:
@@ -470,7 +518,7 @@ def build_validation_price_matrices_from_results(
     return real_df, pred_df
 
 def plot_equal_weight_buy_and_hold_from_results(
-    results: Dict[str, Dict[str, Any]],
+    results: dict,
     n_points: Optional[int] = 200,
 ):
     """
