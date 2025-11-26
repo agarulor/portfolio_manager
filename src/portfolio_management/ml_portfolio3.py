@@ -240,10 +240,39 @@ def train_and_validate_asset(
     verbose: int = 1,
 ) -> Dict[str, Any]:
     """
-    Entrena y valida una LSTM univariante sobre UNA acción concreta.
-    Devuelve modelo, history, y precios reales/predichos en validación desescalados.
+    Train and validate a LSTM model
+
+    Parameters
+    ----------
+    prices_series : pd.Series
+    train_date_end : str
+    val_date_end : str
+    window_size : int, default 60
+    lstm_units : int, default 50
+    learning_rate : float, default 0.001
+    dropout_rate : float, default 0.0
+    optimizer_name : {"adam", "rmsprop", "sgd"}, default "rmsprop"
+    loss : {"mse", "huber", ...}, default "mse"
+    epochs : int, default 25
+    batch_size : int, default 32
+    verbose : int, default 1
+
+    Returns
+    -------
+    results : dict
+     containing:
+        - **asset** : str
+        - **model** : keras.Model
+        - **history** : keras.callbacks.History
+        - **X_train**, **y_train** : np.ndarray
+        - **X_val**, **y_val** : np.ndarray
+        - **y_val_inv** : np.ndarray
+        - **y_pred_inv** : np.ndarray
+        - **val_dates** : np.ndarray
+        - **scaler** : StandardScaler
     """
 
+    # We prepare data
     X_train, y_train, X_val, y_val, scaler, val_dates = prepare_data_ml(
         prices_series=prices_series,
         train_date_end=train_date_end,
@@ -251,6 +280,7 @@ def train_and_validate_asset(
         window_size=window_size
     )
 
+    # We create the model
     model = create_lstm_model(
         window_size=window_size,
         lstm_units=lstm_units,
@@ -260,20 +290,21 @@ def train_and_validate_asset(
         loss=loss
     )
 
+    # We do the fit
     history = model.fit(
         X_train,
         y_train,
         validation_data=(X_val, y_val),
         epochs=epochs,
         batch_size=batch_size,
-        shuffle=False,       # IMPORTANTE en series temporales
+        shuffle=False,
         verbose=verbose
     )
 
-    # Predicciones en validación
+    # We predict the valuation
     y_val_pred = model.predict(X_val)
 
-    # Desescalar
+    # We de-scalate
     y_val_inv = scaler.inverse_transform(y_val)
     y_pred_inv = scaler.inverse_transform(y_val_pred)
 
@@ -285,8 +316,8 @@ def train_and_validate_asset(
         "y_train": y_train,
         "X_val": X_val,
         "y_val": y_val,
-        "y_val_inv": y_val_inv,      # precios reales val
-        "y_pred_inv": y_pred_inv,    # precios predichos val
+        "y_val_inv": y_val_inv,
+        "y_pred_inv": y_pred_inv,
         "val_dates": val_dates,
         "scaler": scaler
     }
