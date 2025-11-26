@@ -172,7 +172,7 @@ best_run = run_best_lstm_and_plot(
 )
 
 """
-e = read_price_file("data/processed/prices_20251110-193424.csv")
+e = read_price_file("data/processed/prices_20251110-201334.csv")
 f = calculate_daily_returns(e, method="simple")
 results = train_lstm_unistep_all_assets_separately(
     prices_df=e,
