@@ -24,78 +24,35 @@ from tensorflow.keras.optimizers import Adam, RMSprop, SGD
 # 1. We prepare the data for a single share (univariate)
 # ============================================================
 
-def split_data_ml(
-        share_price: pd.DataFrame,
-        train_date_end: str = "2022-09-30",
-        val_date_end: str = "2024-09-30",
-        test_date_end: str = "2025-09-30",
-        ) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+def stack_xy(
+        X_list: list,
+        y_list: list,
+        window_size: int
+) -> Tuple[np.ndarray, np.ndarray]:
     """
-    Splits data into training, validation and test sets
+    Stack lists of X and y arrays.
 
     Parameters
     ----------
-    share_price : pd.DataFrame. Dataset with prices.
-    train_date_end : str. End day for train data (YYYY-MM-DD).
-    val_date_end : str. Ending day for validation data (YYYY-MM-DD).
-    test_date_end : str. Ending day for test data (YYYY-MM-DD).
+    X_list : list of np.ndarray.
+    y_list : list of np.ndarray
+    window_size : int
 
     Returns
-    ----------
-    train_set : pd.DataFrame. Training set with returns.
-    val_set : pd.DataFrame. Validation set with returns.
-    test_set : pd.DataFrame. Test set with returns.
+    -------
+    X : np.ndarray stacked
+    y : np.ndarray stacked
     """
-
-    if not isinstance(share_price, pd.DataFrame):
-        raise TypeError(f"'share_price'please, ensure that you are using a pandas DF not a {type(share_price)}")
-    # we sort the returns in case they are not shorted
-    sorted_returns = share_price.sort_index()
-
-    # We convert to datetime the index
-    sorted_returns.index = pd.to_datetime(sorted_returns.index)
-
-    # Now we check if the date exists
-    time_train_end = pd.to_datetime(train_date_end)
-    time_val_end = pd.to_datetime(val_date_end)
-    time_test_end = pd.to_datetime(test_date_end)
-
-    # We raise error if no data available on or before
-    if time_train_end not in sorted_returns.index:
-        pos = sorted_returns.index.searchsorted(time_train_end) - 1
-        if pos < 0:
-            raise ValueError(f"No available data on or before {time_train_end}.")
-        time_train_end = sorted_returns.index[pos]
-
-    # We raise error if no data available on or before
-    if time_val_end not in sorted_returns.index:
-        pos = sorted_returns.index.searchsorted(time_val_end) - 1
-        if pos < 0:
-            raise ValueError(f"No available data on or before {time_val_end}.")
-        time_val_end = sorted_returns.index[pos]
-
-    # We raise error if no data available on or before
-    if time_test_end not in sorted_returns.index:
-        pos = sorted_returns.index.searchsorted(time_test_end) - 1
-        if pos < 0:
-            raise ValueError(f"No available data on or before {time_test_end}.")
-        time_test_end = sorted_returns.index[pos]
-
-    time_val_start = sorted_returns.index[sorted_returns.index.get_loc(time_train_end) + 1]
-    time_test_start = sorted_returns.index[sorted_returns.index.get_loc(time_val_end) + 1]
-
-    # We split the main sets
-    train_set = sorted_returns.loc[: train_date_end]
-    val_set = sorted_returns.loc[ time_val_start: time_val_end]
-    test_set = sorted_returns.loc[time_test_start: time_test_end]
-
-    # We return the different sets
-    return train_set, val_set, test_set
+    if X_list:
+        X = np.stack(X_list, axis=0)
+        y = np.stack(y_list, axis=0)
+    else:
+        X = np.empty((0, window_size, 1))
+        y = np.empty((0, 1))
+    return X, y
 
 
-
-
-def prepare_unistep_univariate_for_asset(
+def prepare_data_ml(
     prices_series: pd.Series,
     train_date_end: str,
     val_date_end: str,
@@ -105,14 +62,33 @@ def prepare_unistep_univariate_for_asset(
            MinMaxScaler,
            np.ndarray]:
     """
-    Prepara X_train, y_train, X_val, y_val para UNA sola acción (univariante),
-    con horizonte 1, usando Rolling Window sobre ,
-    y asignando cada ejemplo a TRAIN/VAL según la fecha del target.
+    Prepare rolling-window training and validation datasets for a single asset,
+    using horizon = 1 forecasting (i.e. T + 1 days).
 
-    prices_series: Serie de precios de UNA acción (index = fechas).
-    train_date_end: último día de train (YYYY-MM-DD).
-    val_date_end: último día de validación (YYYY-MM-DD).
-    window_size: lookback (ej: 60, 120).
+    This function
+    1. Splits the timeline into Train and Validation based on the target date.
+    2. Fits a StandardScaler **only on the train portion** to avoid data leakage.
+    3. Applies a rolling window of size `window_size` to create supervised
+       learning samples
+    4. Returns stacked arrays for TRAIN and VAL sets, the  scaler and
+       the validation target dates.
+
+    Parameters
+    ----------
+    prices_series : pd.Series
+    train_date_end : str
+    val_date_end : str
+    window_size : int
+
+    Returns
+    -------
+    X_train : np.ndarray
+    y_train : np.ndarray
+    X_val : np.ndarray
+    y_val : np.ndarray
+    scaler : StandardScaler
+    val_dates : np.ndarray
+    Notes
     """
 
     # We check that the order is correct
@@ -165,29 +141,27 @@ def prepare_unistep_univariate_for_asset(
             #If it is higher than the date, we pass (no used here)
             pass
 
-    def _stack_xy(X_list, y_list):
-        if len(X_list) == 0:
-            return (np.empty((0, window_size, 1)),
-                    np.empty((0, 1)))
-        return np.stack(X_list, axis=0), np.stack(y_list, axis=0)
-
-    X_train, y_train = _stack_xy(X_train_list, y_train_list)
-    X_val, y_val = _stack_xy(X_val_list, y_val_list)
+    # We now make a stack of the data for train and val
+    X_train, y_train = stack_xy(X_train_list, y_train_list, window_size)
+    X_val, y_val = stack_xy(X_val_list, y_val_list, window_size)
+    # We get val dates
     val_dates = np.array(val_dates_list)
 
+    # We provide visual information
     print(f"[{prices_series.name}] X_train: {X_train.shape}, X_val: {X_val.shape}")
     if len(val_dates) > 0:
-        print(f"[{prices_series.name}] Validación: {val_dates[0]} -> {val_dates[-1]} "
-              f"({len(val_dates)} días de target)")
+        print(f"[{prices_series.name}] Validation: {val_dates[0]} -> {val_dates[-1]} "
+              f"({len(val_dates)} target days)")
 
+    # Finally we return relevant information, including the scaler for de-scaling the data
     return X_train, y_train, X_val, y_val, scaler, val_dates
 
 
 # ============================================================
-# 2. MODELO LSTM UNIVARIANTE (UNA ACCIÓN)
+# 2. We create the model for the asset
 # ============================================================
 
-def create_univariate_lstm_model(
+def create_lstm_model(
     window_size: int,
     lstm_units: int = 50,
     learning_rate: float = 0.001,
@@ -196,11 +170,24 @@ def create_univariate_lstm_model(
     loss: str = "mse",
 ) -> Model:
     """
-    LSTM univariante:
-      input:  (window_size, 1)
-      output: (1)  -> precio del día siguiente (escalado)
+    Create and compile a univariate LSTM model
+
+    Parameters
+    ----------
+    window_size : int
+    lstm_units : int, default 50
+    learning_rate : float, default 0.001
+    dropout_rate : float, default 0.0
+    optimizer_name : {"adam", "rmsprop", "sgd"}, default "rmsprop"
+    loss : {"mse", "huber", ...}, default "mse"
+
+    Returns
+    -------
+    model : keras.Model
     """
+    # We first create the inputs
     inputs = Input(shape=(window_size, 1))
+    # We create the model
     x = LSTM(
         lstm_units,
         dropout=dropout_rate,
@@ -210,6 +197,7 @@ def create_univariate_lstm_model(
     outputs = Dense(1)(x)
     model = Model(inputs=inputs, outputs=outputs)
 
+    # We define the optimizer
     opt_name = optimizer_name.lower()
     if opt_name == "adam":
         optimizer = Adam(learning_rate=learning_rate)
@@ -218,25 +206,26 @@ def create_univariate_lstm_model(
     elif opt_name == "sgd":
         optimizer = SGD(learning_rate=learning_rate, momentum=0.9)
     else:
-        raise ValueError(f"Optimizer no válido: {optimizer_name}")
+        raise ValueError(f"Non-valid Optimizer: {optimizer_name}")
 
+    # In case we opt for a huber loss
     if loss == "huber":
         loss_fn = tf.keras.losses.Huber(delta=1.0)
     else:
         loss_fn = loss
 
+   # We compile the model
     model.compile(
         loss=loss_fn,
         optimizer=optimizer,
     )
     return model
 
-
 # ============================================================
-# 3. ENTRENAR + PREDECIR PARA UNA ACCIÓN
+# 3. WE TRAIN THE MODEL FOR A SHARE
 # ============================================================
 
-def train_and_validate_single_asset(
+def train_and_validate_asset(
     prices_series: pd.Series,
     train_date_end: str,
     val_date_end: str,
@@ -255,14 +244,14 @@ def train_and_validate_single_asset(
     Devuelve modelo, history, y precios reales/predichos en validación desescalados.
     """
 
-    X_train, y_train, X_val, y_val, scaler, val_dates = prepare_unistep_univariate_for_asset(
+    X_train, y_train, X_val, y_val, scaler, val_dates = prepare_data_ml(
         prices_series=prices_series,
         train_date_end=train_date_end,
         val_date_end=val_date_end,
         window_size=window_size
     )
 
-    model = create_univariate_lstm_model(
+    model = create_lstm_model(
         window_size=window_size,
         lstm_units=lstm_units,
         learning_rate=learning_rate,
@@ -337,7 +326,7 @@ def train_lstm_unistep_all_assets_separately(
         print(f"Entrenando LSTM univariante para {col}")
         print(f"==============================\n")
 
-        res_asset = train_and_validate_single_asset(
+        res_asset = train_and_validate_asset(
             prices_series=prices_df[col],
             train_date_end=train_date_end,
             val_date_end=val_date_end,
