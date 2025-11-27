@@ -1,15 +1,12 @@
 import numpy as np
 import pandas as pd
 from typing import Optional, Tuple
-
 import matplotlib.pyplot as plt
-
 from sklearn.preprocessing import MinMaxScaler, StandardScaler
 import tensorflow as tf
 from tensorflow.keras.models import Model
 from tensorflow.keras.layers import LSTM, Dense, Input
 from tensorflow.keras.optimizers import Adam, RMSprop, SGD
-
 
 # ============================================================
 # In this section we are going to create the tools required
@@ -424,18 +421,15 @@ def plot_validation(
 
     Raises
     ------
-    ValueError
-        If the requested asset is not found in the results dictionary.
+    ValueError if the requested asset is not found in the results dictionary.
 
     Returns
     -------
     None : It only displays the plot.
-
     """
-
     # Check if the asset wit want to plot is with the results
     if asset not in results:
-        raise ValueError(f"{asset} no está en results (keys: {list(results.keys())})")
+        raise ValueError(f"{asset} is not in results (keys: {list(results.keys())})")
 
     # we extract the results from the asset
     res = results[asset]
@@ -476,18 +470,27 @@ def plot_validation(
     plt.gcf().autofmt_xdate()
     plt.show()
 
-def build_validation_price_matrices_from_results(
+def validation_price_matrices_from_results(
     results: dict
 ) -> Tuple[pd.DataFrame, pd.DataFrame]:
     """
-    A partir del dict `results` (un modelo por activo), construye:
-      - real_prices_val_df: precios reales de validación (fechas x activos)
-      - pred_prices_val_df: precios predichos de validación (fechas x activos)
-    """
-    if not results:
-        raise ValueError("El diccionario results está vacío.")
+    Builds price matrices (real and predicted) from a results dictionary containing multiple assets.
 
-    # Tomamos un activo de referencia para las fechas
+    Parameters
+    ----------
+    results : dict. Dictionary where each key is an asset name and each value is the output
+        dictionary returned
+
+    Returns
+    -------
+    real_df : pd.DataFrame. DataFrame of real validation prices
+    pred_df : pd.DataFrame. DataFrame of predicted validation prices
+    """
+    # We check if the dictionary is not empty
+    if not results:
+        raise ValueError("The dictionary is empty")
+
+    # We take an asset to extract the dates
     first_asset = list(results.keys())[0]
     ref_dates = pd.to_datetime(results[first_asset]["val_dates"])
     real_df = pd.DataFrame(index=ref_dates)
@@ -501,88 +504,93 @@ def build_validation_price_matrices_from_results(
         s_real = pd.Series(y_val_inv, index=val_dates, name=asset)
         s_pred = pd.Series(y_pred_inv, index=val_dates, name=asset)
 
-        # reindexamos a las fechas de referencia (por si difieren algún día)
+        # We re-index to the reference dates (just in case)
         s_real = s_real.reindex(ref_dates)
         s_pred = s_pred.reindex(ref_dates)
 
         real_df[asset] = s_real
         pred_df[asset] = s_pred
 
-    # Quitamos filas con NaNs en alguno de los activos
+    # Remove rows with NAs
     real_df = real_df.dropna(how="any")
     pred_df = pred_df.dropna(how="any")
 
-    # Alineamos por seguridad
+    # We align, just in case
     real_df, pred_df = real_df.align(pred_df, join="inner", axis=0)
 
     return real_df, pred_df
+
 
 def plot_equal_weight_buy_and_hold_from_results(
     results: dict,
     n_points: Optional[int] = 200,
 ):
     """
-    Portfolio equiponderado BUY & HOLD en validación, a partir de `results`
-    (un modelo univariante por activo, entrenado con train_lstm_unistep_all_assets_separately).
+    Plots an equally weighted  portfolio over the validation period with the
+    real and predicted prices
 
-    Supone que al inicio del periodo de validación se invierte el mismo capital
-    en cada activo (1/N), y luego se dejan correr los precios sin rebalancear.
+    Parameters
+    ----------
+    results : dict. Dictionary where each key is an asset name and each value is the output
+        dictionary returned
+            - "y_pred_inv"  : inverse-scaled predicted validation prices
+
+    n_points : int, optional (default=200). Maximum number of most recent validation points to display.
+
+    Returns
+    -------
+    None : It only displays the plot.
     """
 
-    real_prices_df, pred_prices_df = build_validation_price_matrices_from_results(results)
+    # We get the real and predicted prices for each asset
+    real_prices_df, pred_prices_df = validation_price_matrices_from_results(results)
 
     if real_prices_df.shape[0] <= 1:
-        print("No hay suficientes datos de validación para construir el portfolio.")
+        print("There is not enough validation data to build the portfolio")
         return
 
-    print("Rango usado para el portfolio BUY & HOLD:")
-    print("  Desde:", real_prices_df.index[0])
-    print("  Hasta:", real_prices_df.index[-1])
-    print("  Nº días:", real_prices_df.shape[0])
+    print("Range for the theoretical portfolio:")
+    print("  From:", real_prices_df.index[0])
+    print("  Until:", real_prices_df.index[-1])
+    print("  Number of days:", real_prices_df.shape[0])
 
-    # Fechas
+    # dates
     dates = real_prices_df.index.to_numpy()
 
-    # Recorte final si se pide (últimos n_points días)
+    # Final adjustement
     if n_points is not None and len(dates) > n_points:
         dates = dates[-n_points:]
         real_prices_df = real_prices_df.iloc[-n_points:, :]
         pred_prices_df = pred_prices_df.iloc[-n_points:, :]
 
-    # ============================
-    # BUY & HOLD EQUIPONDERADO
-    # ============================
-    # Normalizamos precios por el valor inicial de cada activo
-    # -> cada activo empieza en 1.0 el primer día de validación
+
+    # Normalization of prices by the initial value of each asset
+    # Each assets starts at 1 on the first day of validation
     real_norm = real_prices_df / real_prices_df.iloc[0]
     pred_norm = pred_prices_df / pred_prices_df.iloc[0]
 
-    # Portfolio equiponderado = media de los valores normalizados (mismo peso inicial)
-    real_port_val = real_norm.mean(axis=1)   # Series indexada por fecha
+    # Equally weighted portfolio, each asset has the same weight
+    real_port_val = real_norm.mean(axis=1)
     pred_port_val = pred_norm.mean(axis=1)
 
-    # ============================
-    # Gráfico
-    # ============================
+    # moving to the plotting section
     plt.figure(figsize=(12, 5))
     plt.plot(real_port_val.index, real_port_val.values,
-             label="Portfolio REAL (EW buy&hold)", linewidth=1.5)
+             label="Actual portfolio equally weighted", linewidth=1.5)
     plt.plot(pred_port_val.index, pred_port_val.values,
-             label="Portfolio PREDICHO (EW buy&hold)", linestyle="--", linewidth=1.5)
+             label="Forecasted Portfolio equally weighted", linestyle="--", linewidth=1.5)
     plt.axhline(1.0, color="black", linestyle="--", linewidth=1)
-    plt.title("Portfolio equiponderado BUY & HOLD (validación)\nModelos univariantes por activo")
-    plt.xlabel("Fecha")
-    plt.ylabel("Valor del portfolio (normalizado a 1.0 al inicio)")
+    plt.title("Equally weighted porfolio actual / vs. forecast \n Validation data")
+    plt.xlabel("Data")
+    plt.ylabel("Portfolio value (normalized at 1.0 at the beginning)")
     plt.grid(True)
     plt.legend()
     plt.tight_layout()
     plt.gcf().autofmt_xdate()
     plt.show()
 
-    # ============================
-    # Métricas: retorno total y anualizado
-    # ============================
-    n_days = len(real_port_val) - 1  # días efectivos de inversión
+    # Key metrics (for comparation purposes)
+    n_days = len(real_port_val) - 1
     if n_days > 0:
         real_total = real_port_val.iloc[-1] - 1.0
         pred_total = pred_port_val.iloc[-1] - 1.0
@@ -591,11 +599,11 @@ def plot_equal_weight_buy_and_hold_from_results(
         real_ann = (1.0 + real_total) ** ann_factor - 1.0
         pred_ann = (1.0 + pred_total) ** ann_factor - 1.0
 
-        print("=== Portfolio equiponderado BUY & HOLD (VALIDACIÓN, modelos por activo) ===")
-        print(f"N días: {n_days}")
-        print(f"Retorno total REAL:     {real_total: .2%}")
-        print(f"Retorno total PREDICHO: {pred_total: .2%}")
-        print(f"Retorno anualizado REAL:     {real_ann: .2%}")
-        print(f"Retorno anualizado PREDICHO: {pred_ann: .2%}")
+        print("=== Equally weighted portfolio (VALIDATION DATA - 1 model per asset) ===")
+        print(f"Number of days: {n_days}")
+        print(f"Total actual return:     {real_total: .2%}")
+        print(f"Total forecasted return: {pred_total: .2%}")
+        print(f"Annualized return - actual:     {real_ann: .2%}")
+        print(f"Annualized return - forecasted: {pred_ann: .2%}")
     else:
         print("No hay suficientes días para calcular rentabilidades.")
