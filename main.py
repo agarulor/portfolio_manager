@@ -15,7 +15,8 @@ from data_management.dataset_preparation import split_data_markowtiz, prepare_da
 from portfolio_management.ml_portfolio import run_lstm_model, get_predictions_and_denormalize, plot_real_vs_predicted, grid_search_lstm, run_best_lstm_and_plot
 from outputs.tables import show_table
 from portfolio_management.XGBoost import run_xgb_experiment
-from portfolio_management.ml_portfolio3 import train_lstm_all_assets, plot_validation, plot_equal_weight_buy_and_hold_from_results
+from portfolio_management.ml_portfolio3 import train_lstm_all_assets
+from portfolio_management.visualization import  plot_equal_weight_buy_and_hold_from_results, plot_validation
 from portfolio_management.ml_portfolio_old import  plot_equal_weight_portfolio_on_validation
 import os
 import random
@@ -184,9 +185,10 @@ results = train_lstm_all_assets(
     dropout_rate=0.0,
     optimizer_name="rmsprop",
     loss="mse",       # si quieres usar Huber
-    epochs=75,
+    epochs=1,
     batch_size=32,
-    verbose=1
+    verbose=1,
+    forecast=True
 )
 
 assets = e.columns

@@ -81,6 +81,30 @@ def create_lstm_model(
     )
     return model
 
+
+def build_last_window_scaled(
+    series: pd.Series,
+    train_end_ts: pd.Timestamp,
+    window_size: int,
+    scaler
+) -> Optional[np.ndarray]:
+    """
+    Construye la última ventana escalada (window_size x 1) a partir de la serie
+    y el scaler ajustado sólo con TRAIN.
+
+    Devuelve:
+      - np.ndarray (window_size, 1) si hay suficientes días.
+      - None si no hay suficientes datos.
+    """
+    series_train = series.loc[:train_end_ts]
+
+    if series_train.shape[0] < window_size:
+        print(f"⚠ {series.name}: menos de window_size={window_size} días hasta {train_end_ts.date()}.")
+        return None
+
+    last_window = series_train.tail(window_size).values.reshape(-1, 1)  # (window_size, 1)
+    last_window_scaled = scaler.transform(last_window)                  # (window_size, 1)
+    return last_window_scaled
 # ============================================================
 # 2. WE TRAIN THE MODEL FOR A SHARE
 # ============================================================
@@ -128,7 +152,7 @@ def train_model_core(
 # ============================================================
 
 # Function to train and validate the data and hyperarmeters
-def train_and_validate_asset(
+def train_asset(
     prices_series: pd.Series,
     train_date_end: str,
     val_date_end: str,
@@ -141,6 +165,7 @@ def train_and_validate_asset(
     epochs: int = 25,
     batch_size: int = 32,
     verbose: int = 1,
+    forecast: bool = False,
 ) -> dict:
     """
     Train and validate a LSTM model
@@ -159,6 +184,7 @@ def train_and_validate_asset(
     epochs : int, default 25
     batch_size : int, default 32
     verbose : int, default 1
+    forecast : bool, default False
 
     Returns
     -------
@@ -174,7 +200,10 @@ def train_and_validate_asset(
         - **val_dates** : np.ndarray
         - **scaler** : StandardScaler
     """
+    asset_name = prices_series.name
 
+    if forecast:
+        val_date_end = train_date_end
     # We prepare data
     X_train, y_train, X_val, y_val, scaler, val_dates = prepare_data_ml(
         prices_series=prices_series,
@@ -198,25 +227,117 @@ def train_and_validate_asset(
         verbose=verbose
     )
 
-    # We predict the valuation
-    y_val_pred = model.predict(X_val)
+    if not forecast:
+        if len(X_val) > 0:
+            # We predict the valuation
+            y_val_pred = model.predict(X_val)
 
-    # We de-scalate
-    y_val_inv = scaler.inverse_transform(y_val)
-    y_pred_inv = scaler.inverse_transform(y_val_pred)
+            # We de-scalate
+            y_val_inv = scaler.inverse_transform(y_val)
+            y_pred_inv = scaler.inverse_transform(y_val_pred)
+        else:
+            y_val_inv = np.array([])
+            y_pred_inv = np.array([])
+
+        return {
+            "asset": prices_series.name,
+            "model": model,
+            "history": history,
+            "X_train": X_train,
+            "y_train": y_train,
+            "X_val": X_val,
+            "y_val": y_val,
+            "y_val_inv": y_val_inv,
+            "y_pred_inv": y_pred_inv,
+            "val_dates": val_dates,
+            "scaler": scaler
+        }
+    train_end_ts = pd.to_datetime(train_date_end)
+
+    last_window_scaled = build_last_window_scaled(
+        series=prices_series,
+        train_end_ts=train_end_ts,
+        window_size=window_size,
+        scaler=scaler,
+    )
 
     return {
-        "asset": prices_series.name,
+        "asset": asset_name,
         "model": model,
         "history": history,
-        "X_train": X_train,
-        "y_train": y_train,
-        "X_val": X_val,
-        "y_val": y_val,
-        "y_val_inv": y_val_inv,
-        "y_pred_inv": y_pred_inv,
-        "val_dates": val_dates,
-        "scaler": scaler
+        "scaler": scaler,
+        "train_date_end": train_end_ts,
+        "last_window_scaled": last_window_scaled
+    }
+
+
+def train_single_asset_for_forecast(
+    prices_series: pd.Series,
+    train_date_end: str,
+    window_size: int,
+    lstm_units: int,
+    learning_rate: float,
+    dropout_rate: float,
+    optimizer_name: str,
+    loss: str,
+    epochs: int,
+    batch_size: int,
+    verbose: int) -> dict:
+    """
+    Entrena una LSTM univariante para UN activo usando datos hasta train_date_end
+    y devuelve lo necesario para hacer FORECAST iterativo sin ver datos futuros.
+    """
+    asset_name = prices_series.name
+    train_end_ts = pd.to_datetime(train_date_end)
+
+    print("\n==============================")
+    print(f"Training FORECAST LSTM model for {asset_name}")
+    print(f"(using data up to {train_date_end})")
+    print("==============================\n")
+
+    # val_date_end = train_date_end, all to train
+    X_train, y_train, _, _, scaler, _ = prepare_data_ml(
+        prices_series=prices_series,
+        train_date_end=train_date_end,
+        val_date_end=train_date_end,
+        window_size=window_size,
+    )
+
+    if X_train.shape[0] == 0:
+        print(f"⚠ {asset_name}: no hay muestras de entrenamiento. Se omite.")
+        return None
+
+    model, history = train_model_core(
+        X_train=X_train,
+        y_train=y_train,
+        window_size=window_size,
+        lstm_units=lstm_units,
+        learning_rate=learning_rate,
+        dropout_rate=dropout_rate,
+        optimizer_name=optimizer_name,
+        loss=loss,
+        epochs=epochs,
+        batch_size=batch_size,
+        verbose=verbose,
+    )
+
+    last_window_scaled = build_last_window_scaled(
+        series=prices_series,
+        train_end_ts=train_end_ts,
+        window_size=window_size,
+        scaler=scaler,
+    )
+
+    if last_window_scaled is None:
+        return None
+
+    return {
+        "asset": asset_name,
+        "model": model,
+        "history": history,
+        "scaler": scaler,
+        "train_date_end": train_end_ts,
+        "last_window_scaled": last_window_scaled,
     }
 
 # ============================================================
@@ -236,6 +357,7 @@ def train_lstm_all_assets(
     epochs: int = 25,
     batch_size: int = 32,
     verbose: int = 1,
+    forecast: bool = False,
 ) -> dict:
     """
     Train and validate LSTM model for each of the shares under one function
@@ -254,6 +376,7 @@ def train_lstm_all_assets(
     epochs : int, default 25
     batch_size : int, default 32
     verbose : int, default 1
+    forecast : bool, default False
 
     Returns
     -------
@@ -273,11 +396,11 @@ def train_lstm_all_assets(
     results = {}
 
     for col in prices_df.columns:
-        print(f"\n==============================")
-        print(f"Training LSTM model for {col} share")
-        print(f"==============================\n")
+        print("\n==============================")
+        print(f"Training LSTM model for {col} (forecast={forecast})")
+        print("==============================\n")
 
-        res_asset = train_and_validate_asset(
+        res_asset = train_asset(
             prices_series=prices_df[col],
             train_date_end=train_date_end,
             val_date_end=val_date_end,
@@ -289,11 +412,13 @@ def train_lstm_all_assets(
             loss=loss,
             epochs=epochs,
             batch_size=batch_size,
-            verbose=verbose
+            verbose=verbose,
+            forecast=forecast,
         )
 
-        # We include both, key and value in the dictionary
-        results[col] = res_asset
+        # In case it returns None
+        if res_asset is not None:
+            results[col] = res_asset
 
     return results
 
