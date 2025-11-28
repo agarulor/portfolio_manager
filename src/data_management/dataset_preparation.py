@@ -80,9 +80,6 @@ def split_data_ml(
     val_set : pd.DataFrame. Validation set with returns.
     test_set : pd.DataFrame. Test set with returns.
     """
-
-    if not isinstance(returns, pd.DataFrame):
-        raise TypeError(f"'returns'please, ensure that you are using a pandas DF not a {type(returns)}")
     # we sort the returns in case they are not shorted
     sorted_returns = returns.sort_index()
 
@@ -266,3 +263,128 @@ def prepare_datasets_ml(returns: pd.DataFrame,
     X_test, y_test, y_test_index = create_rolling_window(test_norm, window_size, horizon_shift)
 
     return X_train, y_train, X_val, y_val, X_test, y_test, scaler, y_val_index, y_test_index
+
+
+
+# We prepare the data for a single share (univariate)
+def stack_xy(
+        X_list: list,
+        y_list: list,
+        window_size: int
+) -> Tuple[np.ndarray, np.ndarray]:
+    """
+    Stack lists of X and y arrays.
+
+    Parameters
+    ----------
+    X_list : list of np.ndarray.
+    y_list : list of np.ndarray
+    window_size : int
+
+    Returns
+    -------
+    X : np.ndarray stacked
+    y : np.ndarray stacked
+    """
+    if X_list:
+        X = np.stack(X_list, axis=0)
+        y = np.stack(y_list, axis=0)
+    else:
+        X = np.empty((0, window_size, 1))
+        y = np.empty((0, 1))
+    return X, y
+
+
+def prepare_data_ml(
+    prices_series: pd.Series,
+    train_date_end: str,
+    val_date_end: str,
+    window_size: int,
+) -> Tuple[np.ndarray, np.ndarray,
+           np.ndarray, np.ndarray,
+           MinMaxScaler,
+           np.ndarray]:
+    """
+    Prepare rolling-window training and validation datasets for a single asset,
+    using horizon = 1 forecasting (i.e. T + 1 days).
+
+    Parameters
+    ----------
+    prices_series : pd.Series
+    train_date_end : str
+    val_date_end : str
+    window_size : int
+
+    Returns
+    -------
+    X_train : np.ndarray
+    y_train : np.ndarray
+    X_val : np.ndarray
+    y_val : np.ndarray
+    scaler : StandardScaler
+    val_dates : np.ndarray
+    Notes
+    """
+    # We check that the order is correct
+    prices_series = prices_series.sort_index().astype(float)
+
+    # We include the cut-off dates
+    train_end = pd.to_datetime(train_date_end)
+    val_end = pd.to_datetime(val_date_end)
+
+    # We get the dates and the number of days
+    dates = prices_series.index.to_numpy()
+    data = prices_series.to_numpy().reshape(-1, 1)
+    n_days = data.shape[0]
+
+    # We escalate the data, with only on the train part, to avoid leakages
+    mask_train_scaler = dates <= train_end
+    data_train_for_scaler = data[mask_train_scaler]
+
+    if data_train_for_scaler.shape[0] == 0:
+        raise ValueError("There is no data available for train_date_end to adjust the scaler.")
+
+    # Now we can scalate
+    scaler = StandardScaler()
+
+    # We fit the data
+    scaler.fit(data_train_for_scaler)
+
+    # Now we transform the data
+    data_scaled = scaler.transform(data)
+
+    # Rolling Window
+    X_train_list, y_train_list = [], []
+    X_val_list, y_val_list = [], []
+    val_dates_list = []
+
+    for t in range(window_size, n_days):
+        X_window = data_scaled[t - window_size:t, :]
+        y_t = data_scaled[t, :]
+        date_t = dates[t]
+
+        if date_t <= train_end:
+            X_train_list.append(X_window)
+            y_train_list.append(y_t)
+        elif date_t <= val_end:
+            X_val_list.append(X_window)
+            y_val_list.append(y_t)
+            val_dates_list.append(date_t)
+        else:
+            #If it is higher than the date, we pass (no used here)
+            pass
+
+    # We now make a stack of the data for train and val
+    X_train, y_train = stack_xy(X_train_list, y_train_list, window_size)
+    X_val, y_val = stack_xy(X_val_list, y_val_list, window_size)
+    # We get val dates
+    val_dates = np.array(val_dates_list)
+
+    # We provide visual information
+    print(f"[{prices_series.name}] X_train: {X_train.shape}, X_val: {X_val.shape}")
+    if len(val_dates) > 0:
+        print(f"[{prices_series.name}] Validation: {val_dates[0]} -> {val_dates[-1]} "
+              f"({len(val_dates)} target days)")
+
+    # Finally we return relevant information, including the scaler for de-scaling the data
+    return X_train, y_train, X_val, y_val, scaler, val_dates
