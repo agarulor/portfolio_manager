@@ -163,3 +163,137 @@ def plot_equal_weight_buy_and_hold_from_results(
         print(f"Annualized return - forecasted: {pred_ann: .2%}")
     else:
         print("No hay suficientes días para calcular rentabilidades.")
+
+
+def plot_asset(
+    real_df: pd.DataFrame,
+    pred_df: pd.DataFrame,
+    asset: str,
+    n_points: Optional[int] = 200,
+    title_prefix: str = "Validation",
+) -> None:
+    """
+    Plot actual vs predicted prices for a single asset using
+    already built DataFrames (real_df, pred_df).
+
+    Parameters
+    ----------
+    real_df : pd.DataFrame
+        Real prices. Index = dates, columns = assets.
+    pred_df : pd.DataFrame
+        Predicted prices. Same shape/axes as real_df (aligned).
+    asset : str
+        Column name (ticker) to plot.
+    n_points : int, optional
+        Maximum number of most recent points to display.
+    title_prefix : str, optional
+        Text to prefix the plot title, e.g. "Validation" or "Forecast".
+    """
+    if asset not in real_df.columns or asset not in pred_df.columns:
+        raise ValueError(f"{asset} not found in DataFrames columns.")
+
+    y_real = real_df[asset].to_numpy()
+    y_pred = pred_df[asset].to_numpy()
+    dates = real_df.index.to_numpy()
+
+    n = min(len(y_real), len(y_pred), len(dates))
+    y_real, y_pred, dates = y_real[:n], y_pred[:n], dates[:n]
+
+    if n_points is not None and n > n_points:
+        y_real = y_real[-n_points:]
+        y_pred = y_pred[-n_points:]
+        dates = dates[-n_points:]
+
+    if len(dates) == 0:
+        print(f"No data to plot for {asset}")
+        return
+
+    print(f"[{asset}] {title_prefix.lower()} from {dates[0]} to {dates[-1]} (N={len(dates)})")
+
+    plt.figure(figsize=(12, 5))
+    plt.plot(dates, y_real, label="Actual price", linewidth=1.5)
+    plt.plot(dates, y_pred, label="Predicted price", linestyle="--", linewidth=1.5)
+    plt.title(f"{title_prefix} – Actual vs Predicted – {asset}")
+    plt.xlabel("Date")
+    plt.ylabel("Price")
+    plt.grid(True)
+    plt.legend()
+    plt.tight_layout()
+    plt.gcf().autofmt_xdate()
+    plt.show()
+
+
+def plot_equal_weight(
+    real_df: pd.DataFrame,
+    pred_df: pd.DataFrame,
+    n_points: Optional[int] = 200,
+    title_prefix: str = "Validation",
+) -> None:
+    """
+    Plot an equally weighted buy-and-hold portfolio using
+    real and predicted price DataFrames.
+
+    Parameters
+    ----------
+    real_df : pd.DataFrame
+        Real prices. Index = dates, columns = assets.
+    pred_df : pd.DataFrame
+        Predicted prices. Same index/columns as real_df.
+    n_points : int, optional
+        Maximum number of most recent points to display.
+    title_prefix : str, optional
+        Text to include in the plot title, e.g. "Validation" or "Forecast".
+    """
+    if real_df.shape[0] <= 1:
+        print("Not enough data to build the portfolio.")
+        return
+
+    # recorte de fechas si hace falta
+    dates = real_df.index.to_numpy()
+    if n_points is not None and len(dates) > n_points:
+        real_df = real_df.iloc[-n_points:, :]
+        pred_df = pred_df.iloc[-n_points:, :]
+
+    print(f"Portfolio {title_prefix} period:")
+    print("  From:", real_df.index[0])
+    print("  To:  ", real_df.index[-1])
+    print("  Days:", real_df.shape[0])
+
+    # Normalización (buy & hold con pesos fijos al inicio)
+    real_norm = real_df / real_df.iloc[0]
+    pred_norm = pred_df / pred_df.iloc[0]
+
+    real_port_val = real_norm.mean(axis=1)
+    pred_port_val = pred_norm.mean(axis=1)
+
+    plt.figure(figsize=(12, 5))
+    plt.plot(real_port_val.index, real_port_val.values,
+             label="Actual EW portfolio", linewidth=1.5)
+    plt.plot(pred_port_val.index, pred_port_val.values,
+             label="Predicted EW portfolio", linestyle="--", linewidth=1.5)
+    plt.axhline(1.0, linestyle="--", linewidth=1)
+
+    plt.title(f"Equally Weighted Portfolio – {title_prefix}")
+    plt.xlabel("Date")
+    plt.ylabel("Portfolio value (normalized to 1.0)")
+    plt.grid(True)
+    plt.legend()
+    plt.tight_layout()
+    plt.gcf().autofmt_xdate()
+    plt.show()
+
+    # Métricas básicas
+    n_days = len(real_port_val) - 1
+    if n_days > 0:
+        real_total = real_port_val.iloc[-1] - 1.0
+        pred_total = pred_port_val.iloc[-1] - 1.0
+        ann_factor = 252.0 / n_days
+        real_ann = (1.0 + real_total) ** ann_factor - 1.0
+        pred_ann = (1.0 + pred_total) ** ann_factor - 1.0
+
+        print(f"=== EW Portfolio ({title_prefix}) ===")
+        print(f"Days:                  {n_days}")
+        print(f"Total actual return:   {real_total: .2%}")
+        print(f"Total predicted return:{pred_total: .2%}")
+        print(f"Annualized actual:     {real_ann: .2%}")
+        print(f"Annualized predicted:  {pred_ann: .2%}")

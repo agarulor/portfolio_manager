@@ -16,7 +16,7 @@ from portfolio_management.ml_portfolio import run_lstm_model, get_predictions_an
 from outputs.tables import show_table
 from portfolio_management.XGBoost import run_xgb_experiment
 from portfolio_management.ml_portfolio3 import train_lstm_all_assets
-from portfolio_management.visualization import  plot_equal_weight_buy_and_hold_from_results, plot_validation
+from portfolio_management.visualization import  plot_asset, plot_validation, plot_equal_weight
 from portfolio_management.ml_portfolio_old import  plot_equal_weight_portfolio_on_validation
 import os
 import random
@@ -175,10 +175,11 @@ best_run = run_best_lstm_and_plot(
 """
 e = read_price_file("data/processed/prices_20251119-101101.csv")
 f = calculate_daily_returns(e, method="simple")
-results = train_lstm_all_assets(
+real_df, pred_df = train_lstm_all_assets(
     prices_df=e,
     train_date_end="2023-09-30",
     val_date_end="2024-09-30",
+    test_date_end="2025-09-30",
     window_size=60,
     lstm_units=128,
     learning_rate=0.0005,
@@ -194,14 +195,16 @@ results = train_lstm_all_assets(
 assets = e.columns
 for asset in assets:
 
-    plot_validation(
-        results=results,
+    plot_asset(
+        real_df=real_df,
+        pred_df=pred_df,
         asset=asset,
         n_points=200
 )
 
-plot_equal_weight_buy_and_hold_from_results(
-    results=results,
+plot_equal_weight(
+    real_df=real_df,
+    pred_df=pred_df,
     n_points=252    # por ejemplo, último año de validación
 )
 
