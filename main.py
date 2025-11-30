@@ -15,7 +15,7 @@ from data_management.dataset_preparation import split_data_markowtiz, prepare_da
 from portfolio_management.ml_portfolio import run_lstm_model, get_predictions_and_denormalize, plot_real_vs_predicted, grid_search_lstm, run_best_lstm_and_plot
 from outputs.tables import show_table
 from portfolio_management.XGBoost import run_xgb_experiment
-from portfolio_management.ml_portfolio3 import train_lstm_all_assets
+from portfolio_management.ml_portfolio4 import train_lstm_all_assets
 from portfolio_management.visualization import  plot_asset, plot_validation, plot_equal_weight
 from portfolio_management.ml_portfolio_old import  plot_equal_weight_portfolio_on_validation
 import os
@@ -175,23 +175,33 @@ best_run = run_best_lstm_and_plot(
 """
 e = read_price_file("data/processed/prices_20251110-193638.csv")
 f = calculate_daily_returns(e, method="simple")
+e = e[["BBVA.MC"]]
 results, real_df, pred_df = train_lstm_all_assets(
     prices_df=e,
-    train_date_end="2023-09-30",
+    train_date_end="2024-09-30",
     val_date_end="2024-09-30",
     test_date_end="2025-09-30",
     window_size=60,
-    lstm_units=128,
+    lstm_units=256,
     learning_rate=0.0005,
     dropout_rate=0.0,
-    optimizer_name="rmsprop",
-    loss="mse",       # si quieres usar Huber
-    epochs=75,
+    optimizer_name="adam",
+    loss="mse",
+    epochs=200,
     batch_size=32,
     verbose=1,
-    forecast=False
+    use_early_stopping=True,
+    patience=15,
+    min_delta=0.001,
+    forecast=True
 )
+print(pred_df.head())
+print(pred_df.tail())
 
+print(real_df.head())
+print(real_df.tail())
+
+print(pred_df.iloc[:, 0].describe())
 assets = e.columns
 for asset in assets:
 

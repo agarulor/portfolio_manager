@@ -114,8 +114,6 @@ def build_last_window_scaled(
 def train_model_core(
         X_train: np.ndarray,
         y_train: np.ndarray,
-        X_val: Optional[np.ndarray],
-        y_val: Optional[np.ndarray],
         window_size: int,
         lstm_units: int,
         learning_rate: float,
@@ -127,8 +125,8 @@ def train_model_core(
         verbose: int,
         use_early_stopping: bool = True,
         patience: int = 10,
-        min_delta: float = 0.01,
-        forecast: bool = False) -> Tuple[Model, tf.keras.callbacks.History]:
+        min_delta: float = 0.01
+        ) -> Tuple[Model, tf.keras.callbacks.History]:
 
         # we create the model
         model = create_lstm_model(
@@ -141,14 +139,9 @@ def train_model_core(
         )
 
         callbacks = []
-        use_val = (
-                X_val is not None
-                and y_val is not None
-                and len(X_val) > 0
-        )
 
         if use_early_stopping:
-            monitor_metric = "val_loss" if use_val else "loss"
+            monitor_metric =  "loss"
             es = EarlyStopping(
                 monitor=monitor_metric,
                 patience=patience,
@@ -157,26 +150,15 @@ def train_model_core(
             )
             callbacks.append(es)
 
-        if forecast:
-            history = model.fit(
-                X_train,
-                y_train,
-                validation_data=(X_val, y_val),
-                epochs=epochs,
-                batch_size=batch_size,
-                shuffle=False,
-                verbose=verbose
-            )
-        else:
-            # we fit the model with the data
-            history = model.fit(
-                X_train,
-                y_train,
-                epochs=epochs,
-                batch_size=batch_size,
-                shuffle=False,
-                verbose=verbose
-            )
+        # we fit the model with the data
+        history = model.fit(
+            X_train,
+            y_train,
+            epochs=epochs,
+            batch_size=batch_size,
+            shuffle=False,
+            verbose=verbose
+        )
 
         return model, history
 
@@ -191,7 +173,7 @@ def forecast_iterative(
     model: tf.keras.Model,
     scaler: StandardScaler | MinMaxScaler,
     last_window_scaled: np.ndarray,
-    start_ts: pd.Timestamp,
+    train_end_ts: pd.Timestamp,
     test_date_end: str) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
     """
     Performs iterative one-step-ahead forecasting for a single asset using a trained
@@ -210,7 +192,7 @@ def forecast_iterative(
     model : keras.Model
     scaler : sklearn scaler (StandardScaler or MinMaxScaler)
     last_window_scaled : np.ndarray of shape (window_size, 1)
-    start_ts : pd.Timestamp
+    train_end_ts : pd.Timestamp
     test_date_end : str
 
     Returns
@@ -226,7 +208,7 @@ def forecast_iterative(
     test_end_ts = pd.to_datetime(test_date_end)
     full_idx = series_sorted.index
 
-    mask_future = (full_idx > start_ts) & (full_idx <= test_end_ts)
+    mask_future = (full_idx > train_end_ts) & (full_idx <= test_end_ts)
     forecast_dates = full_idx[mask_future]
 
     if len(forecast_dates) == 0:
@@ -240,7 +222,10 @@ def forecast_iterative(
     w_size = window_scaled.shape[0]
 
     preds_scaled = []
-
+    print(f"[DEBUG] {prices_series.name} – número de días a forecast:",
+          len(forecast_dates))
+    print(f"[DEBUG] {prices_series.name} – primeras fechas forecast:",
+          forecast_dates[:5])
     for i in range(len(forecast_dates)):
         X = window_scaled.reshape(1, w_size, 1)
         y_scaled = model.predict(X, verbose=0)[0, 0]
@@ -248,6 +233,7 @@ def forecast_iterative(
             print(f"[DEBUG] {prices_series.name} – primera predicción escalada:",
                   y_scaled)
         preds_scaled.append(y_scaled)
+
 
         # Window and append prediction
         window_scaled = np.vstack([window_scaled[1:], [[y_scaled]]])
@@ -327,8 +313,6 @@ def train_asset(
     model, history = train_model_core(
         X_train=X_train,
         y_train=y_train,
-        X_val=X_val,
-        y_val=y_val,
         window_size=window_size,
         lstm_units=lstm_units,
         learning_rate=learning_rate,
@@ -338,10 +322,9 @@ def train_asset(
         epochs=epochs,
         batch_size=batch_size,
         verbose=verbose,
-        forecast=forecast,
-        use_early_stopping = use_early_stopping,
-        patience = patience,
-        min_delta = min_delta
+        use_early_stopping=use_early_stopping,
+        patience=patience,
+        min_delta=min_delta
     )
 
     if not forecast:
@@ -369,14 +352,20 @@ def train_asset(
             "val_dates": val_dates,
             "scaler": scaler
         }
-    val_end_ts = pd.to_datetime(val_date_end)
+    train_end_ts = pd.to_datetime(train_date_end)
 
     last_window_scaled = build_last_window_scaled(
         series=prices_series,
-        train_end_ts=val_end_ts,
+        train_end_ts=train_end_ts,
         window_size=window_size,
         scaler=scaler,
     )
+
+    print(f"[DEBUG] {asset_name} – last_window (últimos 5 precios TRAIN):",
+          prices_series.loc[:train_end_ts].tail(5).values)
+
+    print(f"[DEBUG] {asset_name} – last_window_scaled (últimos 5):",
+          last_window_scaled[-5:].reshape(-1))
 
     if last_window_scaled is None:
         # Not enough data for a full window: no forecast possible
@@ -385,7 +374,7 @@ def train_asset(
             "model": model,
             "history": history,
             "scaler": scaler,
-            "train_date_end": val_end_ts,
+            "train_date_end": train_end_ts,
             "last_window_scaled": None,
             "forecast_dates": np.array([]),
             "forecast_prices": np.array([]),
@@ -397,16 +386,21 @@ def train_asset(
         model=model,
         scaler=scaler,
         last_window_scaled=last_window_scaled,
-        start_ts=val_end_ts,
+        train_end_ts=train_end_ts,
         test_date_end=test_date_end)
+
+    print(f"\n[DEBUG] {asset_name} – y_train (primeros 5):",
+          y_train[:5].reshape(-1))
+
+    print(f"[DEBUG] {asset_name} – scaler.mean_:", getattr(scaler, "mean_", None))
+    print(f"[DEBUG] {asset_name} – scaler.scale_:", getattr(scaler, "scale_", None))
 
     return {
         "asset": asset_name,
         "model": model,
         "history": history,
         "scaler": scaler,
-        "train_date_end": pd.to_datetime(train_date_end),
-        "val_date_end": val_end_ts,
+        "train_date_end": train_end_ts,
         "last_window_scaled": last_window_scaled,
         "forecast_dates": forecast_dates,
         "forecast_prices": forecast_prices,
@@ -570,8 +564,8 @@ def train_lstm_all_assets(
             use_early_stopping=use_early_stopping,
             patience=patience,
             min_delta=min_delta
-
         )
+
 
         if res_asset is not None:
             results[col] = res_asset
