@@ -74,55 +74,7 @@ def plot_validation(
     plt.gcf().autofmt_xdate()
     plt.show()
 
-def validation_price_matrices_from_results(
-    results: dict
-) -> Tuple[pd.DataFrame, pd.DataFrame]:
-    """
-    Builds price matrices (real and predicted) from a results dictionary containing multiple assets.
 
-    Parameters
-    ----------
-    results : dict. Dictionary where each key is an asset name and each value is the output
-        dictionary returned
-
-    Returns
-    -------
-    real_df : pd.DataFrame. DataFrame of real validation prices
-    pred_df : pd.DataFrame. DataFrame of predicted validation prices
-    """
-    # We check if the dictionary is not empty
-    if not results:
-        raise ValueError("The dictionary is empty")
-
-    # We take an asset to extract the dates
-    first_asset = list(results.keys())[0]
-    ref_dates = pd.to_datetime(results[first_asset]["val_dates"])
-    real_df = pd.DataFrame(index=ref_dates)
-    pred_df = pd.DataFrame(index=ref_dates)
-
-    for asset, res in results.items():
-        y_val_inv = res["y_val_inv"].reshape(-1)
-        y_pred_inv = res["y_pred_inv"].reshape(-1)
-        val_dates = pd.to_datetime(res["val_dates"])
-
-        s_real = pd.Series(y_val_inv, index=val_dates, name=asset)
-        s_pred = pd.Series(y_pred_inv, index=val_dates, name=asset)
-
-        # We re-index to the reference dates (just in case)
-        s_real = s_real.reindex(ref_dates)
-        s_pred = s_pred.reindex(ref_dates)
-
-        real_df[asset] = s_real
-        pred_df[asset] = s_pred
-
-    # Remove rows with NAs
-    real_df = real_df.dropna(how="any")
-    pred_df = pred_df.dropna(how="any")
-
-    # We align, just in case
-    real_df, pred_df = real_df.align(pred_df, join="inner", axis=0)
-
-    return real_df, pred_df
 
 
 def plot_equal_weight_buy_and_hold_from_results(
