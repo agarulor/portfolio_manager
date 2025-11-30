@@ -173,9 +173,9 @@ best_run = run_best_lstm_and_plot(
 )
 
 """
-e = read_price_file("data/processed/prices_20251119-101101.csv")
+e = read_price_file("data/processed/prices_20251110-193638.csv")
 f = calculate_daily_returns(e, method="simple")
-real_df, pred_df = train_lstm_all_assets(
+results, real_df, pred_df = train_lstm_all_assets(
     prices_df=e,
     train_date_end="2023-09-30",
     val_date_end="2024-09-30",
@@ -186,10 +186,10 @@ real_df, pred_df = train_lstm_all_assets(
     dropout_rate=0.0,
     optimizer_name="rmsprop",
     loss="mse",       # si quieres usar Huber
-    epochs=1,
+    epochs=75,
     batch_size=32,
     verbose=1,
-    forecast=True
+    forecast=False
 )
 
 assets = e.columns
