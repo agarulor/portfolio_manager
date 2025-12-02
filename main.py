@@ -10,7 +10,7 @@ from portfolio_tools.return_metrics import calculate_daily_returns
 from portfolio_tools.risk_metrics import calculate_covariance
 
 from portfolio_tools.markowitz import plot_frontier
-from portfolio_management.markowitz_portfolios import create_markowitz_table
+from portfolio_management.markowitz_portfolios import create_markowitz_table, get_markowtiz_results
 from data_management.dataset_preparation import split_data_markowtiz, prepare_datasets_ml
 from portfolio_management.ml_portfolio import run_lstm_model, get_predictions_and_denormalize, plot_real_vs_predicted, grid_search_lstm, run_best_lstm_and_plot
 from outputs.tables import show_table
@@ -52,6 +52,8 @@ def main():
     e = read_price_file("data/processed/prices_20251110-193424.csv")
 
     f = calculate_daily_returns(e, method="simple")
+
+
     #train, test = split_data_markowtiz(f)
 
     result = run_lstm_model(f, window_size=60,
@@ -171,10 +173,21 @@ best_run = run_best_lstm_and_plot(
     asset_name=f.columns[0],
     ma_windows=[30]
 )
-
 """
 e = read_price_file("data/processed/prices_20251110-193638.csv")
 f = calculate_daily_returns(e, method="simple")
+
+train_set, test_set = split_data_markowtiz(returns=f, test_date_start="2025-06-01", test_date_end="2025-09-30")
+
+g = calculate_covariance(test_set)
+
+h = create_markowitz_table(train_set, test_set, g, rf = 0.00, min_w=0.0)
+print(h.head())
+
+#plot_frontier(30, test_set, g,  method="simple")
+
+#h = get_markowtiz_results()
+'''
 e = e[["BBVA.MC"]]
 results, real_df, pred_df = train_lstm_all_assets(
     prices_df=e,
@@ -183,11 +196,11 @@ results, real_df, pred_df = train_lstm_all_assets(
     test_date_end="2025-09-30",
     window_size=60,
     lstm_units=256,
-    learning_rate=0.0005,
+    learning_rate=0.0003,
     dropout_rate=0.0,
-    optimizer_name="adam",
+    optimizer_name="rmsprop",
     loss="mse",
-    epochs=200,
+    epochs=400,
     batch_size=32,
     verbose=1,
     use_early_stopping=True,
@@ -218,7 +231,7 @@ plot_equal_weight(
     n_points=252    # por ejemplo, último año de validación
 )
 
-
+'''
 if __name__ == "__main__":
     main()
 

@@ -331,7 +331,6 @@ def portfolio_output(returns: pd.DataFrame,
     -------
     np.ndarray: Weights of the portfolio.
     """
-
     if portfolio_type == "msr":
         weights = msr(returns, covmat, rf, method, periods_per_year, min_w)
     elif portfolio_type == "gmv":
@@ -411,7 +410,6 @@ def get_cml(target_volatility: float,
     cml_pf_return = float(rf + a * (pf_return - rf))
 
     return weight_risky, weight_risk_free, cml_pf_return, cml_pf_volatility
-
 
 
 def plot_frontier(n_returns: int,

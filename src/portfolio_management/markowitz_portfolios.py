@@ -37,7 +37,6 @@ def get_markowtiz_results(train_returns: pd.DataFrame,
     -------
     dictionary: With name of the type of model, returns, volatility, max drawdown and weights
     """
-
     if portfolio_type == "msr":
         weights = msr(train_returns, covmat, rf, method, periods_per_year, min_w)
     elif portfolio_type == "gmv":
@@ -57,7 +56,6 @@ def get_markowtiz_results(train_returns: pd.DataFrame,
     # We get the returns
     pf_return = portfolio_returns(weights, test_returns, method, periods_per_year)
 
-
     # We get the volatility from the test returns
     new_covmat = calculate_covariance(test_returns)
     pf_volatility = portfolio_volatility(weights, new_covmat, periods_per_year)
@@ -68,7 +66,7 @@ def get_markowtiz_results(train_returns: pd.DataFrame,
     # We get the maximum drawdown
     max_drawdown = calculate_max_drawdown(weights, test_returns)
 
-    # Lo pasamos a un diccionario multiplicado por 100 para tenerlo en porcentaje
+    # We convert it into a dictionary and multiply by 100 to get %
     portfolio_information = {"Model": portfolio_type,
                    "Returns": float(round(pf_return * 100, 3)),
                    "Volatility": float(round(pf_volatility * 100, 3)),
@@ -105,9 +103,8 @@ def create_markowitz_table(train_returns: pd.DataFrame,
 
     Returns
     -------
-    List: With name of the type of model, returns, volatility, max drawdown and weights
+    df_resultados : pd.DataFrame With name of the type of model, returns, volatility, max drawdown and weights
     """
-
     portfolio_results = []
 
     # extraemos el nombre de las columnas

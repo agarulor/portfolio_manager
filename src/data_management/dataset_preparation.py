@@ -40,7 +40,6 @@ def split_data_markowtiz(
         time_start = sorted_returns.index[pos]
         print(f"time_start adjusted to: {time_start.date()}")
 
-
     if time_end not in sorted_returns.index:
         print(f"{time_end} not in data. Adjusting to previous available business day.")
         pos = sorted_returns.index.searchsorted(time_end) - 1
@@ -53,7 +52,6 @@ def split_data_markowtiz(
     train_set = sorted_returns.loc[:time_start - pd.Timedelta(days=1)]
     test_set = sorted_returns.loc[time_start : time_end]
 
-    print(test_set)
 
     return train_set, test_set
 

@@ -118,6 +118,7 @@ def portfolio_volatility(
     annualized_covmat = annualize_covariance(covmat, periods_per_year)
     return (weights.T @ annualized_covmat @ weights) ** 0.5
 
+
 def sharpe_ratio(
         weights: np.ndarray,
         returns: pd.DataFrame,
@@ -141,8 +142,6 @@ def sharpe_ratio(
     -------
     float: Sharpe Ratio.
     """
-
-
     returns_portfolio = portfolio_returns(weights, returns, method, periods_per_year)
     volatility_portfolio = portfolio_volatility(weights, covmat, periods_per_year)
 
@@ -177,6 +176,7 @@ def neg_sharpe_ratio(
 
     return -(returns_portfolio - rf) / volatility_portfolio
 
+
 def calculate_max_drawdown(weights: np.ndarray, returns: pd.Series)-> float:
     """
     Calculates the maximum drawdown from the temp returns.
@@ -190,9 +190,6 @@ def calculate_max_drawdown(weights: np.ndarray, returns: pd.Series)-> float:
     -------
     float: maximum drawdown from the returns.
     """
-
-    returns_portfolio = returns.copy()
-
     returns_portfolio = returns.mul(weights, axis=1).sum(axis=1)
 
     # first we create the wealth index
