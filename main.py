@@ -11,13 +11,10 @@ from portfolio_tools.risk_metrics import calculate_covariance
 
 from portfolio_tools.markowitz import plot_frontier
 from portfolio_management.markowitz_portfolios import create_markowitz_table, get_markowtiz_results
-from data_management.dataset_preparation import split_data_markowtiz, prepare_datasets_ml
-from portfolio_management.ml_portfolio import run_lstm_model, get_predictions_and_denormalize, plot_real_vs_predicted, grid_search_lstm, run_best_lstm_and_plot
+from data_management.dataset_preparation import split_data_markowtiz
+
 from outputs.tables import show_table
-from portfolio_management.XGBoost import run_xgb_experiment
-from portfolio_management.ml_portfolio4 import train_lstm_all_assets
-from portfolio_management.visualization import  plot_asset, plot_validation, plot_equal_weight
-from portfolio_management.ml_portfolio_old import  plot_equal_weight_portfolio_on_validation
+
 import os
 import random
 import numpy as np
@@ -53,185 +50,22 @@ def main():
 
     f = calculate_daily_returns(e, method="simple")
 
+    """
 
-    #train, test = split_data_markowtiz(f)
-
-    result = run_lstm_model(f, window_size=60,
-                            lstm_units=128,
-                            learning_rate=0.0005,
-                            dropout_rate=0.05,
-                            batch_size=32,
-                            epochs=100,
-                            loss="mae",
-                            optimizer_name="rmsprop")
-
-    model = result["model"]
-    scaler = result["scaler"]
-    X_test = result["X_test"]
-    y_test = result["y_test"]
-    dates = result["y_test_index"]
-    X_val = result["X_val"]
-    y_val = result["y_val"]
-
-    y_test_inv, y_pred_inv = get_predictions_and_denormalize(
-        model=model,
-        X_test=X_test,
-        y_test=y_test,
-        scaler=scaler)
-
-    y_val_inv, y_pred_val = get_predictions_and_denormalize(
-        model=model,
-        X_test=X_val,
-        y_test=y_val,
-        scaler=scaler)
-
-    plot_real_vs_predicted(
-        y_test_inv=y_test_inv,
-        y_pred_inv=y_pred_inv,
-        dates=dates,
-        asset_idx=0,
-        asset_name=f.columns[0],
-        n_points=None
-    )
-
-    plot_real_vs_predicted(
-        y_test_inv=y_val_inv,
-        y_pred_inv=y_pred_val,
-
-        asset_idx=0,
-        asset_name=f.columns[0],
-        n_points=None
-    )
-    #covmat_train = calculate_covariance(train)
-
-    #pruba = create_markowitz_table(train, test, covmat_train, rf = 0.00, min_w=0.0)
-
-    #a = plot_frontier(30, train, covmat_train, rf= 0.0)
-
-    #show_table(pruba, caption="Resultados Markowitz")
-
-e = read_price_file("data/processed/prices_20251110-193638.csv")
-f = calculate_daily_returns(e, method="simple")
-print(type(f))  # debería ser <class 'pandas.core.frame.DataFrame'>
-
-xgb_results = run_xgb_experiment(
-    returns=f,  # tu DataFrame de retornos
-    train_date_end="2023-09-30",
-    val_date_end="2024-09-30",
-    test_date_end="2025-09-30",
-    window_size=63,  # importante: >= max(lags)
-    horizon_shift=1,
-    lags=[1, 2, 5, 10, 21, 63],
-    n_estimators=800,
-    learning_rate=0.03,
-    max_depth=4,
-    subsample=0.8,
-    colsample_bytree=0.8,
-    reg_lambda=3,
-    reg_alpha=0.1,
-)
-
-# Escogemos un activo, por ejemplo el primero (columna 0)
-asset_idx = 0
-asset_name = f.columns[asset_idx]
-
-plot_real_vs_predicted(
-    y_test_inv=xgb_results["y_test_inv"],
-    y_pred_inv=xgb_results["y_pred_inv"],
-    dates=xgb_results["y_test_index"],
-    asset_idx=asset_idx,
-    asset_name=asset_name,
-    n_points=200
-)
-
-
-
-results_df, best_params = grid_search_lstm(
-    returns=f,
-    train_date_end="2023-09-30",
-    val_date_end="2024-09-30",
-    test_date_end="2025-09-30",
-    window_size_list=[30],
-    horizon_shift=1,
-    lstm_units_list=[128],
-    learning_rate_list=[0.001],
-    dropout_rate_list=[0.35],
-    optimizer_name_list=["adam"],
-    epochs=125,
-    batch_size_list=[32],
-    ma_windows=[5, 21, 63],
-    lookback= 0,
-    loss="mse",
-    verbose=0
-)
-
-best_run = run_best_lstm_and_plot(
-    returns=f,
-    results_df=results_df,
-    best_params=best_params,
-    asset_idx=0,
-    asset_name=f.columns[0],
-    ma_windows=[30]
-)
-"""
 e = read_price_file("data/processed/prices_20251110-193638.csv")
 f = calculate_daily_returns(e, method="simple")
 
 train_set, test_set = split_data_markowtiz(returns=f, test_date_start="2025-06-01", test_date_end="2025-09-30")
 
-g = calculate_covariance(test_set)
+g = calculate_covariance(train_set)
 
-h = create_markowitz_table(train_set, test_set, g, rf = 0.00, min_w=0.0)
+h = create_markowitz_table(train_set, train_set, g, rf = 0.00, min_w=0.0)
 print(h.head())
 
-#plot_frontier(30, test_set, g,  method="simple")
+plot_frontier(30, train_set, g,  method="simple")
 
 #h = get_markowtiz_results()
-'''
-e = e[["BBVA.MC"]]
-results, real_df, pred_df = train_lstm_all_assets(
-    prices_df=e,
-    train_date_end="2024-09-30",
-    val_date_end="2024-09-30",
-    test_date_end="2025-09-30",
-    window_size=60,
-    lstm_units=256,
-    learning_rate=0.0003,
-    dropout_rate=0.0,
-    optimizer_name="rmsprop",
-    loss="mse",
-    epochs=400,
-    batch_size=32,
-    verbose=1,
-    use_early_stopping=True,
-    patience=15,
-    min_delta=0.001,
-    forecast=True
-)
-print(pred_df.head())
-print(pred_df.tail())
 
-print(real_df.head())
-print(real_df.tail())
-
-print(pred_df.iloc[:, 0].describe())
-assets = e.columns
-for asset in assets:
-
-    plot_asset(
-        real_df=real_df,
-        pred_df=pred_df,
-        asset=asset,
-        n_points=200
-)
-
-plot_equal_weight(
-    real_df=real_df,
-    pred_df=pred_df,
-    n_points=252    # por ejemplo, último año de validación
-)
-
-'''
 if __name__ == "__main__":
     main()
 

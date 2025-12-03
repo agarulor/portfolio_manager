@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 from typing import Literal, Tuple
 from portfolio_tools.return_metrics import portfolio_returns, annualize_returns
-from portfolio_tools.risk_metrics import portfolio_volatility, neg_sharpe_ratio, sharpe_ratio, calculate_max_drawdown
+from portfolio_tools.risk_metrics import portfolio_volatility, neg_sharpe_ratio, calculate_max_drawdown
 from scipy.optimize import minimize
 import matplotlib.pyplot as plt
 
@@ -288,7 +288,7 @@ def ew(returns: pd.DataFrame) -> np.ndarray:
     return np.ones(n) / n
 
 
-def random_weights(returns: pd.DataFrame, min_w) -> np.ndarray:
+def random_weights(returns: pd.DataFrame) -> np.ndarray:
     """
     Returns the weights of the portfolio assets for a random weighted portfolio
 
@@ -341,7 +341,7 @@ def portfolio_output(returns: pd.DataFrame,
         # We calculate the weights for an equally weighted portfolio
         weights = ew(returns)
     elif portfolio_type == "random":
-        weights = random_weights(returns, min_w)
+        weights = random_weights(returns)
 
     else:
         raise ValueError(f"Unknown portfolio type: {portfolio_type}")

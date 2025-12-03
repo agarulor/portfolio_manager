@@ -2,17 +2,14 @@ import pandas as pd
 import numpy as np
 from typing import Literal, Tuple
 
-from scipy.constants import precision
-
 from portfolio_tools.markowitz import gmv, msr, ew, random_weights
 from portfolio_tools.return_metrics import portfolio_returns
-from portfolio_tools.risk_metrics import portfolio_volatility, calculate_max_drawdown, calculate_covariance, sharpe_ratio
+from portfolio_tools.risk_metrics import portfolio_volatility, calculate_max_drawdown, calculate_covariance
 
 
 
 def get_markowtiz_results(train_returns: pd.DataFrame,
                           test_returns: pd.DataFrame,
-                          covmat: pd.DataFrame,
                           portfolio_type: Literal["msr", "gmv", "portfolio", "ew", "random"] = "msr",
                           rf: float = 0.0,
                           method: Literal["simple", "log"] = "simple",
@@ -26,21 +23,22 @@ def get_markowtiz_results(train_returns: pd.DataFrame,
     ----------
     train_returns: pd.DataFrame. Expected return of the portfolio.
     test_returns: pd.DataFrame. Expected return of the portfolio.
-    covmat: np.ndarray. Covariance matrix of the portfolio.
     rf: float. Risk-free rate.
     portfolio_type: Literal["msr", "gmv", "portfolio", "ew", "random"] = "msr"
     method: str. "simple" or "log
     periods_per_year: int. Number of years over which to calculate volatility.
     min_w: float. Minimum weight of the portfolio.
+    weight_name: str. Name of the weight column.
 
     Returns
     -------
     dictionary: With name of the type of model, returns, volatility, max drawdown and weights
     """
+    covmat_train = calculate_covariance(train_returns)
     if portfolio_type == "msr":
-        weights = msr(train_returns, covmat, rf, method, periods_per_year, min_w)
+        weights = msr(train_returns, covmat_train, rf, method, periods_per_year, min_w)
     elif portfolio_type == "gmv":
-        weights = gmv(covmat, min_w)
+        weights = gmv(covmat_train, min_w)
     elif portfolio_type == "portfolio":
         weights = 0
     elif portfolio_type == "ew":
@@ -100,6 +98,7 @@ def create_markowitz_table(train_returns: pd.DataFrame,
     method: str. "simple" or "log
     periods_per_year: int. Number of years over which to calculate volatility.
     min_w: float. Minimum weight of the portfolio.
+    weight_name: str. Name of the weight column.
 
     Returns
     -------
