@@ -1,6 +1,8 @@
 import sys
 import os
 
+import investor_information
+
 sys.path.append(os.path.join(os.path.dirname(__file__), "src"))
 import streamlit as st
 from data_management.get_data import read_price_file, get_stock_prices
@@ -12,13 +14,13 @@ from portfolio_tools.risk_metrics import calculate_covariance
 from portfolio_tools.markowitz import plot_frontier
 from portfolio_management.markowitz_portfolios import create_markowitz_table, get_markowtiz_results
 from data_management.dataset_preparation import split_data_markowtiz
+from investor_information.investor_profile import investor_target_volatility
 
 from outputs.tables import show_table
 
 import os
 import random
 import numpy as np
-import tensorflow as tf
 
 SEED = 42
 
@@ -28,7 +30,7 @@ os.environ["PYTHONHASHSEED"] = str(SEED)
 # Semillas de Python, NumPy y TensorFlow
 random.seed(SEED)
 np.random.seed(SEED)
-tf.random.set_seed(SEED)
+
 
 def main():
     """
@@ -50,7 +52,7 @@ def main():
 
     f = calculate_daily_returns(e, method="simple")
 
-    """
+
 
 e = read_price_file("data/processed/prices_20251110-193638.csv")
 f = calculate_daily_returns(e, method="simple")
@@ -65,7 +67,8 @@ print(h.head())
 plot_frontier(30, train_set, g,  method="simple")
 
 #h = get_markowtiz_results()
-
+"""
+print(investor_target_volatility(6, 6, 3, 3, 3, 2, 3, 3))
 if __name__ == "__main__":
     main()
 
