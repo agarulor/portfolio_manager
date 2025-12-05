@@ -1,9 +1,10 @@
 import sys
 import os
 
-import investor_information
+
 
 sys.path.append(os.path.join(os.path.dirname(__file__), "src"))
+from interface.questionnaire import investor_questionnaire
 import streamlit as st
 from data_management.get_data import read_price_file, get_stock_prices
 from data_management.save_data import save_preprocessed_data
@@ -16,7 +17,7 @@ from portfolio_management.markowitz_portfolios import create_markowitz_table, ge
 from data_management.dataset_preparation import split_data_markowtiz
 from investor_information.investor_profile import investor_target_volatility
 
-from outputs.tables import show_table
+from interface.tables import show_table
 
 import os
 import random
@@ -69,6 +70,9 @@ plot_frontier(30, train_set, g,  method="simple")
 #h = get_markowtiz_results()
 """
 print(investor_target_volatility(6, 6, 3, 3, 3, 2, 3, 3))
+investor_target_volatility(6, 6, 3, 3, 3, 2, 3, 3)
+answers = investor_questionnaire()
+print(answers)
 if __name__ == "__main__":
     main()
 

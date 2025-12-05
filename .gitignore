@@ -21,6 +21,6 @@ desktop.ini
 # We also exclude temporary backups created by Jupyter
 .ipynb_checkpoints/
 
-# We also exclude temporary dumps of data and generated outputs
+# We also exclude temporary dumps of data and generated interface
 *.log
 *.tmp
