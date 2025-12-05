@@ -6,6 +6,7 @@ DOWNSIDE_REACTION_WEIGHT = 0.3
 VOLATILITY_MAPPING = MappingProxyType( {
     1: (0.00, 0.10),
     2: (0.10, 0.15),
+    3: (0.15, 0.20),
     4: (0.20, 0.30),
     5: (0.30, 0.45),
     6: (0.45, 0.70)

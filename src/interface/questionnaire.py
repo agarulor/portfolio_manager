@@ -172,12 +172,12 @@ def investor_questionnaire():
         st.success("Formulario enviado correctamente")
         st.subheader("Resultados del perfil de riesgo")
         col1, col2, col3 = st.columns(3)
-        col1.metric("Apetito de riesgo: ", RISK_PROFILE_DICTIONARY[RA])
-        col2.metric("Capacidad de asumir riesgo: ", RISK_PROFILE_DICTIONARY[RC])
-        col3.metric("Tolerancia al riesgo: ", RISK_PROFILE_DICTIONARY[RT])
+        col1.metric("Apetito de riesgo: ", RA)
+        col2.metric("Capacidad de asumir riesgo: ", RC)
+        col3.metric("Tolerancia al riesgo: ", RT)
         st.subheader("Rango de volatilidad recomendado de la cartera para el inversor")
         st.write(f"Rango recomendado de volatilidad anualizada: "
                  f"{sigma_min*100:.1f}% - {sigma_max*100:.1f}%")
 
-        return answers
+
     return None
