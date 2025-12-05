@@ -69,10 +69,11 @@ plot_frontier(30, train_set, g,  method="simple")
 
 #h = get_markowtiz_results()
 """
-print(investor_target_volatility(6, 6, 3, 3, 3, 2, 3, 3))
-investor_target_volatility(6, 6, 3, 3, 3, 2, 3, 3)
-answers = investor_questionnaire()
-print(answers)
+
+(a, b) c, d, e = investor_target_volatility(6, 6, 3, 3, 3, 2, 3, 3)
+print(a, b, c, d, e)
+
+
 if __name__ == "__main__":
     main()
 

@@ -11,6 +11,8 @@ VOLATILITY_MAPPING = MappingProxyType( {
     6: (0.45, 0.70)
 })
 
+
+
 def risk_appetite(knowledge:int, risk_level: int, downside_reaction: int) -> int:
     """
     This function calculates the risk appetite of an investor
@@ -185,7 +187,7 @@ def investor_target_volatility(knowledge: int,
                                net_worth: int,
                                investment_horizon: int,
                                financial_goal_importance: int
-                               ) -> Tuple[float, float]:
+                               ) :
     """
     Computes the investor's target volatility range from risk appetite and risk capacity
 
@@ -229,7 +231,7 @@ def investor_target_volatility(knowledge: int,
     RT = risk_tolerance(RA, RC)
 
     # return volatility level
-    return VOLATILITY_MAPPING[RT]
+    return VOLATILITY_MAPPING[RT], RA, RC, RT
 
 
 

@@ -1,4 +1,16 @@
 import streamlit as st
+from types import MappingProxyType # to avoid changes to a dictionary
+
+from investor_information.investor_profile import investor_target_volatility
+
+RISK_PROFILE_DICTIONARY = MappingProxyType({
+    1: "Perfil bajo de riesgo",
+    2: "Perfil medio-bajo de riesgo",
+    3: "Perfil medio de riesgo",
+    4: "Perfil medio-alto de riesgo",
+    5: "Perfil alto de riesgo",
+    6: "Perfil agresivo de riesgo"
+})
 
 def investor_questionnaire():
     st.set_page_config(page_title="Cuestionario sobre la tolerancia de riesgo del invesor", layout="centered")
@@ -143,3 +155,29 @@ def investor_questionnaire():
         format_func=lambda x: goal_importance_options[x],
         index=1,
     )
+
+    # We know submit and check
+    if  st.button("Enviar formulario"):
+        (sigma_min, sigma_max), RA, RC, RT = investor_target_volatility(
+            knowledge=knowledge,
+            risk_level=risk_level,
+            downside_reaction=downside_reaction,
+            liquidity_need=liquidity_need,
+            annual_income= income,
+            net_worth=net_worth,
+            investment_horizon=investment_horizon,
+            financial_goal_importance=financial_goal_importance
+        )
+
+        st.success("Formulario enviado correctamente")
+        st.subheader("Resultados del perfil de riesgo")
+        col1, col2, col3 = st.columns(3)
+        col1.metric("Apetito de riesgo: ", RISK_PROFILE_DICTIONARY[RA])
+        col2.metric("Capacidad de asumir riesgo: ", RISK_PROFILE_DICTIONARY[RC])
+        col3.metric("Tolerancia al riesgo: ", RISK_PROFILE_DICTIONARY[RT])
+        st.subheader("Rango de volatilidad recomendado de la cartera para el inversor")
+        st.write(f"Rango recomendado de volatilidad anualizada: "
+                 f"{sigma_min*100:.1f}% - {sigma_max*100:.1f}%")
+
+        return answers
+    return None
