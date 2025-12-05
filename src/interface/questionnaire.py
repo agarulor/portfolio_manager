@@ -124,7 +124,7 @@ def render_investor_questionnaire():
         index=2
     )
 
-    income = st.selectbox(
+    annual_income = st.selectbox(
         "5) Ingresos anuales:",
         options=list(income_options.keys()),
         format_func=lambda x: income_options[x],
@@ -152,30 +152,27 @@ def render_investor_questionnaire():
         index=1,
     )
 
-    # We know submit and check
-    if  st.button("Enviar formulario"):
-        (sigma_min, sigma_max), RA, RC, RT = investor_target_volatility(
-            knowledge=knowledge,
-            risk_level=risk_level,
-            downside_reaction=downside_reaction,
-            liquidity_need=liquidity_need,
-            annual_income= income,
-            net_worth=net_worth,
-            investment_horizon=investment_horizon,
-            financial_goal_importance=financial_goal_importance
-        )
+    st.markdown("---")
 
-        st.success("Formulario enviado correctamente")
-        st.subheader("Resultados del perfil de riesgo")
-        col1, col2, col3 = st.columns(3)
-        col1.metric("Apetito de riesgo: ", RA)
-        col2.metric("Capacidad de asumir riesgo: ", RC)
-        col3.metric("Tolerancia al riesgo: ", RT)
-        st.subheader("Rango de volatilidad recomendado de la cartera para el inversor")
-        st.write(f"Rango recomendado de volatilidad anualizada: "
-                 f"{sigma_min*100:.1f}% - {sigma_max*100:.1f}%")
+    submitted = st.button("Obtener perfil de riesgo")
 
-    return None
+    if not submitted:
+        # Button not yet pushed
+        return None
+
+    # We build the dictionary
+    answers = {
+        "knowledge": knowledge,
+        "risk_level": risk_level,
+        "downside_reaction": downside_reaction,
+        "liquidity_need": liquidity_need,
+        "annual_income": annual_income,
+        "net_worth": net_worth,
+        "investment_horizon": investment_horizon,
+        "financial_goal_importance": financial_goal_importance,
+    }
+
+    return answers
 
 def render_app():
     tab_profile, tab_portfolio = st.tabs(["Perfil de riesgo", "Cartera de inversión"])
