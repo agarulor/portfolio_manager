@@ -10,6 +10,10 @@ def investor_questionnaire():
 
     st.header("Información referente sobre su apetito de riesgo")
 
+    # ----------------------------------------------------------
+    # RISK APPETITE
+    # ----------------------------------------------------------
+
     # We first create the dictionaries with the answers for each dropdown menu
     knowledge_options = {
         1: "1 - Muy poco conocimiento sobre productos financieros",
@@ -17,7 +21,7 @@ def investor_questionnaire():
         3: "3 - Conocimiento medio sobre productos financieros",
         4: "4 - Buen conocimiento sobre productos financieros",
         5: "5 - Alto conocimiento sobre productos financieros",
-        6: "6 - Conocimiento experto sobre productos financieros",
+        6: "6 - Conocimiento experto sobre productos financieros"
     }
 
     risk_level_options = {
@@ -26,14 +30,14 @@ def investor_questionnaire():
         3: "3 - Nivel de riesgo dispuesto a asumir: medio",
         4: "4 - Nivel de riesgo dispuesto a asumir: medio-alto",
         5: "5 - Nivel de riesgo dispuesto a asumir: alto",
-        6: "6 - Nivel de riesgo dispuesto a asumir: muy alto",
+        6: "6 - Nivel de riesgo dispuesto a asumir: muy alto"
     }
 
     downside_reaction_options = {
         1: "1 - Ante una caída fuerte vendería toda la inversión",
         2: "2 - Ante una caída fuerte vendería una parte de la inversión",
         3: "3 - Ante una caída fuerte mantendría la inversión",
-        4: "4 - Ante una caída fuerte compraría más para aprovechar la caída",
+        4: "4 - Ante una caída fuerte compraría más para aprovechar la caída"
     }
 
     knowledge = st.selectbox("1) Conocimiento financiero y experiencia",
@@ -49,7 +53,7 @@ def investor_questionnaire():
                              format_func= lambda x: risk_level_options[x],
                              index= 2
                              )
-    st.write("Tu nivel de riesgo dispues a asumir es: ", risk_level_options[risk_level],)
+    st.write("Tu nivel de riesgo dispues a asumir es: ", risk_level_options[risk_level])
 
     downside_reaction = st.selectbox("3) Reacción ante caídas fuertes del precio de los activos",
                              options=list(downside_reaction_options.keys()),
@@ -57,4 +61,85 @@ def investor_questionnaire():
                              index= 2
                              )
 
-    st.write("Tu nivel de reacción ante caídas fuertes del precio de los activos es: ", downside_reaction_options[downside_reaction],)
+    st.write("Tu nivel de reacción ante caídas fuertes del precio de los activos es: ", downside_reaction_options[downside_reaction])
+
+    #----------------------------------------------------------
+    # RISK CAPACITY
+    #----------------------------------------------------------
+
+
+    st.header("Información referente a la capacidad de asumir riesgo")
+
+    liquidity_options = {
+        1: "1 - Liquidez necesaria inmediata (muy alta necesidad de liquidez)",
+        2: "2 - Alta necesidad de liquidez",
+        3: "3 - Necesidad de liquidez media",
+        4: "4 - Baja necesidad de liquidez",
+        5: "5 - Muy baja necesidad de liquidez"
+    }
+
+
+    income_options = {
+        1: "1 - Ingresos anuales muy bajos",
+        2: "2 - Ingresos anuales bajos",
+        3: "3 - Ingresos anuales medios",
+        4: "4 - Ingresos anuales altos",
+        5: "5 - Ingresos anuales muy altos"
+    }
+
+    net_worth_options = {
+        1: "1 - Ahorros y patrimonio muy bajos",
+        2: "2 - Ahorros y patrimonio bajos",
+        3: "3 - Ahorros y patrimonio medios",
+        4: "4 - Ahorros y patrimonio altos",
+        5: "5 - Ahorros y patrimonio muy altos"
+    }
+
+    horizon_options = {
+        1: "1 - Muy corto plazo",
+        2: "2 - Corto plazo",
+        3: "3 - Medio plazo",
+        4: "4 - Largo plazo",
+        5: "5 - Muy largo plazo"
+    }
+
+    goal_importance_options = {
+        1: "1 - Objetivo financiero crítico",
+        2: "2 - Objetivo financiero de importancia media",
+        3: "3 - Objetivo financiero flexible"
+    }
+
+    liquidity_need = st.selectbox(
+        "4) Liquidez necesaria:",
+        options=list(liquidity_options.keys()),
+        format_func=lambda x: liquidity_options[x],
+        index=2
+    )
+
+    income = st.selectbox(
+        "5) Ingresos anuales:",
+        options=list(income_options.keys()),
+        format_func=lambda x: income_options[x],
+        index=2
+    )
+
+    net_worth = st.selectbox(
+        "6) Ahorros y patrimonio:",
+        options=list(net_worth_options.keys()),
+        format_func=lambda x: net_worth_options[x],
+        index=2
+    )
+
+    investment_horizon = st.selectbox(
+        "7) Horizonte temporal:",
+        options=list(horizon_options.keys()),
+        format_func=lambda x: horizon_options[x],
+        index=2
+    )
+
+    financial_goal_importance = st.selectbox(
+        "8) Importancia del objetivo financiero:",
+        options=list(goal_importance_options.keys()),
+        format_func=lambda x: goal_importance_options[x],
+        index=1,
+    )
