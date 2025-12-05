@@ -40,7 +40,6 @@ def risk_appetite(knowledge:int, risk_level: int, downside_reaction: int) -> int
         value will be between 1 and 6 depending on the risk appetite. Each factor will have
         a different weight
     """
-
     # We first need to reescalate the downside_reaction
     if downside_reaction == 1:
         downside_reaction_r = 1
@@ -55,10 +54,11 @@ def risk_appetite(knowledge:int, risk_level: int, downside_reaction: int) -> int
 
     # Weighted Average
     risk_appetite_score = round(
-        KNOWLEDGE_WEIGHT * knowledge + RISK_LEVEL_WEIGHT * risk_level + DOWNSIDE_REACTION_WEIGHT * downside_reaction)
+        KNOWLEDGE_WEIGHT * knowledge + RISK_LEVEL_WEIGHT * risk_level + DOWNSIDE_REACTION_WEIGHT * downside_reaction_r)
 
     # We ensure that we are within the values
     risk_appetite_score = max(1, min(6, risk_appetite_score))
+    print(risk_appetite_score)
 
     return risk_appetite_score
 

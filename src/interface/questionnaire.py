@@ -12,12 +12,12 @@ RISK_PROFILE_DICTIONARY = MappingProxyType({
     6: "Perfil agresivo de riesgo"
 })
 
-def investor_questionnaire():
+def render_investor_questionnaire():
     st.set_page_config(page_title="Cuestionario sobre la tolerancia de riesgo del invesor", layout="centered")
 
     st.title("Cuestionario sobre la tolerancia al riesgo del inversor para su clasificación")
 
-    st.write("""Por favor, repsonda a las siguientes preguntas para poder determinar su perfil de riesgo. """
+    st.write("""Por favor, responda a las siguientes preguntas para poder determinar su perfil de riesgo. """
              """De esta forma podremos recomendarle una cartera de inversión acorde a sus necesidades""")
 
     st.header("Información referente sobre su apetito de riesgo")
@@ -58,22 +58,18 @@ def investor_questionnaire():
                              index= 2
                              )
 
-    st.write("Tu conocimiento seleccionado es: ", knowledge)
 
     risk_level = st.selectbox("2) Nivel de riesgo dispuesto a asumir",
                              options=list(risk_level_options.keys()),
                              format_func= lambda x: risk_level_options[x],
                              index= 2
                              )
-    st.write("Tu nivel de riesgo dispues a asumir es: ", risk_level_options[risk_level])
 
     downside_reaction = st.selectbox("3) Reacción ante caídas fuertes del precio de los activos",
                              options=list(downside_reaction_options.keys()),
                              format_func= lambda x: downside_reaction_options[x],
                              index= 2
                              )
-
-    st.write("Tu nivel de reacción ante caídas fuertes del precio de los activos es: ", downside_reaction_options[downside_reaction])
 
     #----------------------------------------------------------
     # RISK CAPACITY
@@ -179,5 +175,9 @@ def investor_questionnaire():
         st.write(f"Rango recomendado de volatilidad anualizada: "
                  f"{sigma_min*100:.1f}% - {sigma_max*100:.1f}%")
 
-
     return None
+
+def render_app():
+    tab_profile, tab_portfolio = st.tabs(["Perfil de riesgo", "Cartera de inversión"])
+    with tab_profile:
+        render_investor_questionnaire()
