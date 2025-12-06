@@ -1,6 +1,7 @@
 import streamlit as st
 from types import MappingProxyType # to avoid changes to a dictionary
 from investor_information.investor_profile import investor_target_volatility
+from interface.main_interface import render_sidebar_profile_summary
 RISK_COLOR = MappingProxyType({1: "#2ecc71", 2: "#2ecc71", 3: "#f39c12", 4: "#f39c12", 5: "#e74c3c", 6: "#e74c3c"})
 RISK_PROFILE_DICTIONARY = MappingProxyType({
     1: "Perfil bajo de riesgo",
@@ -12,7 +13,7 @@ RISK_PROFILE_DICTIONARY = MappingProxyType({
 })
 
 def render_investor_questionnaire():
-    st.set_page_config(page_title="Cuestionario sobre la tolerancia de riesgo del invesor", layout="centered")
+
 
     st.title("Cuestionario sobre la tolerancia al riesgo del inversor para su clasificación")
 
@@ -231,9 +232,6 @@ def show_investor_profile(answers):
     if answers is not None:
         (sigma_min, sigma_max), RA, RC, RT = investor_target_volatility(**answers)
 
-        # We show the window
-        render_investor_profile_view(RA, RC, RT, sigma_min, sigma_max)
-
         # Save session state
         st.session_state["risk_result"] = {
             "RA": RA,
@@ -242,7 +240,8 @@ def show_investor_profile(answers):
             "sigma_min": sigma_min,
             "sigma_max": sigma_max,
         }
-
+        # We show the window
+        render_investor_profile_view(RA, RC, RT, sigma_min, sigma_max)
 
     elif "risk_result" in st.session_state:
         # No update of the questionnaire,

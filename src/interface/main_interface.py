@@ -1,6 +1,4 @@
 import streamlit as st
-from interface.investor_profile_view import render_investor_questionnaire, show_investor_profile
-from investor_information.investor_profile import investor_target_volatility
 from types import MappingProxyType
 RISK_COLOR = MappingProxyType({1: "#2ecc71", 2: "#2ecc71", 3: "#f39c12", 4: "#f39c12", 5: "#e74c3c", 6: "#e74c3c"})
 RISK_PROFILE_DICTIONARY = MappingProxyType({
@@ -60,7 +58,7 @@ def render_sidebar():
         options=["Perfil de riesgo", "Cartera de inversión"],
         index=0
     )
-    render_sidebar_profile_summary()
+
     return page
 
 
@@ -87,16 +85,3 @@ def render_portfolio():
     # aquí luego puedes meter tu optimización y mostrar pesos
     st.info("Aquí iría la construcción de la cartera (pesos por activo, gráficos, etc.).")
 
-def render_app():
-    apply_global_styles()
-    page = render_sidebar()
-
-    if page == "Perfil de riesgo":
-        st.header("Perfil de riesgo del inversor")
-        answers = render_investor_questionnaire()
-        show_investor_profile(answers)
-
-
-
-    elif page == "Cartera de inversión":
-        render_portfolio()

@@ -4,8 +4,7 @@ import os
 
 
 sys.path.append(os.path.join(os.path.dirname(__file__), "src"))
-
-from interface.main_interface import render_app
+from app.run_app import run_app
 import streamlit as st
 from data_management.get_data import read_price_file, get_stock_prices
 from data_management.save_data import save_preprocessed_data
@@ -71,7 +70,7 @@ plot_frontier(30, train_set, g,  method="simple")
 #h = get_markowtiz_results()
 """
 
-render_app()
+run_app()
 
 
 if __name__ == "__main__":
