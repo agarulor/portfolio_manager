@@ -1,8 +1,7 @@
 import streamlit as st
 from types import MappingProxyType # to avoid changes to a dictionary
-
 from investor_information.investor_profile import investor_target_volatility
-
+RISK_COLOR = MappingProxyType({1: "#2ecc71", 2: "#2ecc71", 3: "#f39c12", 4: "#f39c12", 5: "#e74c3c", 6: "#e74c3c"})
 RISK_PROFILE_DICTIONARY = MappingProxyType({
     1: "Perfil bajo de riesgo",
     2: "Perfil medio-bajo de riesgo",
@@ -174,7 +173,89 @@ def render_investor_questionnaire():
 
     return answers
 
-def render_app():
-    tab_profile, tab_portfolio = st.tabs(["Perfil de riesgo", "Cartera de inversión"])
-    with tab_profile:
-        render_investor_questionnaire()
+def render_investor_profile_view(RA, RC, RT, sigma_min, sigma_max):
+    st.subheader("Resultados del perfil de riesgo")
+
+    col1, col2 = st.columns(2)
+    col1.markdown(
+        f"""
+        <div style="text-align: center;">
+            <div style="font-size: 18px; font-weight: 500; color: #555;">
+                Apetito de riesgo:
+            </div>
+            <div style="font-size: 36px; font-weight: 800; margin-top: 4px;">
+                {RA}
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+    col2.markdown(
+        f"""
+        <div style="text-align: center;">
+            <div style="font-size: 18px; font-weight: 500; color: #555;">
+                Capacidad de asumir riesgo
+            </div>
+            <div style="font-size: 36px; font-weight: 800; margin-top: 4px;">
+                {RC}
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+    color_tolerance = RISK_COLOR[RT]
+    st.markdown(
+        f"""
+        <div style="text-align: center; font-size: 26px; font-weight: 600; margin-top: 40px">
+            Tolerancia final (RT)
+            <div style="font-size: 48px;font-weight: 800;color: {color_tolerance};margin-top: 10px">
+                {RT}
+            </div>
+            <div style="font-size: 24px;font-weight: 800; color: {color_tolerance};margin-top: 10px">
+                {RISK_PROFILE_DICTIONARY[RT]}
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+    st.subheader("Volatilidad objetivo de la cartera")
+    st.write(
+        f"Rango recomendado de volatilidad anualizada: "
+        f"**{sigma_min * 100:.1f}% – {sigma_max * 100:.1f}%**"
+    )
+
+
+def show_investor_profile(answers):
+    if answers is not None:
+        (sigma_min, sigma_max), RA, RC, RT = investor_target_volatility(**answers)
+
+        # We show the window
+        render_investor_profile_view(RA, RC, RT, sigma_min, sigma_max)
+
+        # Save session state
+        st.session_state["risk_result"] = {
+            "RA": RA,
+            "RC": RC,
+            "RT": RT,
+            "sigma_min": sigma_min,
+            "sigma_max": sigma_max,
+        }
+
+
+    elif "risk_result" in st.session_state:
+        # No update of the questionnaire,
+        # But we can show a past resulta
+        res = st.session_state["risk_result"]
+        render_investor_profile_view(
+            RA=res["RA"],
+            RC=res["RC"],
+            RT=res["RT"],
+            sigma_min=res["sigma_min"],
+            sigma_max=res["sigma_max"],
+        )
+
+    else:
+        # No previous answers. We show info panel
+        st.info("Por favor, completa el cuestionario para calcular tu perfil.")
