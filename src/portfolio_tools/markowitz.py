@@ -35,21 +35,16 @@ def min_max_percentage_renormalize(w: np.ndarray,
     # 1) Limpieza numérica
     w2[np.abs(w2) < tol] = 0.0
 
-    # 2) Cortar por abajo: 0 ó >= min_w
     mask_small = (w2 > 0) & (w2 < min_w)
     w2[mask_small] = 0.0
 
-    # 3) Cortar por arriba
     if max_w < 1.0:
         w2 = np.minimum(w2, max_w)
 
     # 4) Renormalizar
     s = w2.sum()
     if s <= tol:
-        raise ValueError(
-            "Todos los pesos han quedado a cero tras aplicar min_w / max_w. "
-            "Relaja las restricciones."
-        )
+        raise ValueError("All waits are equal to 0. Relax percentages")
 
     w2 /= s
     return w2
@@ -521,7 +516,7 @@ def plot_frontier(n_returns: int,
     volatilities = [portfolio_volatility(w, covmat, periods_per_year) for w in weights]
     retornos_2 = [portfolio_returns(w, returns, method, periods_per_year) for w in weights_2]
     volatilities_2 = [portfolio_volatility(w, covmat, periods_per_year) for w in weights_2]
-    pesos3= maximize_return(0.17, returns, covmat, max_w=max_w)
+    pesos3= maximize_return(0.17, returns, covmat, min_w = 0.025, max_w=0.20)
     rentabilidad = portfolio_returns(pesos3, returns, method, periods_per_year)
     volatilidad = portfolio_volatility(pesos3, covmat, periods_per_year)
     ef = pd.DataFrame({

@@ -2,13 +2,27 @@ import pandas as pd
 import numpy as np
 from typing import Literal, Tuple
 
-from portfolio_tools.markowitz import gmv, msr, ew, random_weights
+from portfolio_tools.markowitz import gmv, msr, ew, random_weights, maximize_return
 from portfolio_tools.return_metrics import portfolio_returns
 from portfolio_tools.risk_metrics import portfolio_volatility, calculate_max_drawdown, calculate_covariance
 
+
+def get_investor_results(returns: pd.DataFrame,
+                         covmat: pd.DataFrame,
+                         rf: float = 0.00,
+                         method: Literal["simple", "log"] = "simple",
+                         periods_per_year: int = 252,
+                         min_w: float = 0.00,
+                         max_w: float = 1.00,
+                         weight_name: str = "weights") -> Tuple[float, float, float]:
+
+    weights = maximize_return(0.24, returns, covmat, min_w = min_w, max_w=max_w)
+    return weights
+
+
 def get_markowtiz_results(train_returns: pd.DataFrame,
                           test_returns: pd.DataFrame,
-                          portfolio_type: Literal["msr", "gmv", "portfolio", "ew", "random"] = "msr",
+                          portfolio_type: Literal["msr", "gmv", "portfolio", "ew", "random", "custom"] = "msr",
                           rf: float = 0.0,
                           method: Literal["simple", "log"] = "simple",
                           periods_per_year: int = 252,
@@ -36,9 +50,9 @@ def get_markowtiz_results(train_returns: pd.DataFrame,
     """
     covmat_train = calculate_covariance(train_returns)
     if portfolio_type == "msr":
-        weights = msr(train_returns, covmat_train, rf, method, periods_per_year, min_w, max_w)
+        weights = msr(train_returns, covmat_train, rf, method, periods_per_year)
     elif portfolio_type == "gmv":
-        weights = gmv(covmat_train, min_w, max_w)
+        weights = gmv(covmat_train)
     elif portfolio_type == "portfolio":
         weights = 0
     elif portfolio_type == "ew":
@@ -46,6 +60,8 @@ def get_markowtiz_results(train_returns: pd.DataFrame,
         weights = ew(train_returns)
     elif portfolio_type == "random":
         weights = random_weights(train_returns)
+    elif portfolio_type == "custom":
+        weights = get_investor_results(train_returns, covmat_train, rf, method, periods_per_year, min_w, max_w)
 
     else:
         raise ValueError(f"Unknown portfolio type: {portfolio_type}")
@@ -66,11 +82,11 @@ def get_markowtiz_results(train_returns: pd.DataFrame,
 
     # We convert it into a dictionary and multiply by 100 to get %
     portfolio_information = {"Model": portfolio_type,
-                   "Returns": float(round(pf_return * 100, 3)),
-                   "Volatility": float(round(pf_volatility * 100, 3)),
-                    "Sharpe Ratio": float(round(portfolio_sharpe_ratio, 3)),
-                   "max_drawdown": float(round(max_drawdown * 100, 3)),
-                   weight_name: np.round(weights * 100, 3) }
+                             "Returns": float(round(pf_return * 100, 3)),
+                             "Volatility": float(round(pf_volatility * 100, 3)),
+                             "Sharpe Ratio": float(round(portfolio_sharpe_ratio, 3)),
+                             "max_drawdown": float(round(max_drawdown * 100, 3)),
+                             weight_name: np.round(weights * 100, 3) }
 
     return portfolio_information
 
@@ -112,7 +128,7 @@ def create_markowitz_table(train_returns: pd.DataFrame,
     tickers = train_returns.columns
 
     if portfolio_types is None:
-        portfolio_types = ["msr", "gmv", "ew", "random"]
+        portfolio_types = ["msr", "gmv", "ew", "random", "custom"]
 
     for portfolio in portfolio_types:
         resultados = get_markowtiz_results(
