@@ -59,7 +59,7 @@ def minimize_volatility(target_return: float,
     init_guess = np.ones(n) / n
 
     # We ensure that there is no short-selling (i.e. no short positions)
-    bounds = [(0, 1)] * n
+    bounds = [(min_w, 1)] * n
 
     # We add the constraints to the model
     # Weights must sum 1 (fully invested)
@@ -82,8 +82,8 @@ def minimize_volatility(target_return: float,
 def maximize_return(target_volatility: float,
                     returns: pd.DataFrame,
                     covmat: np.ndarray,
-                    method: Literal["simple", "log"] = "simple",
-                    periods_per_year: int =252,
+                    method: Literal["simpl  e", "log"] = "simple",
+                    periods_per_year: int = 252,
                     min_w: float = 0.00) -> np.ndarray:
     """
     Returns the optimal weight of the portfolio assets that maximize
@@ -91,11 +91,11 @@ def maximize_return(target_volatility: float,
 
     Parameters
     ----------
-    target_volatility: float. Expected return of the portfolio.
-    returns: pd.DataFrame. Expected return of the portfolio.
+    target_volatility: float. target volatility of the portfolio.
+    returns: pd.DataFrame. Past returns of the portfolio.
     covmat: np.ndarray. Covariance matrix of the portfolio.
-    method: str. "simple" or "log
-    periods_per_year: int. Number of years over which to calculate volatility.
+    method: str. "simple" or "log"
+    periods_per_year: int. Number of periods, n= 252 per yeras, 12 for months over which to calculate volatility.
     min_w: float. Minimum weight of the portfolio.
 
     Returns
@@ -110,7 +110,7 @@ def maximize_return(target_volatility: float,
     init_guess = np.ones(n) / n
 
     # We ensure that there is no short-selling (i.e. no short positions)
-    bounds = [(0, 1)] * n
+    bounds = [(min_w, 1)] * n
 
     # We add the constraints to the model
     # Weights must sum 1 (fully invested)
@@ -156,6 +156,7 @@ def get_weights(n_returns: int,
     """
 
     annualized_returns = annualize_returns(returns, method, periods_per_year)
+    print(annualized_returns)
     # We obtain a series of points based on the min and max returns
     target_returns = np.linspace(annualized_returns.min(), annualized_returns.max(), n_returns)
     # We now obtain the weights for each of the target_returns
@@ -168,6 +169,46 @@ def get_weights(n_returns: int,
 
     return weights
 
+
+def get_weights_from_min_volatility(n_volatilities: int,
+                                    returns: pd.DataFrame,
+                                    covmat: np.ndarray,
+                                    method: Literal["simple", "log"] = "simple",
+                                    periods_per_year: int =252,
+                                    min_w: float = 0) -> np.ndarray:
+    """
+    Returns the optimal weight of the portfolio assets that maximize returns
+    for a given target volatility, returns and a covariance matrix.
+
+    Parameters
+    ----------
+    n_volatilities : int. volatilities of the portfolio
+    returns: pd.DataFrame. Expected return of the portfolio.
+    covmat: np.ndarray. Covariance matrix of the portfolio.
+    method: str. "simple" or "log
+    periods_per_year: int. Number of years over which to calculate volatility.
+    min_w: float. Minimum weight of the portfolio.
+
+    Returns
+    -------
+    np.ndarray: Optimal weight of the portfolio.
+    """
+
+    # we get the returns
+    annualized_returns = annualize_returns(returns, method, periods_per_year)
+    # we obtain the volatilities
+
+    # We obtain a series of points based on the min and max volatility
+    target_volatilities = np.linspace(annualized_returns.min(), annualized_returns.max(), n_volatilities)
+    # We now obtain the weights for each of the target_volatility
+    weights = [maximize_return(target_volatility,
+                               returns,
+                               covmat,
+                               method=method,
+                               periods_per_year=periods_per_year,
+                               min_w=min_w) for target_volatility in target_volatilities]
+
+    return weights
 
 def msr(returns,
         covmat: np.ndarray,

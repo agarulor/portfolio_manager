@@ -17,6 +17,7 @@ def calculate_variance(returns: pd.DataFrame) -> pd.DataFrame:
     """
     return returns.var(axis=0)
 
+
 def calculate_standard_deviation(returns: pd.DataFrame) -> pd.DataFrame:
 
     """
@@ -31,6 +32,7 @@ def calculate_standard_deviation(returns: pd.DataFrame) -> pd.DataFrame:
     pd.Series: Standard deviation per asset.
     """
     return returns.std(axis=0)
+
 
 
 def annualize_variance(variances: pd.DataFrame, periods_per_year: int = 252) -> pd.DataFrame:
@@ -49,6 +51,7 @@ def annualize_variance(variances: pd.DataFrame, periods_per_year: int = 252) -> 
     """
     return variances * periods_per_year
 
+
 def annualize_standard_deviation(standard_deviations: pd.DataFrame, periods_per_year: int = 252) -> pd.DataFrame:
 
     """
@@ -64,6 +67,7 @@ def annualize_standard_deviation(standard_deviations: pd.DataFrame, periods_per_
     pd.Series: Annualized Standard deviations (Var × periods_per_year).
     """
     return standard_deviations * periods_per_year**0.5
+
 
 def calculate_covariance(returns: pd.DataFrame) -> pd.DataFrame:
     """
@@ -95,7 +99,6 @@ def annualize_covariance(covmat: pd.DataFrame, periods_per_year: int = 252) -> p
 
     """
     return covmat * periods_per_year
-
 
 
 def portfolio_volatility(

@@ -6,8 +6,6 @@ from portfolio_tools.markowitz import gmv, msr, ew, random_weights
 from portfolio_tools.return_metrics import portfolio_returns
 from portfolio_tools.risk_metrics import portfolio_volatility, calculate_max_drawdown, calculate_covariance
 
-
-
 def get_markowtiz_results(train_returns: pd.DataFrame,
                           test_returns: pd.DataFrame,
                           portfolio_type: Literal["msr", "gmv", "portfolio", "ew", "random"] = "msr",
@@ -45,17 +43,17 @@ def get_markowtiz_results(train_returns: pd.DataFrame,
         # We calculate the weights for an equally weighted portfolio
         weights = ew(train_returns)
     elif portfolio_type == "random":
-        weights = random_weights(train_returns, min_w)
+        weights = random_weights(train_returns)
 
     else:
         raise ValueError(f"Unknown portfolio type: {portfolio_type}")
 
-    print(portfolio_returns(weights, train_returns, method, periods_per_year))
     # We get the returns
     pf_return = portfolio_returns(weights, test_returns, method, periods_per_year)
 
     # We get the volatility from the test returns
     new_covmat = calculate_covariance(test_returns)
+
     pf_volatility = portfolio_volatility(weights, new_covmat, periods_per_year)
 
     # We calculate the sharpe ratio
@@ -116,13 +114,14 @@ def create_markowitz_table(train_returns: pd.DataFrame,
         resultados = get_markowtiz_results(
             train_returns,
             test_returns,
-            covmat,
             portfolio,
             rf,
             method,
             periods_per_year,
-            min_w)
+            min_w,
+            weight_name,)
         portfolio_results.append(resultados)
+
 
     df_resultados = pd.DataFrame(portfolio_results)
 

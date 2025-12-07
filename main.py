@@ -54,7 +54,7 @@ def main():
     f = calculate_daily_returns(e, method="simple")
 
 
-
+"""
 e = read_price_file("data/processed/prices_20251110-193638.csv")
 f = calculate_daily_returns(e, method="simple")
 
@@ -62,15 +62,15 @@ train_set, test_set = split_data_markowtiz(returns=f, test_date_start="2025-06-0
 
 g = calculate_covariance(train_set)
 
-h = create_markowitz_table(train_set, train_set, g, rf = 0.00, min_w=0.0)
+h = create_markowitz_table(train_set, train_set, g, rf = 0.00, min_w=0.00)
 print(h.head())
 
-plot_frontier(30, train_set, g,  method="simple")
+plot_frontier(30, train_set, g,  method="simple", min_w=0.00)
 
 #h = get_markowtiz_results()
-"""
 
-run_app()
+
+#run_app()
 
 
 if __name__ == "__main__":
