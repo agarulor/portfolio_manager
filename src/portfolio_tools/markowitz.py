@@ -11,6 +11,7 @@ from portfolio_tools.risk_metrics import (
 from scipy.optimize import minimize
 import matplotlib.pyplot as plt
 
+
 def minimize_volatility(target_return: float,
                         returns: pd.DataFrame,
                         covmat: np.ndarray,
@@ -519,8 +520,8 @@ def plot_frontier(n_returns: int,
         gmv_return, gmv_volatility, gmv_drawdown = portfolio_output(returns,
                                                                     covmat,
                                                                     "gmv",
-                                                                    min_w,
-                                                                    max_w)
+                                                                    min_w=min_w,
+                                                                    max_w=max_w)
         ax.plot(gmv_volatility, gmv_return, color='red', marker='o', markersize=12)
 
     ew_return, ew_volatility, ew_drawdown = portfolio_output(returns, covmat, "ew")

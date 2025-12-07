@@ -1,7 +1,7 @@
 import streamlit as st
 from interface.investor_profile_view import render_investor_questionnaire, show_investor_profile, render_sidebar_profile_summary
-from interface.main_interface import apply_global_styles, render_sidebar, render_portfolio
-
+from interface.main_interface import apply_global_styles, render_sidebar
+from interface.render_portfolio import render_portfolio
 
 def run_app():
     st.set_page_config(page_title="Gestor de carteras", layout="centered")
