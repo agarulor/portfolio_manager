@@ -35,10 +35,10 @@ np.random.seed(SEED)
 
 def main():
     """
-    datos = get_stock_prices("data/input/eurostoxx50_csv.csv",
+    datos = get_stock_prices("data/input/ibex_eurostoxx.csv",
                              "ticker_yahoo",
                              "name",
-                             start_date="2015-10-01",
+                             start_date="2020-10-01",
                              )
     datos_2, report, summary = clean_and_align_data(datos, beginning_data=True)
 
@@ -46,16 +46,10 @@ def main():
 
     print(datos_2.head())
 
-
+"""
     #st.title("Análisis de Carteras Markowitz")
 
-    e = read_price_file("data/processed/prices_20251110-193424.csv")
-
-    f = calculate_daily_returns(e, method="simple")
-
-
-"""
-e = read_price_file("data/processed/prices_20251110-193638.csv")
+e = read_price_file("data/processed/prices_20251207-210306.csv")
 f = calculate_daily_returns(e, method="simple")
 
 train_set, test_set = split_data_markowtiz(returns=f, test_date_start="2025-06-01", test_date_end="2025-09-30")

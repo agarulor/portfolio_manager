@@ -253,7 +253,7 @@ def gmv(covmat: pd.DataFrame,
     # Minimize the function to get the MGV
     weights = minimize(lambda w: float(w @ covmat_values @ w),
                    init_guess,
-                   method='COBYLA',
+                   method='SLSQP',
                    bounds=bounds,
                    constraints=constraints,
                    options={'maxiter': 1000})
@@ -331,7 +331,6 @@ def get_weights_from_min_volatility(n_volatilities: int,
     # now we obtain the highest volatility
     stds = calculate_standard_deviation(returns)
     annualized_stds = annualize_standard_deviation(stds, periods_per_year)
-    print(annualized_stds)
     vol_max = annualized_stds.max()
 
     # We obtain a series of points based on the min and max volatility
@@ -479,7 +478,9 @@ def plot_frontier(n_returns: int,
     volatilities = [portfolio_volatility(w, covmat, periods_per_year) for w in weights]
     retornos_2 = [portfolio_returns(w, returns, method, periods_per_year) for w in weights_2]
     volatilities_2 = [portfolio_volatility(w, covmat, periods_per_year) for w in weights_2]
-
+    pesos3= maximize_return(0.17, returns, covmat, max_w=max_w)
+    rentabilidad = portfolio_returns(pesos3, returns, method, periods_per_year)
+    volatilidad = portfolio_volatility(pesos3, covmat, periods_per_year)
     ef = pd.DataFrame({
         "Returns": retornos,
         "Volatility": volatilities
@@ -491,6 +492,7 @@ def plot_frontier(n_returns: int,
     })
     ax = ef.plot.line(x="Volatility", y="Returns", style=style, legend=legend)
     ax.plot(ef_2["Volatility"], ef_2["Returns"], color = "red")
+    ax.plot(volatilidad, rentabilidad, color = "orange", marker='o', markersize=14)
     if plot_msr:
         msr_return, msr_volatility, msr_drawdown = portfolio_output(returns,
                                                                     covmat,
