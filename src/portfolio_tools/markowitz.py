@@ -11,6 +11,49 @@ from portfolio_tools.risk_metrics import (
 from scipy.optimize import minimize
 import matplotlib.pyplot as plt
 
+def min_max_percentage_renormalize(w: np.ndarray,
+                                   min_w: float = 0.00,
+                                   max_w: float = 1.00,
+                                   tol: float = 1e-12) -> np.ndarray:
+    """
+        Obtains the minimal and maximum percentages renormalized weight for the assets
+
+        Parameters
+        ----------
+        w: np.ndarray. Expected return of the portfolio.
+        min_w: float. Minimum weight of the portfolio.
+        max_w: float. Maximum weight of the portfolio.
+        tol: float. Tolerance of the renormalization.
+
+        Returns
+        -------
+        np.ndarray: Optimal weight of the portfolio adjusted
+        """
+
+    w2 = np.array(w, dtype=float, copy=True)
+
+    # 1) Limpieza numérica
+    w2[np.abs(w2) < tol] = 0.0
+
+    # 2) Cortar por abajo: 0 ó >= min_w
+    mask_small = (w2 > 0) & (w2 < min_w)
+    w2[mask_small] = 0.0
+
+    # 3) Cortar por arriba
+    if max_w < 1.0:
+        w2 = np.minimum(w2, max_w)
+
+    # 4) Renormalizar
+    s = w2.sum()
+    if s <= tol:
+        raise ValueError(
+            "Todos los pesos han quedado a cero tras aplicar min_w / max_w. "
+            "Relaja las restricciones."
+        )
+
+    w2 /= s
+    return w2
+
 
 def minimize_volatility(target_return: float,
                         returns: pd.DataFrame,
@@ -45,7 +88,7 @@ def minimize_volatility(target_return: float,
     init_guess = np.ones(n) / n
 
     # We ensure that there is no short-selling (i.e. no short positions)
-    bounds = [(min_w, max_w)] * n
+    bounds = [(0, max_w)] * n
 
     # We add the constraints to the model
     # Weights must sum 1 (fully invested)
@@ -61,8 +104,8 @@ def minimize_volatility(target_return: float,
                       constraints=constraints,
                       bounds=bounds)
 
-
-    return result.x
+    weights = min_max_percentage_renormalize(result.x, min_w, max_w)
+    return weights
 
 
 def maximize_return(target_volatility: float,
@@ -98,7 +141,7 @@ def maximize_return(target_volatility: float,
     init_guess = np.ones(n) / n
 
     # We ensure that there is no short-selling (i.e. no short positions)
-    bounds = [(min_w, max_w)] * n
+    bounds = [(0, max_w)] * n
 
     # We add the constraints to the model
     # Weights must sum 1 (fully invested)
@@ -114,7 +157,8 @@ def maximize_return(target_volatility: float,
                       constraints=constraints,
                       bounds=bounds)
 
-    return result.x
+    weights = min_max_percentage_renormalize(result.x, min_w, max_w)
+    return weights
 
 
 def get_weights(n_returns: int,
@@ -145,7 +189,6 @@ def get_weights(n_returns: int,
     """
 
     annualized_returns = annualize_returns(returns, method, periods_per_year)
-    print(annualized_returns)
     # We obtain a series of points based on the min and max returns
     target_returns = np.linspace(annualized_returns.min(), annualized_returns.max(), n_returns)
     # We now obtain the weights for each of the target_returns
@@ -194,7 +237,7 @@ def msr(returns,
     init_guess = np.ones(n) / n
 
     # We ensure that there is no short-selling (i.e. no short positions)
-    bounds = [(min_w, max_w)] * n
+    bounds = [(0, max_w)] * n
 
     # constraints
     # Weights must sum 1 (fully invested)
@@ -213,7 +256,8 @@ def msr(returns,
                        bounds=bounds
                        )
 
-    return weights.x
+    weights = min_max_percentage_renormalize(weights.x, min_w, max_w)
+    return weights
 
 
 def gmv(covmat: pd.DataFrame,
@@ -242,7 +286,7 @@ def gmv(covmat: pd.DataFrame,
     init_guess = np.ones(n) / n
 
     # We ensure that there is no short-selling (i.e. no short positions)
-    bounds = [(min_w, max_w)] * n
+    bounds = [(0, max_w)] * n
 
     # constraints
     # Weights must sum 1 (fully invested)
@@ -253,15 +297,15 @@ def gmv(covmat: pd.DataFrame,
     # Minimize the function to get the MGV
     weights = minimize(lambda w: float(w @ covmat_values @ w),
                    init_guess,
-                   method='SLSQP',
+                   method='COBYLA',
                    bounds=bounds,
                    constraints=constraints,
-                   options={'maxiter': 1000})
+                   options={'maxiter': 10000})
 
     if not weights.success:
         raise ValueError(f"GMV optimization failed: {weights.message}")
-
-    return weights.x
+    weights = min_max_percentage_renormalize(weights.x, min_w, max_w)
+    return weights
 
 def ew(returns: pd.DataFrame) -> np.ndarray:
     """
@@ -326,7 +370,7 @@ def get_weights_from_min_volatility(n_volatilities: int,
 
     # we obtain the volatilities
     # We first get the min_volatility from gmv
-    gmv_return, gmv_volatility, gmv_drawdown = portfolio_output(returns, covmat, "gmv")
+   # gmv_return, gmv_volatility, gmv_drawdown = portfolio_output(returns, covmat, "gmv")
 
     # now we obtain the highest volatility
     stds = calculate_standard_deviation(returns)
@@ -334,7 +378,7 @@ def get_weights_from_min_volatility(n_volatilities: int,
     vol_max = annualized_stds.max()
 
     # We obtain a series of points based on the min and max volatility
-    target_volatilities = np.linspace(gmv_volatility, vol_max, n_volatilities)
+    target_volatilities = np.linspace(0, vol_max, n_volatilities)
     # We now obtain the weights for each of the target_volatility
     weights = [maximize_return(target_volatility,
                                returns,
@@ -395,7 +439,6 @@ def portfolio_output(returns: pd.DataFrame,
 
     # We get the maximum drawdown
     max_drawdown = calculate_max_drawdown(weights, returns)
-    print(f"Max Drawdown: {max_drawdown}")
     return pf_return, pf_volatility, max_drawdown
 
 
