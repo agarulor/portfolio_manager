@@ -2,38 +2,22 @@ import pandas as pd
 import numpy as np
 from typing import Literal, Tuple
 from portfolio_tools.return_metrics import portfolio_returns, annualize_returns
-from portfolio_tools.risk_metrics import portfolio_volatility, neg_sharpe_ratio, calculate_max_drawdown
+from portfolio_tools.risk_metrics import (
+    portfolio_volatility,
+    neg_sharpe_ratio,
+    calculate_max_drawdown,
+    calculate_standard_deviation,
+    annualize_standard_deviation)
 from scipy.optimize import minimize
 import matplotlib.pyplot as plt
-
-
-def min_percentage_renormalize(w: np.ndarray, min_w: float = 0.00) -> np.ndarray:
-    """
-        Obtains the minimal percentage renormalized weight for the assets
-
-        Parameters
-        ----------
-        w: np.ndarray. Expected return of the portfolio.
-        min_w: float. Minimum weight of the portfolio.
-
-        Returns
-        -------
-        np.ndarray: Optimal weight of the portfolio adjusted
-        """
-
-    w2 = w.copy()
-    w2[w2 < min_w] = 0.0
-    s = w2.sum()
-    return w2 / s if s > 0 else w2
-
-
 
 def minimize_volatility(target_return: float,
                         returns: pd.DataFrame,
                         covmat: np.ndarray,
                         method: Literal["simple", "log"] = "simple",
                         periods_per_year: int =252,
-                        min_w: float = 0.00) -> np.ndarray:
+                        min_w: float = 0.00,
+                        max_w: float = 1.00) -> np.ndarray:
     """
     Returns the optimal weight of the portfolio assets that minimize
     volatility for a given target return, returns and a covariance matrix.
@@ -46,6 +30,7 @@ def minimize_volatility(target_return: float,
     method: str. "simple" or "log
     periods_per_year: int. Number of years over which to calculate volatility.
     min_w: float. Minimum weight of the portfolio.
+    max_w: float. Maximum weight of the portfolio.
 
     Returns
     -------
@@ -59,7 +44,7 @@ def minimize_volatility(target_return: float,
     init_guess = np.ones(n) / n
 
     # We ensure that there is no short-selling (i.e. no short positions)
-    bounds = [(min_w, 1)] * n
+    bounds = [(min_w, max_w)] * n
 
     # We add the constraints to the model
     # Weights must sum 1 (fully invested)
@@ -75,8 +60,8 @@ def minimize_volatility(target_return: float,
                       constraints=constraints,
                       bounds=bounds)
 
-    weights = min_percentage_renormalize(result.x, min_w)
-    return weights
+
+    return result.x
 
 
 def maximize_return(target_volatility: float,
@@ -84,7 +69,8 @@ def maximize_return(target_volatility: float,
                     covmat: np.ndarray,
                     method: Literal["simpl  e", "log"] = "simple",
                     periods_per_year: int = 252,
-                    min_w: float = 0.00) -> np.ndarray:
+                    min_w: float = 0.00,
+                    max_w: float = 1.00) -> np.ndarray:
     """
     Returns the optimal weight of the portfolio assets that maximize
     return for a given target volatility, returns and a covariance matrix.
@@ -97,6 +83,7 @@ def maximize_return(target_volatility: float,
     method: str. "simple" or "log"
     periods_per_year: int. Number of periods, n= 252 per yeras, 12 for months over which to calculate volatility.
     min_w: float. Minimum weight of the portfolio.
+    max_w: float. Maximum weight of the portfolio.
 
     Returns
     -------
@@ -110,7 +97,7 @@ def maximize_return(target_volatility: float,
     init_guess = np.ones(n) / n
 
     # We ensure that there is no short-selling (i.e. no short positions)
-    bounds = [(min_w, 1)] * n
+    bounds = [(min_w, max_w)] * n
 
     # We add the constraints to the model
     # Weights must sum 1 (fully invested)
@@ -126,8 +113,7 @@ def maximize_return(target_volatility: float,
                       constraints=constraints,
                       bounds=bounds)
 
-    weights = min_percentage_renormalize(result.x, min_w)
-    return weights
+    return result.x
 
 
 def get_weights(n_returns: int,
@@ -135,7 +121,8 @@ def get_weights(n_returns: int,
                 covmat: np.ndarray,
                 method: Literal["simple", "log"] = "simple",
                 periods_per_year: int =252,
-                min_w: float = 0) -> np.ndarray:
+                min_w: float = 0,
+                max_w: float = 1.00) -> np.ndarray:
 
     """
     Returns the optimal weight of the portfolio assets that minimize
@@ -149,6 +136,7 @@ def get_weights(n_returns: int,
     method: str. "simple" or "log
     periods_per_year: int. Number of years over which to calculate volatility.
     min_w: float. Minimum weight of the portfolio.
+    max_w: float. Maximum weight of the portfolio.
 
     Returns
     -------
@@ -165,57 +153,19 @@ def get_weights(n_returns: int,
                                    covmat,
                                    method=method,
                                    periods_per_year=periods_per_year,
-                                   min_w=min_w) for target_return in target_returns]
+                                   min_w=min_w,
+                                   max_w=max_w) for target_return in target_returns]
 
     return weights
 
-
-def get_weights_from_min_volatility(n_volatilities: int,
-                                    returns: pd.DataFrame,
-                                    covmat: np.ndarray,
-                                    method: Literal["simple", "log"] = "simple",
-                                    periods_per_year: int =252,
-                                    min_w: float = 0) -> np.ndarray:
-    """
-    Returns the optimal weight of the portfolio assets that maximize returns
-    for a given target volatility, returns and a covariance matrix.
-
-    Parameters
-    ----------
-    n_volatilities : int. volatilities of the portfolio
-    returns: pd.DataFrame. Expected return of the portfolio.
-    covmat: np.ndarray. Covariance matrix of the portfolio.
-    method: str. "simple" or "log
-    periods_per_year: int. Number of years over which to calculate volatility.
-    min_w: float. Minimum weight of the portfolio.
-
-    Returns
-    -------
-    np.ndarray: Optimal weight of the portfolio.
-    """
-
-    # we get the returns
-    annualized_returns = annualize_returns(returns, method, periods_per_year)
-    # we obtain the volatilities
-
-    # We obtain a series of points based on the min and max volatility
-    target_volatilities = np.linspace(annualized_returns.min(), annualized_returns.max(), n_volatilities)
-    # We now obtain the weights for each of the target_volatility
-    weights = [maximize_return(target_volatility,
-                               returns,
-                               covmat,
-                               method=method,
-                               periods_per_year=periods_per_year,
-                               min_w=min_w) for target_volatility in target_volatilities]
-
-    return weights
 
 def msr(returns,
         covmat: np.ndarray,
         rf: float = 0,
         method: Literal["simple", "log"] = "simple",
         periods_per_year: int = 252,
-        min_w: float = 0.00
+        min_w: float = 0.00,
+        max_w: float = 1.00,
         ) -> np.ndarray:
     """
     Returns the weights of the portfolio assets that maximize the Sharpe Ratio
@@ -230,6 +180,7 @@ def msr(returns,
     method: str. "simple" or "log
     periods_per_year: int. Number of years over which to calculate volatility.
     min_w: float. Minimum weight of the portfolio.
+    max_w: float. Maximum weight of the portfolio.
 
     Returns
     -------
@@ -242,7 +193,7 @@ def msr(returns,
     init_guess = np.ones(n) / n
 
     # We ensure that there is no short-selling (i.e. no short positions)
-    bounds = [(0, 1)] * n
+    bounds = [(min_w, max_w)] * n
 
     # constraints
     # Weights must sum 1 (fully invested)
@@ -261,15 +212,12 @@ def msr(returns,
                        bounds=bounds
                        )
 
-    # We adjust for min % of assets
-    weights = min_percentage_renormalize(weights.x, min_w)
-
-    return weights
-
+    return weights.x
 
 
 def gmv(covmat: pd.DataFrame,
-        min_w: float = 0.0) -> np.ndarray:
+        min_w: float = 0.0,
+        max_w: float = 1.0) -> np.ndarray:
     """
     Returns the weights of the portfolio assets that helps to meet the GMV
 
@@ -277,6 +225,7 @@ def gmv(covmat: pd.DataFrame,
     ----------
     covmat: np.ndarray. Covariance matrix of the portfolio.
     min_w: float. Minimum weight of the portfolio.
+    max_w: float. Maximum weight of the portfolio.
 
     Returns
     -------
@@ -292,7 +241,7 @@ def gmv(covmat: pd.DataFrame,
     init_guess = np.ones(n) / n
 
     # We ensure that there is no short-selling (i.e. no short positions)
-    bounds = [(min_w, 1.0)] * n
+    bounds = [(min_w, max_w)] * n
 
     # constraints
     # Weights must sum 1 (fully invested)
@@ -348,6 +297,54 @@ def random_weights(returns: pd.DataFrame) -> np.ndarray:
     # We return the weights
     return np.random.dirichlet([0.15] * n)
 
+def get_weights_from_min_volatility(n_volatilities: int,
+                                    returns: pd.DataFrame,
+                                    covmat: np.ndarray,
+                                    method: Literal["simple", "log"] = "simple",
+                                    periods_per_year: int =252,
+                                    min_w: float = 0,
+                                    max_w: float = 0) -> np.ndarray:
+    """
+    Returns the optimal weight of the portfolio assets that maximize returns
+    for a given target volatility, returns and a covariance matrix.
+
+    Parameters
+    ----------
+    n_volatilities : int. volatilities of the portfolio
+    returns: pd.DataFrame. Expected return of the portfolio.
+    covmat: np.ndarray. Covariance matrix of the portfolio.
+    method: str. "simple" or "log
+    periods_per_year: int. Number of years over which to calculate volatility.
+    min_w: float. Minimum weight of the portfolio.
+    max_w: float. Maximum weight of the portfolio.
+
+    Returns
+    -------
+    np.ndarray: Optimal weight of the portfolio.
+    """
+
+    # we obtain the volatilities
+    # We first get the min_volatility from gmv
+    gmv_return, gmv_volatility, gmv_drawdown = portfolio_output(returns, covmat, "gmv")
+
+    # now we obtain the highest volatility
+    stds = calculate_standard_deviation(returns)
+    annualized_stds = annualize_standard_deviation(stds, periods_per_year)
+    print(annualized_stds)
+    vol_max = annualized_stds.max()
+
+    # We obtain a series of points based on the min and max volatility
+    target_volatilities = np.linspace(gmv_volatility, vol_max, n_volatilities)
+    # We now obtain the weights for each of the target_volatility
+    weights = [maximize_return(target_volatility,
+                               returns,
+                               covmat,
+                               method=method,
+                               periods_per_year=periods_per_year,
+                               min_w=min_w,
+                               max_w= max_w) for target_volatility in target_volatilities]
+
+    return weights
 
 
 def portfolio_output(returns: pd.DataFrame,
@@ -356,7 +353,8 @@ def portfolio_output(returns: pd.DataFrame,
                      rf: float = 0.0,
                      method: Literal["simple", "log"] = "simple",
                      periods_per_year: int = 252,
-                     min_w: float = 0.00) -> Tuple[float, float, float]:
+                     min_w: float = 0.00,
+                     max_w: float = 1.00) -> Tuple[float, float, float]:
     """
     Returns the returns and volatility of a portfolio given weights of the portfolio
 
@@ -369,15 +367,16 @@ def portfolio_output(returns: pd.DataFrame,
     method: str. "simple" or "log
     periods_per_year: int. Number of years over which to calculate volatility.
     min_w: float. Minimum weight of the portfolio.
+    max_w: float. Maximum weight of the portfolio.
 
     Returns
     -------
     np.ndarray: Weights of the portfolio.
     """
     if portfolio_type == "msr":
-        weights = msr(returns, covmat, rf, method, periods_per_year, min_w)
+        weights = msr(returns, covmat, rf, method, periods_per_year, min_w, max_w)
     elif portfolio_type == "gmv":
-        weights = gmv(covmat, min_w)
+        weights = gmv(covmat, min_w, max_w)
     elif portfolio_type == "portfolio":
         weights = 0
     elif portfolio_type == "ew":
@@ -399,13 +398,15 @@ def portfolio_output(returns: pd.DataFrame,
     print(f"Max Drawdown: {max_drawdown}")
     return pf_return, pf_volatility, max_drawdown
 
+
 def get_cml(target_volatility: float,
             returns: pd.DataFrame,
             covmat: pd.DataFrame,
             rf: float = 0.0,
             method: Literal["simple", "log"] = "simple",
             periods_per_year: int = 252,
-            min_w: float = 0.00):
+            min_w: float = 0.00,
+            max_w: float = 1.00) -> pd.DataFrame:
 
     """
     It helps an investor to select a point of the CML given a
@@ -420,6 +421,7 @@ def get_cml(target_volatility: float,
     method: str. "simple" or "log
     periods_per_year: int. Number of years over which to calculate volatility.
     min_w: float. Minimum weight of the portfolio.
+    max_w: float. Maximum weight of the portfolio.
 
     Returns
     -------
@@ -431,7 +433,7 @@ def get_cml(target_volatility: float,
         Ratio de Sharpe del punto en la CML, usando rf.
     """
     # We first obtain the msr
-    sharpe_w = msr(returns, covmat, rf, method, periods_per_year, min_w)
+    sharpe_w = msr(returns, covmat, rf, method, periods_per_year, min_w, max_w)
 
     # We get the returns
     pf_return = portfolio_returns(sharpe_w, returns, method, periods_per_year)
@@ -462,6 +464,7 @@ def plot_frontier(n_returns: int,
                   method: Literal["simple", "log"] = "simple",
                   periods_per_year: int = 252,
                   min_w: float = 0.00,
+                  max_w: float = 1.00,
                   plot_msr = True,
                   plot_cml = True,
                   plot_gmv = True,
@@ -469,16 +472,33 @@ def plot_frontier(n_returns: int,
                   legend: bool = False) -> plt.Figure:
 
 
-    weights = get_weights(n_returns, returns, covmat, method, periods_per_year, min_w)
+    weights = get_weights(n_returns, returns, covmat, method, periods_per_year, min_w, max_w)
+    weights_2 = get_weights_from_min_volatility(n_returns, returns, covmat, method, periods_per_year, min_w, max_w)
     retornos = [portfolio_returns(w, returns, method,periods_per_year) for w in weights]
     volatilities = [portfolio_volatility(w, covmat, periods_per_year) for w in weights]
+    retornos_2 = [portfolio_returns(w, returns, method, periods_per_year) for w in weights_2]
+    volatilities_2 = [portfolio_volatility(w, covmat, periods_per_year) for w in weights_2]
+
     ef = pd.DataFrame({
         "Returns": retornos,
         "Volatility": volatilities
     })
+
+    ef_2 = pd.DataFrame({
+        "Returns": retornos_2,
+        "Volatility": volatilities_2
+    })
     ax = ef.plot.line(x="Volatility", y="Returns", style=style, legend=legend)
+    ax.plot(ef_2["Volatility"], ef_2["Returns"], color = "red")
     if plot_msr:
-        msr_return, msr_volatility, msr_drawdown = portfolio_output(returns, covmat, "msr", rf, method, periods_per_year, min_w)
+        msr_return, msr_volatility, msr_drawdown = portfolio_output(returns,
+                                                                    covmat,
+                                                                    "msr",
+                                                                    rf,
+                                                                    method,
+                                                                    periods_per_year,
+                                                                    min_w,
+                                                                    max_w)
         ax.plot(msr_volatility, msr_return, color='midnightblue', marker='o', markersize=12)
 
         if plot_cml:
@@ -490,12 +510,17 @@ def plot_frontier(n_returns: int,
                                                                              covmat,
                                                                              rf, method,
                                                                              periods_per_year,
-                                                                             min_w)
+                                                                             min_w,
+                                                                             max_w)
             ax.plot(cml_x, cml_y, color='green', marker='o', linestyle='dashed', linewidth=2, markersize=10)
             ax.plot(cml_volatility, cml_return, color='yellow', marker='o', markersize=16)
 
     if plot_gmv:
-        gmv_return, gmv_volatility, gmv_drawdown = portfolio_output(returns, covmat, "gmv")
+        gmv_return, gmv_volatility, gmv_drawdown = portfolio_output(returns,
+                                                                    covmat,
+                                                                    "gmv",
+                                                                    min_w,
+                                                                    max_w)
         ax.plot(gmv_volatility, gmv_return, color='red', marker='o', markersize=12)
 
     ew_return, ew_volatility, ew_drawdown = portfolio_output(returns, covmat, "ew")

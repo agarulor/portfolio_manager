@@ -13,6 +13,7 @@ def get_markowtiz_results(train_returns: pd.DataFrame,
                           method: Literal["simple", "log"] = "simple",
                           periods_per_year: int = 252,
                           min_w: float = 0.00,
+                          max_w: float = 1.00,
                           weight_name: str = "weights") -> Tuple[float, float, float]:
     """
     Returns the returns and volatility of a portfolio given weights of the portfolio
@@ -26,6 +27,7 @@ def get_markowtiz_results(train_returns: pd.DataFrame,
     method: str. "simple" or "log
     periods_per_year: int. Number of years over which to calculate volatility.
     min_w: float. Minimum weight of the portfolio.
+    max_w: float. Maximum weight of the portfolio.
     weight_name: str. Name of the weight column.
 
     Returns
@@ -34,9 +36,9 @@ def get_markowtiz_results(train_returns: pd.DataFrame,
     """
     covmat_train = calculate_covariance(train_returns)
     if portfolio_type == "msr":
-        weights = msr(train_returns, covmat_train, rf, method, periods_per_year, min_w)
+        weights = msr(train_returns, covmat_train, rf, method, periods_per_year, min_w, max_w)
     elif portfolio_type == "gmv":
-        weights = gmv(covmat_train, min_w)
+        weights = gmv(covmat_train, min_w, max_w)
     elif portfolio_type == "portfolio":
         weights = 0
     elif portfolio_type == "ew":
@@ -81,6 +83,7 @@ def create_markowitz_table(train_returns: pd.DataFrame,
                            method: Literal["simple", "log"] = "simple",
                            periods_per_year: int = 252,
                            min_w: float = 0.00,
+                           max_w: float = 1.00,
                            weight_name: str = "weights"
                            ) -> pd.DataFrame:
     """
@@ -96,6 +99,7 @@ def create_markowitz_table(train_returns: pd.DataFrame,
     method: str. "simple" or "log
     periods_per_year: int. Number of years over which to calculate volatility.
     min_w: float. Minimum weight of the portfolio.
+    max_w: float. Maximum weight of the portfolio.
     weight_name: str. Name of the weight column.
 
     Returns
@@ -119,6 +123,7 @@ def create_markowitz_table(train_returns: pd.DataFrame,
             method,
             periods_per_year,
             min_w,
+            max_w,
             weight_name,)
         portfolio_results.append(resultados)
 

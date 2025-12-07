@@ -62,10 +62,10 @@ train_set, test_set = split_data_markowtiz(returns=f, test_date_start="2025-06-0
 
 g = calculate_covariance(train_set)
 
-h = create_markowitz_table(train_set, train_set, g, rf = 0.00, min_w=0.00)
+h = create_markowitz_table(train_set, train_set, g, rf = 0.00, min_w=0.01, max_w=0.25)
 print(h.head())
 
-plot_frontier(30, train_set, g,  method="simple", min_w=0.00)
+plot_frontier(60, train_set, g,  method="simple", min_w=0.03, max_w=0.25)
 
 #h = get_markowtiz_results()
 
