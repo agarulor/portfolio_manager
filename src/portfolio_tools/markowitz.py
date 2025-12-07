@@ -516,7 +516,7 @@ def plot_frontier(n_returns: int,
     volatilities = [portfolio_volatility(w, covmat, periods_per_year) for w in weights]
     retornos_2 = [portfolio_returns(w, returns, method, periods_per_year) for w in weights_2]
     volatilities_2 = [portfolio_volatility(w, covmat, periods_per_year) for w in weights_2]
-    pesos3= maximize_return(0.17, returns, covmat, min_w = 0.025, max_w=0.20)
+    pesos3= maximize_return(0.24, returns, covmat, min_w = 0.025, max_w=0.20)
     rentabilidad = portfolio_returns(pesos3, returns, method, periods_per_year)
     volatilidad = portfolio_volatility(pesos3, covmat, periods_per_year)
     ef = pd.DataFrame({
