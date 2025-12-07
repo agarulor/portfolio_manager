@@ -292,7 +292,7 @@ def gmv(covmat: pd.DataFrame,
     init_guess = np.ones(n) / n
 
     # We ensure that there is no short-selling (i.e. no short positions)
-    bounds = [(0, 1.0)] * n
+    bounds = [(min_w, 1.0)] * n
 
     # constraints
     # Weights must sum 1 (fully invested)
@@ -308,8 +308,10 @@ def gmv(covmat: pd.DataFrame,
                    constraints=constraints,
                    options={'maxiter': 1000})
 
-    weights = min_percentage_renormalize(weights.x, min_w)
-    return weights
+    if not weights.success:
+        raise ValueError(f"GMV optimization failed: {weights.message}")
+
+    return weights.x
 
 def ew(returns: pd.DataFrame) -> np.ndarray:
     """
