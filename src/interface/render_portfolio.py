@@ -12,7 +12,7 @@ from portfolio_tools.return_metrics import calculate_daily_returns
 from portfolio_tools.risk_metrics import calculate_covariance
 
 from portfolio_tools.markowitz import plot_frontier
-from portfolio_management.markowitz_portfolios import create_markowitz_table, get_markowtiz_results
+from portfolio_management.markowitz_portfolios import create_markowitz_table, get_markowtiz_results, get_initial_portfolio, show_initial_portfolio
 from data_management.dataset_preparation import split_data_markowtiz
 from investor_information.investor_profile import investor_target_volatility
 from types import MappingProxyType
@@ -64,8 +64,8 @@ def render_portfolio():
 
     covmat = calculate_covariance(train_set)
 
-    df_resultados = create_markowitz_table(train_returns=train_set,
-                                           test_returns=train_set,
+
+    df_resultados = show_initial_portfolio(train_set,
                                            min_w=0.025,
                                            max_w=0.15,
                                            rf_annual = 0.035,
