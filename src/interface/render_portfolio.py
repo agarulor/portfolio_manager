@@ -1,7 +1,8 @@
 import sys
 import os
 
-from portfolio_management.markowitz_portfolios import create_markowitz_table  # ajusta el path a donde tengas la función
+import pandas as pd
+
 from portfolio_tools.risk_metrics import calculate_covariance  # si quieres usar covmat
 sys.path.append(os.path.join(os.path.dirname(__file__), "src"))
 import streamlit as st
@@ -12,7 +13,8 @@ from portfolio_tools.return_metrics import calculate_daily_returns
 from portfolio_tools.risk_metrics import calculate_covariance
 
 from portfolio_tools.markowitz import plot_frontier
-from portfolio_management.markowitz_portfolios import create_markowitz_table, get_markowtiz_results, get_initial_portfolio, show_initial_portfolio
+from portfolio_management.markowitz_portfolios import get_initial_portfolio, show_initial_portfolio, \
+    get_investor_initial_portfolio
 from data_management.dataset_preparation import split_data_markowtiz
 from investor_information.investor_profile import investor_target_volatility
 from types import MappingProxyType
@@ -30,6 +32,9 @@ RISK_PROFILE_DICTIONARY = MappingProxyType({
     6: "Perfil agresivo de riesgo"
 })
 
+
+def show_portfolio(returns: pd.DataFrame, weights: np.ndarray) -> None:
+    a = 1
 
 def render_portfolio():
     if "risk_result" not in st.session_state:
@@ -53,7 +58,7 @@ def render_portfolio():
     # -----------------------------
     # AQUÍ IMPRIMES LA TABLA
     # -----------------------------
-    st.subheader("Comparativa de carteras (Markowitz)")
+    st.subheader("Cartera de inversión recomendada")
 
     # covmat no lo usas realmente dentro de create_markowitz_table,
     # pero si quieres ser consistente puedes calcularlo:
@@ -65,11 +70,11 @@ def render_portfolio():
     covmat = calculate_covariance(train_set)
 
 
-    df_resultados = show_initial_portfolio(train_set,
+    df_resultados, df_weights = get_investor_initial_portfolio(train_set,
                                            min_w=0.0,
-                                           max_w=1,
+                                           max_w=0.19,
                                            rf_annual = 0.035,
-                                           custom_target_volatility=0.00)
+                                           custom_target_volatility=0.25)
 
     # Versión interactiva
     st.dataframe(
@@ -83,7 +88,7 @@ def render_portfolio():
         )
     )
 
-    # Si prefieres una tabla estática:
-    # st.table(df_resultados)
-
-    st.info("La tabla muestra rentabilidad, volatilidad, sharpe, max drawdown y pesos de cada tipo de cartera.")
+    # Versión interactiva
+    st.dataframe(
+        df_weights.style.format()
+    )
