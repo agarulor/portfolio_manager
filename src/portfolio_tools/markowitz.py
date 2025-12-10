@@ -506,6 +506,7 @@ def plot_frontier(n_returns: int,
                   plot_msr = True,
                   plot_cml = True,
                   plot_gmv = True,
+                  custom_target_volatility: float = 0.15,
                   style: str = '.-',
                   legend: bool = False) -> plt.Figure:
 
@@ -516,7 +517,7 @@ def plot_frontier(n_returns: int,
     volatilities = [portfolio_volatility(w, covmat, periods_per_year) for w in weights]
     retornos_2 = [portfolio_returns(w, returns, method, periods_per_year) for w in weights_2]
     volatilities_2 = [portfolio_volatility(w, covmat, periods_per_year) for w in weights_2]
-    pesos3= maximize_return(0.24, returns, covmat, min_w = 0.025, max_w=0.20)
+    pesos3= maximize_return(custom_target_volatility, returns, covmat, min_w=min_w, max_w=max_w)
     rentabilidad = portfolio_returns(pesos3, returns, method, periods_per_year)
     volatilidad = portfolio_volatility(pesos3, covmat, periods_per_year)
     ef = pd.DataFrame({
@@ -537,9 +538,7 @@ def plot_frontier(n_returns: int,
                                                                     "msr",
                                                                     rf,
                                                                     method,
-                                                                    periods_per_year,
-                                                                    min_w,
-                                                                    max_w)
+                                                                    periods_per_year)
         ax.plot(msr_volatility, msr_return, color='midnightblue', marker='o', markersize=12)
 
         if plot_cml:
@@ -550,18 +549,14 @@ def plot_frontier(n_returns: int,
                                                                              returns,
                                                                              covmat,
                                                                              rf, method,
-                                                                             periods_per_year,
-                                                                             min_w,
-                                                                             max_w)
+                                                                             periods_per_year)
             ax.plot(cml_x, cml_y, color='green', marker='o', linestyle='dashed', linewidth=2, markersize=10)
             ax.plot(cml_volatility, cml_return, color='yellow', marker='o', markersize=16)
 
     if plot_gmv:
         gmv_return, gmv_volatility, gmv_drawdown = portfolio_output(returns,
                                                                     covmat,
-                                                                    "gmv",
-                                                                    min_w=min_w,
-                                                                    max_w=max_w)
+                                                                    "gmv")
         ax.plot(gmv_volatility, gmv_return, color='red', marker='o', markersize=12)
 
     ew_return, ew_volatility, ew_drawdown = portfolio_output(returns, covmat, "ew")

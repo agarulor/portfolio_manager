@@ -1,8 +1,6 @@
 import sys
 import os
 
-
-
 sys.path.append(os.path.join(os.path.dirname(__file__), "src"))
 from app.run_app import run_app
 import streamlit as st
@@ -52,20 +50,16 @@ def main():
 e = read_price_file("data/processed/prices_20251207-210306.csv")
 f = calculate_daily_returns(e, method="simple")
 
-train_set, test_set = split_data_markowtiz(returns=f, test_date_start="2025-06-01", test_date_end="2025-09-30")
+train_set, test_set = split_data_markowtiz(returns=f, test_date_start="2024-10-01", test_date_end="2025-09-30")
 
 g = calculate_covariance(train_set)
-#run_app()
-h = create_markowitz_table(train_set, test_set, g, rf = 0.000, min_w=0.00, max_w=0.15)
-print(h.head())
 
-plot_frontier(60, train_set, g,  method="simple", min_w=0.00, max_w=1)
+#h = create_markowitz_table(train_set, test_set, g, rf = 0.000, min_w=0.025, max_w=0.16, custom_target_volatility=0.26)
 
-#h = get_markowtiz_results()
+#print(h)
+run_app()
+#plot_frontier(60, train_set, g,  method="simple", min_w=0.025, max_w=0.20, custom_target_volatility=0.26)
 
 
 if __name__ == "__main__":
     main()
-
-
-

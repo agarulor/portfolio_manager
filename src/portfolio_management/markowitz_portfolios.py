@@ -7,27 +7,55 @@ from portfolio_tools.return_metrics import portfolio_returns
 from portfolio_tools.risk_metrics import portfolio_volatility, calculate_max_drawdown, calculate_covariance
 
 
+# We create an aux function for the client case. In this case, we add the risk free asset to the potential portfolio
+def add_risk_free_asset(
+        returns: pd.DataFrame,
+        covmat: pd.DataFrame,
+        rf_annual: float,
+        periods_per_year: int) -> Tuple[pd.DataFrame, np.ndarray]:
+
+    # we adjust it to the number of periods (approximately)
+    rf_per_period = (1 + rf_annual)**(1/periods_per_year) - 1
+
+    rf_series = pd.Series(rf_per_period, index=returns.index, name="RISK_FREE")
+
+    # We add this new column to the returns dataframe
+    returns_ext = pd.concat([returns, rf_series], axis=1)
+
+    # We increase the covmat matrix by adding the new asset, taking into account that it has a VAR = 0 and COV = 0
+    # with any other risky asset
+    n = covmat.shape[0]
+    cov_ext = np.zeros((n + 1, n + 1))
+    cov_ext[:n, :n] = covmat
+
+    return returns_ext, cov_ext
+
+
 def get_investor_results(returns: pd.DataFrame,
                          covmat: pd.DataFrame,
-                         rf: float = 0.00,
                          method: Literal["simple", "log"] = "simple",
                          periods_per_year: int = 252,
                          min_w: float = 0.00,
                          max_w: float = 1.00,
-                         weight_name: str = "weights") -> Tuple[float, float, float]:
+                         rf_annual: float | None = None,
+                         custom_target_volatility: float = 0.15) -> Tuple[float, float, float]:
 
-    weights = maximize_return(0.24, returns, covmat, min_w = min_w, max_w=max_w)
+    if rf_annual is None:
+        returns, covmat = add_risk_free_asset(returns, covmat, rf_annual, periods_per_year)
+
+    weights = maximize_return(custom_target_volatility, returns, covmat, min_w = min_w, max_w=max_w)
     return weights
 
 
 def get_markowtiz_results(train_returns: pd.DataFrame,
                           test_returns: pd.DataFrame,
                           portfolio_type: Literal["msr", "gmv", "portfolio", "ew", "random", "custom"] = "msr",
-                          rf: float = 0.0,
                           method: Literal["simple", "log"] = "simple",
                           periods_per_year: int = 252,
                           min_w: float = 0.00,
                           max_w: float = 1.00,
+                          rf_annual: float | None = None,
+                          custom_target_volatility: float = 0.15,
                           weight_name: str = "weights") -> Tuple[float, float, float]:
     """
     Returns the returns and volatility of a portfolio given weights of the portfolio
@@ -36,21 +64,21 @@ def get_markowtiz_results(train_returns: pd.DataFrame,
     ----------
     train_returns: pd.DataFrame. Expected return of the portfolio.
     test_returns: pd.DataFrame. Expected return of the portfolio.
-    rf: float. Risk-free rate.
     portfolio_type: Literal["msr", "gmv", "portfolio", "ew", "random"] = "msr"
     method: str. "simple" or "log
     periods_per_year: int. Number of years over which to calculate volatility.
     min_w: float. Minimum weight of the portfolio.
     max_w: float. Maximum weight of the portfolio.
+    custom_target_volatility: float. Custom target volatility.
     weight_name: str. Name of the weight column.
-
+    rf_annual: float. Risk free annual.
     Returns
     -------
     dictionary: With name of the type of model, returns, volatility, max drawdown and weights
     """
     covmat_train = calculate_covariance(train_returns)
     if portfolio_type == "msr":
-        weights = msr(train_returns, covmat_train, rf, method, periods_per_year)
+        weights = msr(train_returns, covmat_train, rf_annual, method, periods_per_year)
     elif portfolio_type == "gmv":
         weights = gmv(covmat_train)
     elif portfolio_type == "portfolio":
@@ -61,7 +89,14 @@ def get_markowtiz_results(train_returns: pd.DataFrame,
     elif portfolio_type == "random":
         weights = random_weights(train_returns)
     elif portfolio_type == "custom":
-        weights = get_investor_results(train_returns, covmat_train, rf, method, periods_per_year, min_w, max_w)
+        weights = get_investor_results(train_returns,
+                                       covmat_train,
+                                       method,
+                                       periods_per_year,
+                                       min_w,
+                                       max_w,
+                                       rf_annual,
+                                       custom_target_volatility)
 
     else:
         raise ValueError(f"Unknown portfolio type: {portfolio_type}")
@@ -75,7 +110,7 @@ def get_markowtiz_results(train_returns: pd.DataFrame,
     pf_volatility = portfolio_volatility(weights, new_covmat, periods_per_year)
 
     # We calculate the sharpe ratio
-    portfolio_sharpe_ratio = (pf_return - rf) / pf_volatility
+    portfolio_sharpe_ratio = (pf_return - rf_annual) / pf_volatility
 
     # We get the maximum drawdown
     max_drawdown = calculate_max_drawdown(weights, test_returns)
@@ -93,13 +128,13 @@ def get_markowtiz_results(train_returns: pd.DataFrame,
 
 def create_markowitz_table(train_returns: pd.DataFrame,
                            test_returns: pd.DataFrame,
-                           covmat: pd.DataFrame,
                            portfolio_types=None,
-                           rf: float = 0.0,
                            method: Literal["simple", "log"] = "simple",
                            periods_per_year: int = 252,
                            min_w: float = 0.00,
                            max_w: float = 1.00,
+                           rf_annual: float = None,
+                           custom_target_volatility: float = 0.15,
                            weight_name: str = "weights"
                            ) -> pd.DataFrame:
     """
@@ -109,18 +144,18 @@ def create_markowitz_table(train_returns: pd.DataFrame,
     ----------
     train_returns: pd.DataFrame. Expected return of the portfolio.
     test_returns: pd.DataFrame. Expected return of the portfolio.
-    covmat: np.ndarray. Covariance matrix of the portfolio.
-    rf: float. Risk-free rate.
     portfolio_types: List with they type of portfolio names.
     method: str. "simple" or "log
     periods_per_year: int. Number of years over which to calculate volatility.
     min_w: float. Minimum weight of the portfolio.
     max_w: float. Maximum weight of the portfolio.
+    custom_target_volatility: float. Custom target volatility for potential investor
     weight_name: str. Name of the weight column.
+    rf_annual: float. Risk free annual.
 
     Returns
     -------
-    df_resultados : pd.DataFrame With name of the type of model, returns, volatility, max drawdown and weights
+    df_results : pd.DataFrame With name of the type of model, returns, volatility, max drawdown and weights
     """
     portfolio_results = []
 
@@ -130,29 +165,31 @@ def create_markowitz_table(train_returns: pd.DataFrame,
     if portfolio_types is None:
         portfolio_types = ["msr", "gmv", "ew", "random", "custom"]
 
+
     for portfolio in portfolio_types:
         resultados = get_markowtiz_results(
             train_returns,
             test_returns,
             portfolio,
-            rf,
             method,
             periods_per_year,
             min_w,
             max_w,
-            weight_name,)
+            rf_annual,
+            custom_target_volatility,
+            weight_name)
         portfolio_results.append(resultados)
 
 
-    df_resultados = pd.DataFrame(portfolio_results)
+    df_results = pd.DataFrame(portfolio_results)
 
     # We extract the column weights
-    new_columns = df_resultados[weight_name].apply(pd.Series)
+    new_columns = df_results[weight_name].apply(pd.Series)
 
     # we add the ticker names
     new_columns.columns = tickers
 
     # We join it to the dataframe replacing weights
-    df_resultados = pd.concat([df_resultados.drop(weight_name, axis=1), new_columns], axis=1)
+    df_results = pd.concat([df_results.drop(weight_name, axis=1), new_columns], axis=1)
 
-    return df_resultados
+    return df_results

@@ -15,12 +15,20 @@ from portfolio_tools.markowitz import plot_frontier
 from portfolio_management.markowitz_portfolios import create_markowitz_table, get_markowtiz_results
 from data_management.dataset_preparation import split_data_markowtiz
 from investor_information.investor_profile import investor_target_volatility
-
+from types import MappingProxyType
 from interface.tables import show_table
 
 import os
 import random
 import numpy as np
+RISK_PROFILE_DICTIONARY = MappingProxyType({
+    1: "Perfil bajo de riesgo",
+    2: "Perfil medio-bajo de riesgo",
+    3: "Perfil medio de riesgo",
+    4: "Perfil medio-alto de riesgo",
+    5: "Perfil alto de riesgo",
+    6: "Perfil agresivo de riesgo"
+})
 
 
 def render_portfolio():
@@ -52,21 +60,16 @@ def render_portfolio():
     e = read_price_file("data/processed/prices_20251110-193638.csv")
     f = calculate_daily_returns(e, method="simple")
 
-    train_set, test_set = split_data_markowtiz(returns=f, test_date_start="2025-06-01", test_date_end="2025-09-30")
+    train_set, test_set = split_data_markowtiz(returns=f, test_date_start="2024-10-01", test_date_end="2025-09-30")
 
     covmat = calculate_covariance(train_set)
 
-    df_resultados = create_markowitz_table(
-        train_returns=train_returns,
-        test_returns=test_returns,
-        covmat=covmat,          # aunque ahora mismo no se use dentro
-        rf=0.0,
-        method="simple",
-        periods_per_year=252,
-        min_w=0.01,
-        max_w=0.25,
-        weight_name="weights"
-    )
+    df_resultados = create_markowitz_table(train_returns=train_set,
+                                           test_returns=train_set,
+                                           min_w=0.025,
+                                           max_w=0.15,
+                                           rf_annual = 0.035,
+                                           custom_target_volatility=0.15)
 
     # Versión interactiva
     st.dataframe(
