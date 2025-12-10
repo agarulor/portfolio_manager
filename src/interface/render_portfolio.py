@@ -57,7 +57,7 @@ def render_portfolio():
 
     # covmat no lo usas realmente dentro de create_markowitz_table,
     # pero si quieres ser consistente puedes calcularlo:
-    e = read_price_file("data/processed/prices_20251110-193638.csv")
+    e = read_price_file("data/processed/prices_20251207-210306.csv")
     f = calculate_daily_returns(e, method="simple")
 
     train_set, test_set = split_data_markowtiz(returns=f, test_date_start="2024-10-01", test_date_end="2025-09-30")
@@ -66,10 +66,10 @@ def render_portfolio():
 
 
     df_resultados = show_initial_portfolio(train_set,
-                                           min_w=0.025,
-                                           max_w=0.15,
+                                           min_w=0.0,
+                                           max_w=1,
                                            rf_annual = 0.035,
-                                           custom_target_volatility=0.15)
+                                           custom_target_volatility=0.00)
 
     # Versión interactiva
     st.dataframe(

@@ -307,6 +307,8 @@ def show_initial_portfolio(returns: pd.DataFrame,
 
     # extraemos el nombre de las columnas
     tickers = returns.columns
+    if rf_annual is not None:
+        tickers = tickers.append(pd.Index(["Risk Free"]))
 
     if portfolio_types is None:
         portfolio_types = ["msr", "gmv", "ew", "random", "custom"]
