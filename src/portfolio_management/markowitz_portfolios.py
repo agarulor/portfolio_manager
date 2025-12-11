@@ -112,6 +112,8 @@ def get_investor_initial_portfolio(returns: pd.DataFrame,
     df_results = pd.DataFrame(resultados, index=[0])
 
     df_weights = pd.DataFrame({"Pesos": weights}, index=tickers)
+    # put a name to the index
+    df_weights.index.name = "Ticker"
     # We remove the values equal to 0
     df_weights = df_weights[df_weights["Pesos"] > 0]
     df_weights = df_weights.sort_values(by=["Pesos"], ascending=False)

@@ -6,6 +6,8 @@ import pandas as pd
 from portfolio_tools.risk_metrics import calculate_covariance  # si quieres usar covmat
 sys.path.append(os.path.join(os.path.dirname(__file__), "src"))
 import streamlit as st
+from typing import Literal
+import plotly.express as px
 from data_management.get_data import read_price_file, get_stock_prices
 from data_management.save_data import save_preprocessed_data
 from data_management.clean_data import clean_and_align_data
@@ -33,8 +35,50 @@ RISK_PROFILE_DICTIONARY = MappingProxyType({
 })
 
 
-def show_portfolio(returns: pd.DataFrame, weights: np.ndarray) -> None:
-    a = 1
+def show_portfolio(df_weights: pd.DataFrame,
+                   chart_type: Literal["pie", "bar"] = "bar",
+                   title: "str" = "Composición de la cartera inicial") -> None:
+    # We check that the DataFrame is correct
+    if df_weights.shape[1] != 1:
+        raise ValueError("DataFrame needs to have 1 weights column.")
+
+    col_name = df_weights.columns[0]
+    df_plot = df_weights.copy()
+    # We reset the index to plot
+    df_plot = df_plot.reset_index()
+    df_plot.columns = ["Ticker", "Peso"]
+
+    st.subheader(title)
+
+    if chart_type == "bar":
+        fig = px.bar(
+            df_plot,
+            x="Peso",
+            y="Ticker",
+            orientation="h",
+            text="Peso",
+            title=title,
+        )
+        fig.update_traces(texttemplate="%{text:.2f}", textposition="outside")
+        fig.update_layout(
+            xaxis_title="Peso (%)",
+            yaxis_title="Activo",
+            yaxis=dict(categoryorder="total ascending"),
+        )
+
+    elif chart_type == "pie":
+        fig = px.pie(
+            df_plot,
+            names="Ticker",
+            values="Peso",
+            title=title,
+        )
+
+    else:
+        raise ValueError("chart_type must be either 'bar' or 'pie'")
+
+    st.plotly_chart(fig, use_container_width=True)
+
 
 def render_portfolio():
     if "risk_result" not in st.session_state:
@@ -67,14 +111,11 @@ def render_portfolio():
 
     train_set, test_set = split_data_markowtiz(returns=f, test_date_start="2024-10-01", test_date_end="2025-09-30")
 
-    covmat = calculate_covariance(train_set)
-
-
     df_resultados, df_weights = get_investor_initial_portfolio(train_set,
-                                           min_w=0.0,
-                                           max_w=0.19,
+                                           min_w=0.025,
+                                           max_w=0.14,
                                            rf_annual = 0.035,
-                                           custom_target_volatility=0.25)
+                                           custom_target_volatility=0.24)
 
     # Versión interactiva
     st.dataframe(
@@ -91,4 +132,10 @@ def render_portfolio():
     # Versión interactiva
     st.dataframe(
         df_weights.style.format()
+    )
+
+    show_portfolio(
+        df_weights=df_weights,
+        chart_type="bar",
+        title="Distribución inicial de la cartera"
     )
