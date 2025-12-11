@@ -54,10 +54,11 @@ def get_results(returns: pd.DataFrame,
                 weights: pd.DataFrame,
                 method: Literal["simple", "log"] = "simple",
                 periods_per_year: float = 252,
-                rf_annual: float|None = None) -> Tuple[float, float, float]:
+                rf_annual: float|None = None) -> dict:
 
     # We get the historical returns
     pf_return = portfolio_returns(weights, returns, method, periods_per_year)
+
 
     # We get the historical volatility
     pf_volatility = portfolio_volatility(weights, covmat, periods_per_year)
@@ -94,6 +95,7 @@ def get_investor_initial_portfolio(returns: pd.DataFrame,
     max_w: float. Maximum weight of the portfolio.
     custom_target_volatility: float. Custom target volatility.
     rf_annual: float. Risk free annual.
+    return_type: str. "markowitz" or "actual
     Returns
     -------
     dictionary: With name of the type of model, returns, volatility, max drawdown and weights
@@ -125,25 +127,12 @@ def get_investor_initial_portfolio(returns: pd.DataFrame,
 
     return df_results, df_weights, weights
 
-
-def get_updated_results(returns: pd.DataFrame,
-                        weights: pd.DataFrame,
-                        method: Literal["simple", "log"] = "simple",
-                        periods_per_year: float = 252,
-                        rf_annual: float | None = None,):
-    covmat = calculate_covariance(returns)
-    if rf_annual is not None:
-        returns, covmat = add_risk_free_asset(returns, covmat, rf_annual, periods_per_year)
-    resultados = get_results(returns, covmat, weights, method, periods_per_year, rf_annual)
-    df_results = pd.DataFrame(resultados, index=[0])
-    return df_results
-
-
 def get_cumulative_returns(returns: pd.DataFrame,
                            weights: np.ndarray,
                            initial_investment: float = 1,
                            rf_annual: float | None = None,
-                           periods_per_year: float = 252) -> pd.DataFrame:
+                           periods_per_year: float = 252
+                           ) -> pd.DataFrame:
 
     money_invested = weights * initial_investment
     if rf_annual is not None:
@@ -157,10 +146,30 @@ def get_cumulative_returns(returns: pd.DataFrame,
 
     adjusted_total_value = adjusted_value.sum(axis=1)
 
-    print(adjusted_total_value.shape)
-
     return adjusted_total_value
 
+def get_updated_results(returns: pd.DataFrame,
+                        weights: pd.DataFrame,
+                        initial_investment: float = 1,
+                        method: Literal["simple", "log"] = "simple",
+                        periods_per_year: float = 252,
+                        rf_annual: float | None = None):
+    covmat = calculate_covariance(returns)
 
+    df_returns = get_cumulative_returns(returns, weights, initial_investment, rf_annual, periods_per_year)
+    absolute_return = df_returns.iloc[-1] / initial_investment
+    print(absolute_return)
+    t = df_returns.shape[0]
+
+    annualized_return = float(round((absolute_return**(254 / 254) - 1) * 100, 4))
+    print(f"Retorno {annualized_return}")
+
+    if rf_annual is not None:
+        returns, covmat = add_risk_free_asset(returns, covmat, rf_annual, periods_per_year)
+    resultados = get_results(returns, covmat, weights, method, periods_per_year, rf_annual)
+    print(resultados["Returns"])
+    resultados["Returns"] = annualized_return
+    df_results = pd.DataFrame(resultados, index=[0])
+    return df_results, df_returns
 
 

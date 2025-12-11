@@ -53,7 +53,7 @@ def calculate_daily_returns(
 def annualize_returns(
     returns: pd.DataFrame,
     method: Literal["simple", "log"] = "simple",
-    periods_per_year: int = 252
+    periods_per_year: float = 252
 ) -> pd.Series:
     """
     Calculates annualized returns from different periodic returns.
@@ -103,13 +103,14 @@ def annualize_returns(
         mean_log = returns.mean(skipna=True)
         annualized_returns = np.exp(mean_log * periods_per_year) - 1
 
+
     return annualized_returns
 
 def portfolio_returns(
         weights: np.ndarray,
         returns: pd.DataFrame,
         method: Literal["simple", "log"] = "simple",
-        periods_per_year=252) -> float:
+        periods_per_year: float = 252) -> float:
     """
     Computes the portfolio return from asset weights and returns of assets.
 
@@ -143,6 +144,7 @@ def portfolio_returns(
         raise ValueError("Weights and returns must have same length.")
     # We calculate the portfolio returns
     return weights.T @ annualized_returns
+
 
 
 def daily_portfolio_returns(
