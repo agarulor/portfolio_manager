@@ -11,7 +11,7 @@ from portfolio_tools.return_metrics import calculate_daily_returns
 from portfolio_tools.risk_metrics import calculate_covariance
 
 from portfolio_tools.markowitz import plot_frontier
-from portfolio_management.markowitz_portfolios import show_initial_portfolio
+
 from data_management.dataset_preparation import split_data_markowtiz
 from investor_information.investor_profile import investor_target_volatility
 

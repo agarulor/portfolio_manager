@@ -15,8 +15,7 @@ from portfolio_tools.return_metrics import calculate_daily_returns
 from portfolio_tools.risk_metrics import calculate_covariance
 
 from portfolio_tools.markowitz import plot_frontier
-from portfolio_management.markowitz_portfolios import get_initial_portfolio, show_initial_portfolio, \
-    get_investor_initial_portfolio
+from portfolio_management.markowitz_portfolios import  get_investor_initial_portfolio, get_updated_results
 from data_management.dataset_preparation import split_data_markowtiz
 from investor_information.investor_profile import investor_target_volatility
 from types import MappingProxyType
@@ -109,22 +108,24 @@ def render_portfolio():
     e = read_price_file("data/processed/prices_20251207-210306.csv")
     f = calculate_daily_returns(e, method="simple")
 
-    train_set, test_set = split_data_markowtiz(returns=f, test_date_start="2024-10-01", test_date_end="2025-09-30")
+    train_set, test_set = split_data_markowtiz(returns=f, test_date_start="2023-10-01", test_date_end="2025-09-30")
 
-    df_resultados, df_weights = get_investor_initial_portfolio(train_set,
-                                           min_w=0.025,
-                                           max_w=0.14,
+    df_resultados, df_weights, weights = get_investor_initial_portfolio(train_set,
+                                           min_w=0.00,
+                                           max_w=1,
                                            rf_annual = 0.035,
-                                           custom_target_volatility=0.24)
+                                           custom_target_volatility=0.35)
+
+    df_resultados_updated = get_updated_results(test_set, weights, rf_annual=0.035)
 
     # Versión interactiva
     st.dataframe(
         df_resultados.style.format(
             {
-                "Returns": "{:.2f}%",
-                "Volatility": "{:.2f}%",
-                "Sharpe Ratio": "{:.2f}",
-                "max_drawdown": "{:.2f}%",
+                "Returns": "{:.4f}%",
+                "Volatility": "{:.4f}%",
+                "Sharpe Ratio": "{:.4f}",
+                "max_drawdown": "{:.4f}%",
             }
         )
     )
@@ -138,4 +139,16 @@ def render_portfolio():
         df_weights=df_weights,
         chart_type="bar",
         title="Distribución inicial de la cartera"
+    )
+
+    # Versión interactiva
+    st.dataframe(
+        df_resultados_updated.style.format(
+            {
+                "Returns": "{:.4f}%",
+                "Volatility": "{:.4}%",
+                "Sharpe Ratio": "{:.4f}",
+                "max_drawdown": "{:.4f}%",
+            }
+        )
     )
