@@ -116,9 +116,10 @@ def render_portfolio():
                                            min_w=0.00,
                                            max_w=1,
                                            rf_annual = 0.035,
-                                           custom_target_volatility=0.08)
+                                            periods_per_year=256,
+                                           custom_target_volatility=0.1)
 
-    df_resultados_updated = get_updated_results(test_set, weights, rf_annual=0.035)
+    df_resultados_updated = get_updated_results(test_set, weights, rf_annual=0.035, periods_per_year=254.5)
 
     # Versión interactiva
     st.dataframe(
@@ -155,6 +156,6 @@ def render_portfolio():
         )
     )
 
-    money = get_cumulative_returns(test_set, weights, dinero_invertido, rf_annual=0.035)
+    money = get_cumulative_returns(test_set, weights, dinero_invertido, rf_annual=0.035, periods_per_year=254.5)
 
     st.write(money)
