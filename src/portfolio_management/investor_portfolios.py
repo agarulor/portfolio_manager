@@ -8,20 +8,27 @@ from portfolio_tools.risk_metrics import portfolio_volatility, calculate_max_dra
 
 
 # We create an aux function for the client case. In this case, we add the risk free asset to the potential portfolio
-def add_risk_free_asset(
-        returns: pd.DataFrame,
-        covmat: pd.DataFrame,
-        rf_annual: float,
-        periods_per_year: int) -> Tuple[pd.DataFrame, np.ndarray]:
 
+def add_risk_free_column(returns: pd.DataFrame,
+                         rf_annual: float,
+                         periods_per_year: int = 252) -> pd.DataFrame:
     # we adjust it to the number of periods (approximately)
-    rf_per_period = (1 + rf_annual)**(1/periods_per_year) - 1
+    rf_per_period = (1 + rf_annual) ** (1 / periods_per_year) - 1
 
     rf_series = pd.Series(rf_per_period, index=returns.index, name="RISK_FREE")
 
     # We add this new column to the returns dataframe
     returns_ext = pd.concat([returns, rf_series], axis=1)
 
+    return returns_ext
+
+def add_risk_free_asset(
+        returns: pd.DataFrame,
+        covmat: pd.DataFrame,
+        rf_annual: float,
+        periods_per_year: int) -> Tuple[pd.DataFrame, np.ndarray]:
+
+    returns_ext = add_risk_free_column(returns, rf_annual, periods_per_year)# we adjust it to the number of periods (approximately)
     # We increase the covmat matrix by adding the new asset, taking into account that it has a VAR = 0 and COV = 0
     # with any other risky asset
     n = covmat.shape[0]
@@ -132,8 +139,22 @@ def get_updated_results(returns: pd.DataFrame,
     return df_results
 
 
-def get_cumulative_returns(returns: pd.DataFrame, weights: np.ndarray, initial_investment: float = 1) -> pd.DataFrame:
-    money_invested = weights * initial_investment
+def get_cumulative_returns(returns: pd.DataFrame,
+                           weights: np.ndarray,
+                           initial_investment: float = 1,
+                           rf_annual: float | None = None,
+                           periods_per_year: int = 252) -> pd.DataFrame:
 
-    return money_invested
+    money_invested = weights * initial_investment
+    if rf_annual is not None:
+        returns = add_risk_free_column(returns, rf_annual, periods_per_year)
+
+    adjust_returns = (1+returns)
+
+    adjusted_returns = adjust_returns.cumprod()
+
+    return adjusted_returns * money_invested
+
+
+
 
