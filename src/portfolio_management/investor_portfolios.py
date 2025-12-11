@@ -132,4 +132,8 @@ def get_updated_results(returns: pd.DataFrame,
     return df_results
 
 
+def get_cumulative_returns(returns: pd.DataFrame, weights: np.ndarray, initial_investment: float = 1) -> pd.DataFrame:
+    money_invested = weights * initial_investment
+
+    return money_invested
 

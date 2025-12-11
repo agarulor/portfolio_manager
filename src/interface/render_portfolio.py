@@ -15,7 +15,7 @@ from portfolio_tools.return_metrics import calculate_daily_returns
 from portfolio_tools.risk_metrics import calculate_covariance
 
 from portfolio_tools.markowitz import plot_frontier
-from portfolio_management.markowitz_portfolios import  get_investor_initial_portfolio, get_updated_results
+from portfolio_management.investor_portfolios import  get_investor_initial_portfolio, get_updated_results, get_cumulative_returns
 from data_management.dataset_preparation import split_data_markowtiz
 from investor_information.investor_profile import investor_target_volatility
 from types import MappingProxyType
@@ -80,6 +80,7 @@ def show_portfolio(df_weights: pd.DataFrame,
 
 
 def render_portfolio():
+    dinero_invertido = 100
     if "risk_result" not in st.session_state:
         st.warning("Primero completa el cuestionario de perfil de riesgo.")
         return
@@ -101,6 +102,7 @@ def render_portfolio():
     # -----------------------------
     # AQUÍ IMPRIMES LA TABLA
     # -----------------------------
+    st.subheader(f"Dinero Invertido **{dinero_invertido}**")
     st.subheader("Cartera de inversión recomendada")
 
     # covmat no lo usas realmente dentro de create_markowitz_table,
@@ -152,3 +154,7 @@ def render_portfolio():
             }
         )
     )
+
+    money = get_cumulative_returns(test_set, weights, dinero_invertido)
+
+    st.write(money)
