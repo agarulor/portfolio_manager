@@ -4,7 +4,7 @@ from typing import Literal, Tuple
 
 from portfolio_tools.markowitz import  maximize_return
 from portfolio_tools.return_metrics import portfolio_returns
-from portfolio_tools.risk_metrics import portfolio_volatility, calculate_max_drawdown, calculate_covariance
+from portfolio_tools.risk_metrics import portfolio_volatility, calculate_max_drawdown, calculate_covariance, max_drawdown_from_value_series
 
 
 # We create an aux function for the client case. In this case, we add the risk free asset to the potential portfolio
@@ -127,6 +127,7 @@ def get_investor_initial_portfolio(returns: pd.DataFrame,
 
     return df_results, df_weights, weights
 
+
 def get_cumulative_returns(returns: pd.DataFrame,
                            weights: np.ndarray,
                            initial_investment: float = 1,
@@ -154,22 +155,42 @@ def get_updated_results(returns: pd.DataFrame,
                         method: Literal["simple", "log"] = "simple",
                         periods_per_year: float = 252,
                         rf_annual: float | None = None):
+
     covmat = calculate_covariance(returns)
 
     df_returns = get_cumulative_returns(returns, weights, initial_investment, rf_annual, periods_per_year)
+
     absolute_return = df_returns.iloc[-1] / initial_investment
+
     print(absolute_return)
+
     t = df_returns.shape[0]
 
-    annualized_return = float(round((absolute_return**(254 / 254) - 1) * 100, 4))
+    annualized_return = absolute_return**(periods_per_year / t) - 1
+
     print(f"Retorno {annualized_return}")
 
     if rf_annual is not None:
         returns, covmat = add_risk_free_asset(returns, covmat, rf_annual, periods_per_year)
-    resultados = get_results(returns, covmat, weights, method, periods_per_year, rf_annual)
-    print(resultados["Returns"])
-    resultados["Returns"] = annualized_return
+
+
+    # We get the historical volatility
+    pf_volatility = portfolio_volatility(weights, covmat, periods_per_year)
+
+    # We calculate the sharpe ratio
+    portfolio_sharpe_ratio = (annualized_return - rf_annual) / pf_volatility
+
+    # We get the maximum drawdown
+    max_drawdown = max_drawdown_from_value_series(df_returns)
+
+    # We get the maximum drawdown
+    resultados = {"Returno anualizado": float(round(annualized_return * 100, 3)),
+                  "Volatility": float(round(pf_volatility * 100, 3)),
+                  "Sharpe Ratio": float(round(portfolio_sharpe_ratio, 3)),
+                  "max_drawdown": float(round(max_drawdown * 100, 3))}
+
     df_results = pd.DataFrame(resultados, index=[0])
+
     return df_results, df_returns
 
 

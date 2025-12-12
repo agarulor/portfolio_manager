@@ -110,16 +110,16 @@ def render_portfolio():
     e = read_price_file("data/processed/prices_20251207-210306.csv")
     f = calculate_daily_returns(e, method="simple")
 
-    train_set, test_set = split_data_markowtiz(returns=f, test_date_start="2024-10-01", test_date_end="2025-09-30")
+    train_set, test_set = split_data_markowtiz(returns=f, test_date_start="2023-10-01", test_date_end="2025-09-30")
 
     df_resultados, df_weights, weights = get_investor_initial_portfolio(train_set,
                                            min_w=0.00,
                                            max_w=1,
                                            rf_annual = 0.035,
                                             periods_per_year=256,
-                                           custom_target_volatility=0.00)
+                                           custom_target_volatility=0.15)
 
-    df_resultados_updated, money = get_updated_results(test_set, weights, initial_investment= 100, rf_annual=0.035, periods_per_year=254)
+    df_resultados_updated, money = get_updated_results(test_set, weights, initial_investment= 100, rf_annual=0.035, periods_per_year=254.5)
 
     # Versión interactiva
     st.dataframe(

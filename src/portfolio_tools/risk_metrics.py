@@ -179,7 +179,6 @@ def neg_sharpe_ratio(
 
     return -(returns_portfolio - rf) / volatility_portfolio
 
-
 def calculate_max_drawdown(weights: np.ndarray, returns: pd.Series)-> float:
     """
     Calculates the maximum drawdown from the temp returns.
@@ -205,3 +204,17 @@ def calculate_max_drawdown(weights: np.ndarray, returns: pd.Series)-> float:
 
     # We return the max drawdown
     return abs(drawdowns.min())
+
+
+def max_drawdown_from_value_series(value_series: pd.Series) -> float:
+    # Asegurar orden
+    series = value_series.dropna().sort_index()
+
+    # Calcular máximo acumulado hasta cada punto
+    running_max = series.cummax()
+
+    # Drawdown en cada punto
+    drawdowns = series / running_max - 1
+
+    # Máximo drawdown (valor más bajo)
+    return (drawdowns.min()) * - 1
