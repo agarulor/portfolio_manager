@@ -78,6 +78,27 @@ def show_portfolio(df_weights: pd.DataFrame,
 
     st.plotly_chart(fig, use_container_width=True)
 
+def plot_portfolio_value(df_value: pd.DataFrame,
+                         title: str = "Evolución de la cartera") -> None:
+
+    # We order by date
+    df_value = df_value.reset_index()
+    df_value.columns = ["Fecha", "Valor"]
+
+    fig = px.line(df_value,
+                  x="Fecha",
+                  y="Valor",
+                  title = title,
+                  markers=False)
+
+    fig.update_layout(template="plotly_white",
+                      xaxis_title="Fecha",
+                      yaxis_title="Valor (€)",
+                      hovermode= "x unified",
+                      height=450,
+    )
+    st.plotly_chart(fig, use_container_width=True)
+
 
 def render_portfolio():
     dinero_invertido = 100
@@ -156,6 +177,6 @@ def render_portfolio():
         )
     )
 
-    #money = get_cumulative_returns(test_set, weights, dinero_invertido, rf_annual=0.035, periods_per_year=254   )
+    plot_portfolio_value(money)
 
     st.write(money)
