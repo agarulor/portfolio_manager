@@ -63,6 +63,8 @@ def read_stock_ticker(file_path: str) -> Optional[pd.DataFrame]:
     return df
 
 
+
+
 def get_stock_prices(file_path: str,
                      ticker_col: str,
                      companies_col: str,
@@ -165,7 +167,34 @@ def get_stock_prices(file_path: str,
     print(F"Download completed successfully for {len(prices.columns)} stocks")
     print(f"{prices.shape[0]} rows in total")
 
-    return prices
+    # We now get sector information
+    print(f"Downloading sector/industry info for {len(tickers)} tickers. Please wait...")
+
+    # Create an empty dictionary
+    sector_data = {
+        "ticker": [],
+        "sector": [],
+        "industry": [],
+    }
+
+    # We get tiker information
+    for tkr in tickers:
+        try:
+            info = yf.Ticker(tkr).info
+            sector = info.get("sector", None)
+            industry = info.get("industry", None)
+        except Exception as e:
+            print(f"Error downloading data from Yahoo Finance: {e}")
+            sector = None
+            industry = None
+
+        sector_data["ticker"].append(tkr)
+        sector_data["sector"].append(sector)
+        sector_data["industry"].append(industry)
+
+    sectors_df = pd.DataFrame(sector_data)
+
+    return prices, sectors_df
 
 
 def read_price_file(

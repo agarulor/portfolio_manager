@@ -32,32 +32,18 @@ np.random.seed(SEED)
 
 
 def main():
-    """
-    datos = get_stock_prices("data/input/ibex_eurostoxx.csv",
-                             "ticker_yahoo",
-                             "name",
-                             start_date="2020-10-01",
-                             )
-    datos_2, report, summary = clean_and_align_data(datos, beginning_data=True)
 
-    save_preprocessed_data(datos_2)
 
-    print(datos_2.head())
 
-"""
-    #st.title("Análisis de Carteras Markowitz")
 
-e = read_price_file("data/processed/prices_20251207-210306.csv")
-f = calculate_daily_returns(e, method="simple")
 
-train_set, test_set = split_data_markowtiz(returns=f, test_date_start="2024-10-01", test_date_end="2025-09-30")
 
-g = calculate_covariance(train_set)
+    #g = calculate_covariance(train_set)
 
 #h = create_markowitz_table(train_set, test_set, g, rf = 0.000, min_w=0.025, max_w=0.16, custom_target_volatility=0.26)
 
 #print(h)
-run_app()
+    run_app()
 #plot_frontier(60, train_set, g,  method="simple", min_w=0.025, max_w=0.20, custom_target_volatility=0.26)
 
 

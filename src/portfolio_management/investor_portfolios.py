@@ -1,6 +1,6 @@
 import pandas as pd
 import numpy as np
-from typing import Literal, Tuple
+from typing import Literal, Tuple, Optional
 
 from portfolio_tools.markowitz import  maximize_return
 from portfolio_tools.return_metrics import portfolio_returns
@@ -43,9 +43,22 @@ def get_investor_weights(returns: pd.DataFrame,
                          method: Literal["simple", "log"] = "simple",
                          min_w: float = 0.00,
                          max_w: float = 1.00,
-                         custom_target_volatility: float = 0.15) -> np.ndarray:
+                         custom_target_volatility: float = 0.15,
+                         sectors_df: Optional[pd.DataFrame] = None,
+                         ticker_col: str = "ticker",
+                         sector_col: str = "sector",
+                         sector_max_weight: Optional[float] = None) -> np.ndarray:
 
-    weights = maximize_return(custom_target_volatility, returns, covmat, min_w = min_w, max_w=max_w)
+    weights = maximize_return(custom_target_volatility,
+                              returns,
+                              covmat,
+                              min_w = min_w,
+                              max_w=max_w,
+                              sectors_df=sectors_df,
+                              ticker_col=ticker_col,
+                              sector_col=sector_col,
+                              sector_max_weight=sector_max_weight)
+
     return weights
 
 
@@ -82,7 +95,12 @@ def get_investor_initial_portfolio(returns: pd.DataFrame,
                                    min_w: float = 0.00,
                                    max_w: float = 1.00,
                                    rf_annual: float | None = None,
-                                   custom_target_volatility: float = 0.15) -> pd.DataFrame:
+                                   custom_target_volatility: float = 0.15,
+                                   sectors_df: Optional[pd.DataFrame] = None,
+                                   ticker_col: str = "ticker",
+                                   sector_col: str = "sector",
+                                   sector_max_weight: Optional[float] = None
+                                   ) -> pd.DataFrame:
     """
     Returns the returns and volatility of a portfolio given weights of the portfolio
 
@@ -109,7 +127,12 @@ def get_investor_initial_portfolio(returns: pd.DataFrame,
                                    method,
                                    min_w,
                                    max_w,
-                                   custom_target_volatility)
+                                   custom_target_volatility,
+                                   sectors_df=sectors_df,
+                                   ticker_col=ticker_col,
+                                   sector_col=sector_col,
+                                   sector_max_weight=sector_max_weight
+                                   )
 
     resultados = get_results(returns, covmat, weights, method, periods_per_year, rf_annual)
     # we now extract tickers

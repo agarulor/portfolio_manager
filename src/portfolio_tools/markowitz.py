@@ -1,6 +1,6 @@
 import pandas as pd
 import numpy as np
-from typing import Literal, Tuple
+from typing import Literal, Tuple, Optional
 from portfolio_tools.return_metrics import portfolio_returns, annualize_returns
 from portfolio_tools.risk_metrics import (
     portfolio_volatility,
@@ -109,7 +109,11 @@ def maximize_return(target_volatility: float,
                     method: Literal["simpl  e", "log"] = "simple",
                     periods_per_year: int = 252,
                     min_w: float = 0.00,
-                    max_w: float = 1.00) -> np.ndarray:
+                    max_w: float = 1.00,
+                    sectors_df: Optional[pd.DataFrame] = None,
+                    ticker_col: str = "ticker",
+                    sector_col: str = "sector",
+                    sector_max_weight: Optional[float] = None) -> np.ndarray:
     """
     Returns the optimal weight of the portfolio assets that maximize
     return for a given target volatility, returns and a covariance matrix.
@@ -123,6 +127,10 @@ def maximize_return(target_volatility: float,
     periods_per_year: int. Number of periods, n= 252 per yeras, 12 for months over which to calculate volatility.
     min_w: float. Minimum weight of the portfolio.
     max_w: float. Maximum weight of the portfolio.
+    sectors_df: pd.DataFrame. Sectors dataframe.
+    ticker_col: str. Column name of the ticker.
+    sector_col: str. Column name of the sector column.
+    sector_max_weight: float. Maximum weight of the sector column.
 
     Returns
     -------
@@ -141,10 +149,46 @@ def maximize_return(target_volatility: float,
     # We add the constraints to the model
     # Weights must sum 1 (fully invested)
     # Volatility constraint
-    constraints = (
+    constraints = [
         {"type": "eq", "fun": lambda w: np.sum(w) - 1},
         {"type": "eq", "fun": lambda w: portfolio_volatility(w, covmat, periods_per_year) - target_volatility}
-    )
+    ]
+
+    # We add sector restrictions
+    if sectors_df is not None and sector_max_weight is not None:
+        if ticker_col not in sectors_df.columns:
+            raise ValueError(f"Column '{ticker_col}' not found in sectors_df")
+
+        if sector_col not in sectors_df.columns:
+            raise ValueError(f"Column '{sector_col}' not found in sectors_df")
+
+        # We index by ticker
+        info = sectors_df.set_index(ticker_col)
+
+        # We check that we have all sectors
+        missing = [t for t in returns.columns if t not in info.index]
+        if missing:
+            raise ValueError(f"There is / are tickers with no sector: {missing}")
+
+        # We align with the order of returns.columns
+        sector_series = info.reindex(returns.columns)[sector_col]
+
+        # We creat a restriction for each sector
+        for sect in sector_series.dropna().unique():
+            idx = np.where(sector_series.values == sect)[0]
+            if len(idx) == 0:
+                continue
+
+            # type "ineq": fun(w) >= 0
+            #  sum_{i in industria} w_i <= industry_max_weight
+            # => industry_max_weight - sum(w_i) >= 0
+            constraints.append(
+                {
+                    "type": "ineq",
+                    "fun": lambda w, idx=idx: sector_max_weight - np.sum(w[idx])
+                }
+            )
+
     result = minimize(lambda w: -portfolio_returns(w, returns, method, periods_per_year),
                       init_guess,
                       method='SLSQP',
