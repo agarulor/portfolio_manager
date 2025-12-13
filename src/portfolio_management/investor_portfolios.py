@@ -47,7 +47,8 @@ def get_investor_weights(returns: pd.DataFrame,
                          sectors_df: Optional[pd.DataFrame] = None,
                          ticker_col: str = "ticker",
                          sector_col: str = "sector",
-                         sector_max_weight: Optional[float] = None) -> np.ndarray:
+                         sector_max_weight: Optional[float] = None,
+                         risk_free_ticker: str = "RISK_FREE") -> np.ndarray:
 
     weights = maximize_return(custom_target_volatility,
                               returns,
@@ -57,7 +58,8 @@ def get_investor_weights(returns: pd.DataFrame,
                               sectors_df=sectors_df,
                               ticker_col=ticker_col,
                               sector_col=sector_col,
-                              sector_max_weight=sector_max_weight)
+                              sector_max_weight=sector_max_weight,
+                              risk_free_ticker=risk_free_ticker)
 
     return weights
 
@@ -99,7 +101,8 @@ def get_investor_initial_portfolio(returns: pd.DataFrame,
                                    sectors_df: Optional[pd.DataFrame] = None,
                                    ticker_col: str = "ticker",
                                    sector_col: str = "sector",
-                                   sector_max_weight: Optional[float] = None
+                                   sector_max_weight: Optional[float] = None,
+                                   risk_free_ticker: str = "RISK_FREE"
                                    ) -> pd.DataFrame:
     """
     Returns the returns and volatility of a portfolio given weights of the portfolio
@@ -131,7 +134,8 @@ def get_investor_initial_portfolio(returns: pd.DataFrame,
                                    sectors_df=sectors_df,
                                    ticker_col=ticker_col,
                                    sector_col=sector_col,
-                                   sector_max_weight=sector_max_weight
+                                   sector_max_weight=sector_max_weight,
+                                   risk_free_ticker = risk_free_ticker
                                    )
 
     resultados = get_results(returns, covmat, weights, method, periods_per_year, rf_annual)
@@ -217,3 +221,43 @@ def get_updated_results(returns: pd.DataFrame,
     return df_results, df_returns
 
 
+def get_sector_exposure_table(
+    df_weights: pd.DataFrame,
+    sectors: pd.DataFrame,
+    weight_col: str = "Pesos",
+    as_percent: bool = True,
+) -> pd.DataFrame:
+    """
+    Devuelve una tabla con la exposición por sector a partir de:
+    - df_weights: índice = ticker, columna = pesos
+    - sectors: columnas = ticker, sector
+    """
+
+    # Pasamos el índice (Ticker) a columna
+    df = df_weights.reset_index().rename(columns={"Ticker": "ticker"})
+
+    # Unimos con sectores
+    df = df.merge(
+        sectors[["ticker", "sector"]],
+        on="ticker",
+        how="left"
+    )
+
+    # Excluimos activos sin sector (ej. RISK_FREE)
+    df = df.dropna(subset=["sector"])
+
+    # Agregamos por sector
+    sector_table = (
+        df.groupby("sector", as_index=False)[weight_col]
+          .sum()
+    )
+
+    if as_percent:
+        sector_table[weight_col] *= 100
+
+    # Ordenamos de mayor a menor peso
+    sector_table = sector_table.sort_values(
+        by=weight_col, ascending=False
+    ).reset_index(drop=True)
+
+    return sector_table

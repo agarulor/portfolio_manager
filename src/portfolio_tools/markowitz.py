@@ -113,7 +113,8 @@ def maximize_return(target_volatility: float,
                     sectors_df: Optional[pd.DataFrame] = None,
                     ticker_col: str = "ticker",
                     sector_col: str = "sector",
-                    sector_max_weight: Optional[float] = None) -> np.ndarray:
+                    sector_max_weight: Optional[float] = None,
+                    risk_free_ticker: str = "RISK_FREE") -> np.ndarray:
     """
     Returns the optimal weight of the portfolio assets that maximize
     return for a given target volatility, returns and a covariance matrix.
@@ -163,15 +164,16 @@ def maximize_return(target_volatility: float,
             raise ValueError(f"Column '{sector_col}' not found in sectors_df")
 
         # We index by ticker
-        info = sectors_df.set_index(ticker_col)
+        df = sectors_df.set_index(ticker_col)
 
-        # We check that we have all sectors
-        missing = [t for t in returns.columns if t not in info.index]
+        tickers_to_check = [t for t in returns.columns if t != risk_free_ticker]
+
+        missing = [t for t in tickers_to_check if t not in df.index]
         if missing:
             raise ValueError(f"There is / are tickers with no sector: {missing}")
 
         # We align with the order of returns.columns
-        sector_series = info.reindex(returns.columns)[sector_col]
+        sector_series = df.reindex(returns.columns)[sector_col]
 
         # We creat a restriction for each sector
         for sect in sector_series.dropna().unique():
