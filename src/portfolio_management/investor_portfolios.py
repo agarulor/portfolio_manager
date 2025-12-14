@@ -174,7 +174,8 @@ def get_cumulative_returns(returns: pd.DataFrame,
 
     adjusted_total_value = adjusted_value.sum(axis=1)
 
-    return adjusted_total_value
+    return adjusted_total_value, adjusted_value
+
 
 def get_updated_results(returns: pd.DataFrame,
                         weights: pd.DataFrame,
@@ -185,7 +186,7 @@ def get_updated_results(returns: pd.DataFrame,
 
     covmat = calculate_covariance(returns)
 
-    df_returns = get_cumulative_returns(returns, weights, initial_investment, rf_annual, periods_per_year)
+    df_returns, df_stock_returns = get_cumulative_returns(returns, weights, initial_investment, rf_annual, periods_per_year)
 
     absolute_return = df_returns.iloc[-1] / initial_investment
 
@@ -218,7 +219,7 @@ def get_updated_results(returns: pd.DataFrame,
 
     df_results = pd.DataFrame(resultados, index=[0])
 
-    return df_results, df_returns
+    return df_results, df_returns, df_stock_returns
 
 
 def get_sector_exposure_table(

@@ -17,6 +17,7 @@ from portfolio_tools.risk_metrics import calculate_covariance
 from portfolio_tools.markowitz import plot_frontier
 from portfolio_management.investor_portfolios import  get_investor_initial_portfolio, get_updated_results, get_cumulative_returns, get_sector_exposure_table
 from data_management.dataset_preparation import split_data_markowtiz
+from portfolio_management.portfolio_management import check_portfolio_weights
 from investor_information.investor_profile import investor_target_volatility
 from types import MappingProxyType
 from interface.tables import show_table
@@ -191,7 +192,7 @@ def render_portfolio():
     print(sectors)
     f = calculate_daily_returns(prices, method="simple")
 
-    train_set, test_set = split_data_markowtiz(returns=f, test_date_start="2015-10-01", test_date_end="2025-09-30")
+    train_set, test_set = split_data_markowtiz(returns=f, test_date_start="2022-10-01", test_date_end="2025-09-30")
 
     df_resultados, df_weights, weights = get_investor_initial_portfolio(train_set,
                                            min_w=0.0,
@@ -200,16 +201,17 @@ def render_portfolio():
                                             periods_per_year=256,
                                            custom_target_volatility=0.25,
                                                                         sectors_df=sectors,
-                                                                        sector_max_weight=0.25,
+                                                                        sector_max_weight=0.35,
                                                                         risk_free_ticker="RISK_FREE")
 
     print(df_weights)
     print(sectors)
     sectores = get_sector_exposure_table(df_weights, sectors)
 
+    #print(check_portfolio_weights(df))
 
-    df_resultados_updated, money = get_updated_results(test_set, weights, initial_investment= 100, rf_annual=0.035, periods_per_year=254.5)
-
+    df_resultados_updated, money, stock_returns = get_updated_results(test_set, weights, initial_investment= 100, rf_annual=0.035, periods_per_year=254.5)
+    print(df_resultados_updated)
     # Versión interactiva
     st.dataframe(
         df_resultados.style.format(
@@ -264,3 +266,4 @@ def render_portfolio():
     plot_portfolio_value(money)
 
     st.write(money)
+    print(check_portfolio_weights(stock_returns, "2025-01-31"))
