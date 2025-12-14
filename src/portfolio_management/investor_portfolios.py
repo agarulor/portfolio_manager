@@ -139,8 +139,8 @@ def get_investor_initial_portfolio(returns: pd.DataFrame,
                                    )
 
     resultados = get_results(returns, covmat, weights, method, periods_per_year, rf_annual)
-    # we now extract tickers
 
+    # we now extract tickers
     tickers = returns.columns
     #  We create a dataframe with the results
     df_results = pd.DataFrame(resultados, index=[0])

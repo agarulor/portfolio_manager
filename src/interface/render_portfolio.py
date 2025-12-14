@@ -9,6 +9,7 @@ import streamlit as st
 from typing import Literal, Optional
 import plotly.express as px
 from data_management.get_data import read_price_file, get_stock_prices
+
 from data_management.save_data import save_preprocessed_data
 from data_management.clean_data import clean_and_align_data
 from portfolio_tools.return_metrics import calculate_daily_returns
@@ -17,7 +18,7 @@ from portfolio_tools.risk_metrics import calculate_covariance
 from portfolio_tools.markowitz import plot_frontier
 from portfolio_management.investor_portfolios import  get_investor_initial_portfolio, get_updated_results, get_cumulative_returns, get_sector_exposure_table
 from data_management.dataset_preparation import split_data_markowtiz
-from portfolio_management.portfolio_management import check_portfolio_weights
+from portfolio_management.portfolio_management import check_portfolio_weights, calculate_portfolio_daily_returns
 from investor_information.investor_profile import investor_target_volatility
 from types import MappingProxyType
 from interface.tables import show_table
@@ -199,12 +200,13 @@ def render_portfolio():
                                            max_w=0.15,
                                            rf_annual = 0.035,
                                             periods_per_year=256,
-                                           custom_target_volatility=0.25,
+                                           custom_target_volatility=0.05,
                                                                         sectors_df=sectors,
                                                                         sector_max_weight=0.35,
                                                                         risk_free_ticker="RISK_FREE")
 
-    print(df_weights)
+    print(df_resultados)
+    print(calculate_portfolio_daily_returns(weights, f, 0.035))
     print(sectors)
     sectores = get_sector_exposure_table(df_weights, sectors)
 

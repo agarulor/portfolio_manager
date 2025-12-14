@@ -1,6 +1,8 @@
 import pandas as pd
+import numpy as np
 from typing import Union
 from datetime import datetime
+
 
 def check_portfolio_weights(df_values: pd.DataFrame,
                             date: Union[str, datetime, pd.Timestamp]) -> pd.Series:
@@ -44,14 +46,21 @@ def check_portfolio_weights(df_values: pd.DataFrame,
     return weights
 
 
+def calculate_portfolio_daily_returns(weights: np.ndarray, returns: pd.DataFrame, rf_annual: float|None = None) -> pd.Series:
+    """
+    We calculate the daily returns of the portfolio. Helper function to keep track of volatility
+    :param weights:
+    :param returns:
+    :return:
+    """
+    weights_risky = weights
+    if len(weights) != returns.shape[1]:
+        if rf_annual is not None:
+            weights_risky = weights[:-1]
+        else:
+            raise ValueError("The number of weights is not equal to the number of assets")
 
-    # We first sum the value of all the assets
-    total = df_values.sum(axis=1)
-    # We then divide by the values
-    weights = df_values.div(total, axis=0).fillna(0.0)
-
-    weights = weights[weights > 0]
-    return weights
+    return (returns * weights_risky).sum(axis=1)
 
 
 
