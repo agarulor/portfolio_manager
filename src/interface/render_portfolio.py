@@ -18,7 +18,7 @@ from portfolio_tools.risk_metrics import calculate_covariance
 from portfolio_tools.markowitz import plot_frontier
 from portfolio_management.investor_portfolios import  get_investor_initial_portfolio, get_updated_results, get_cumulative_returns, get_sector_exposure_table
 from data_management.dataset_preparation import split_data_markowtiz
-from portfolio_management.portfolio_management import check_portfolio_weights, calculate_portfolio_daily_returns
+from portfolio_management.portfolio_management import check_portfolio_weights, get_sector_weights_at_date, simulate_rebalance_6m_from_returns
 from investor_information.investor_profile import investor_target_volatility
 from types import MappingProxyType
 from interface.tables import show_table
@@ -187,27 +187,24 @@ def render_portfolio():
     price_data, sectors = get_stock_prices("data/input/ibex_eurostoxx.csv",
                                            "ticker_yahoo",
                                            "name",
-                                           start_date="2000-10-01",
+                                           start_date="2020-10-01",
                                            )
     prices, report, summary = clean_and_align_data(price_data, beginning_data=True)
     print(sectors)
     f = calculate_daily_returns(prices, method="simple")
 
-    train_set, test_set = split_data_markowtiz(returns=f, test_date_start="2022-10-01", test_date_end="2025-09-30")
+    train_set, test_set = split_data_markowtiz(returns=f, test_date_start="2024-10-01", test_date_end="2025-09-30")
 
     df_resultados, df_weights, weights = get_investor_initial_portfolio(train_set,
-                                           min_w=0.0,
+                                           min_w=0.025,
                                            max_w=0.15,
                                            rf_annual = 0.035,
                                             periods_per_year=256,
-                                           custom_target_volatility=0.05,
+                                           custom_target_volatility=0.02,
                                                                         sectors_df=sectors,
-                                                                        sector_max_weight=0.35,
+                                                                        sector_max_weight=0.30,
                                                                         risk_free_ticker="RISK_FREE")
 
-    print(df_resultados)
-    print(calculate_portfolio_daily_returns(weights, f, 0.035))
-    print(sectors)
     sectores = get_sector_exposure_table(df_weights, sectors)
 
     #print(check_portfolio_weights(df))
@@ -269,3 +266,16 @@ def render_portfolio():
 
     st.write(money)
     print(check_portfolio_weights(stock_returns, "2025-01-31"))
+    print(get_sector_weights_at_date(stock_returns, sectors,"2025-01-31"))
+
+    total_value_rb, values_by_asset_rb, trades_log = simulate_rebalance_6m_from_returns(
+        returns_test=test_set,
+        target_weights=weights,  # tu np.ndarray objetivo
+        initial_investment=100,
+        months=6,
+        rf_annual=0.035,
+        periods_per_year=254.5,
+        risk_free_ticker="RISK_FREE"
+    )
+
+    print(trades_log.head(20))
