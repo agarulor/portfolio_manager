@@ -13,6 +13,7 @@ def render():
 
     logo_col_left, logo_col_center, logo_col_right = st.columns([2, 1, 2])
 
+    # --------------- UOC LOGO ---------------
     with logo_col_center:
         st.image(
             str(ASSETS_PATH + "202-nova-marca-uoc.jpg"),
@@ -51,7 +52,7 @@ def render():
     </style>
     """, unsafe_allow_html=True)
 
-    # ---------- HERO ----------
+    # ---------- INTRO ----------
     st.markdown("""
     <div style="text-align: center; margin-bottom: 2rem;">
         <h1 style="color:#000078;">TFG - Ciencia de datos aplicada a la gestión de carteras</h1>
@@ -61,6 +62,7 @@ def render():
     </div>
     """, unsafe_allow_html=True)
 
+    # --------------- TFG LOGO ---------------
     st.markdown("""
     <div style="display:flex; justify-content:center; margin-bottom:2.5rem;">
         <div style="
@@ -83,17 +85,116 @@ def render():
     </div>
     """, unsafe_allow_html=True)
 
+    st.markdown("##", unsafe_allow_html=True)
     st.markdown("""
-    <p style="text-align:center; color:#000078; font-size:1rem;">
-        Aplicación para creación de carteras de inversión para inversores en función de su apetito y capacidad de
-        asumir riesgo.
-    </p>
+    <div style="text-align:center; margin-top: 0.5rem; margin-bottom: 1.5rem;">
+      <h2 style="color:#000078; margin-bottom:0.3rem;">¿Qué hace el Robo Advisor?</h2>
+      <p style="color:#000078; margin:0;">Metodología, control de riesgo y automatización para una cartera diversificada.</p>
+    </div>
     """, unsafe_allow_html=True)
 
+    c1, c2, c3 = st.columns(3)
 
-    # ---------- CTA FINAL ----------
-    st.markdown("## Antes de empezar, es necesario llevar a cabo un cuestionario personal")
-    st.write("Responde unas preguntas, define tu perfil de riesgo y deja que la aplicación te ayude.")
+    with c1:
+        st.markdown("""
+        <div class="card", style="
+        text-align:center;
+        display:flex;
+        flex-direction:column;
+        justify-content:center">
+            <h3 style="color:#000078; margin-top:0"> Diversificación</h3>
+            <p style="color:#000078; margin-bottom:0">
+                Construye una cartera diversificada para reducir riesgo y ajustarse al inversor.
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
+
+    with c2:
+        st.markdown("""
+        <div class="card", style="
+        text-align:center;
+        display:flex;
+        flex-direction:column;
+        justify-content:center">
+            <h3 style="color:#000078; margin-top:0;"> Perfil de riesgo</h3>
+            <p style="color:#000078; margin-bottom:0;">
+                Ajusta la asignación de activos según la tolerancia y capacidad de asumir riesgo del inversor.
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
+
+    with c3:
+        st.markdown("""
+        <div class="card", style="
+        text-align:center;
+        display:flex;
+        flex-direction:column;
+        justify-content:center">
+            <h3 style="color:#000078; margin-top:0;"> Seguimiento</h3>
+            <p style="color:#000078; margin-bottom:0;">
+                Permite hacer seguimiento de la cartera de invesión.
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
+
+    #--------------- DISCLAIMER ---------------
+    st.markdown("""
+    <div style="
+        display:flex;
+        justify-content:center;
+        margin-top:1rem;
+    ">
+        <div style="
+            max-width:900px;
+            background-color:rgba(115,237,255,0.05);
+            border:1px solid rgba(115,237,255,0.35);
+            border-radius:12px;
+            padding:1.2rem 1.5rem;
+            text-align:center;
+        ">
+            <p style="
+                color:#000078;
+                font-size:0.9rem;
+                line-height:1.5;
+                margin:0;
+            ">
+                <strong>Disclaimer:</strong><br><br>
+                Esta aplicación es una herramienta desarrollada exclusivamente con fines académicos
+                en el marco de un Trabajo de Fin de Grado (TFG).<br>
+                No constituye asesoramiento financiero, recomendación de inversión ni oferta de
+                productos financieros.<br>
+                Cualquier decisión tomada a partir de esta herramienta es responsabilidad exclusiva del usuario.
+            </p>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    st.markdown("""
+    <hr style="
+        border: none;
+        height: 2px;
+        background: linear-gradient(
+            to right,
+            transparent,
+            #73EDFF,
+            transparent
+        );
+        margin: 3rem 0 2rem 0;
+    ">
+    """, unsafe_allow_html=True)
+
+    st.markdown("""
+    <div style="text-align: center">
+        <h3 style="color:#000078; font-weight:500;">
+            Antes de empezar, es necesario llevar a cabo un cuestionario personal
+        </h3>
+    </div>
+    """, unsafe_allow_html=True)
+    st.markdown("""
+    <p style="text-align: center">
+        Responde a una serie de preguntas que permitan definir tu perfil de riesgo y así recomendarte una cartera adecuada
+    </p>
+        """, unsafe_allow_html=True)
 
     if st.button("Completar cuestionario personal", use_container_width=True):
         st.session_state["route"] = "onboarding"
