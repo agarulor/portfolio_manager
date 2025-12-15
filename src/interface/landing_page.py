@@ -1,8 +1,16 @@
 import sys
 import os
 import streamlit as st
+import base64
+from pathlib import Path
 sys.path.append(os.path.join(os.path.dirname(__file__), "src"))
-ASSETS_PATH = "assets/"
+BASE_DIR = Path(__file__).resolve().parent
+ASSETS_PATH = BASE_DIR / "assets"
+
+
+def _img_to_base64(img_path: Path) -> str:
+    data = img_path.read_bytes()
+    return base64.b64encode(data).decode("utf-8")
 
 def render():
     st.set_page_config(
@@ -10,13 +18,14 @@ def render():
         page_icon="📈",
         layout="wide"
     )
-
+    portada_path = ASSETS_PATH / "portada.png"
+    portada_b64 = _img_to_base64(portada_path)
     logo_col_left, logo_col_center, logo_col_right = st.columns([2, 1, 2])
 
     # --------------- UOC LOGO ---------------
     with logo_col_center:
         st.image(
-            str(ASSETS_PATH + "202-nova-marca-uoc.jpg"),
+            str(ASSETS_PATH / "202-nova-marca-uoc.jpg"),
             width=360
         )
 
@@ -51,37 +60,59 @@ def render():
     }
     </style>
     """, unsafe_allow_html=True)
-
-    # ---------- INTRO ----------
-    st.markdown("""
+    st.markdown(f"""
+    <div style="
+    background-image: url('data:image/jpeg;base64,{portada_b64}');
+    background-size: cover;
+    background-position: center;
+    padding: 6rem 1rem;
+    border-radius: 18px;
+    margin-bottom: 2.5rem;
+    ">
     <div style="text-align: center; margin-bottom: 2rem;">
-        <h1 style="color:#000078;">TFG - Ciencia de datos aplicada a la gestión de carteras</h1>
-        <h3 style="color:#000078; font-weight:400;">
-            Proyecto para la creación de una cartera de inversión diversificada mediante un asesor automatizado
-        </h3>
+    <h1 style="color:#000078;">TFG - Ciencia de datos aplicada a la gestión de carteras</h1>
+    <h3 style="color:#000078; font-weight:400;">
+    Proyecto para la creación de una cartera de inversión diversificada mediante un asesor automatizado
+    </h3>
     </div>
-    """, unsafe_allow_html=True)
 
-    # --------------- TFG LOGO ---------------
-    st.markdown("""
-    <div style="display:flex; justify-content:center; margin-bottom:2.5rem;">
-        <div style="
-            background: linear-gradient(135deg, rgba(115,237,255,0.15), rgba(115,237,255,0.05));
-            border: 2px solid #73EDFF;
-            border-radius: 14px;
-            padding: 0.9rem 1.6rem;
-            box-shadow: 0 10px 30px rgba(115,237,255,0.15);
-            text-align: center;
-        ">
-            <span style="
-                color:#73EDFF;
-                font-size:3.15rem;
-                font-weight:800;
-                letter-spacing:0.1em;
-            ">
-                ROBO-UOC ADVISOR
-            </span>
-        </div>
+    <div style="display:flex; justify-content:center; margin-bottom:1.5rem;">
+    <div style="
+    background: linear-gradient(135deg, rgba(115,237,255,0.15), rgba(115,237,255,0.05));
+    border: 2px solid #FFFFFF;
+    border-radius: 14px;
+    padding: 0.9rem 1.6rem;
+    box-shadow: 0 10px 30px rgba(115,237,255,0.15);
+    text-align: center;
+    ">
+    <span style="
+    display:block;
+    color:#FFFFFF;
+    font-size:3.15rem;
+    font-weight:800;
+    letter-spacing:0.1em;
+    line-height:1.1;
+    ">
+    ROBO-UOC ADVISOR
+    </span>
+    </div>
+    </div>
+
+    <div style="display:flex; justify-content:center;">
+    <a href="?route=questionnaire" style="
+    background:#73EDFF;
+    color:#000078;
+    border:2px solid #000078;
+    border-radius:8px;
+    padding:0.6rem 1.2rem;
+    font-size:1rem;
+    font-weight:700;
+    text-decoration:none;
+    box-shadow:0 10px 25px rgba(0,0,0,0.12);
+    ">
+    Completar cuestionario personal
+    </a>
+    </div>
     </div>
     """, unsafe_allow_html=True)
 
@@ -89,7 +120,6 @@ def render():
     st.markdown("""
     <div style="text-align:center; margin-top: 0.5rem; margin-bottom: 1.5rem;">
       <h2 style="color:#000078; margin-bottom:0.3rem;">¿Qué hace el Robo Advisor?</h2>
-      <p style="color:#000078; margin:0;">Metodología, control de riesgo y automatización para una cartera diversificada.</p>
     </div>
     """, unsafe_allow_html=True)
 
@@ -144,7 +174,6 @@ def render():
     st.markdown("""
        <div style="text-align:center; margin-top: 0.8rem; margin-bottom: 1.2rem;">
          <h2 style="color:#000078; margin-bottom:0.25rem;">Cómo funciona</h2>
-         <p style="color:#000078; margin:0;">Pasos para generar la recomendación.</p>
        </div>
        """, unsafe_allow_html=True)
 
@@ -154,7 +183,7 @@ def render():
         <div class="card" style="border-left: 6px solid #73EDFF; text-align:center">
             <h3 style="color:#000078; margin-top:0;">Cuestionario</h3>
             <p style="color:#000078; margin-bottom:0;">
-                Preguntas para determinar perfil y restricciones.
+                Preguntas para determinar perfil y restricciones
             </p>
         </div>
         """, unsafe_allow_html=True)
@@ -164,7 +193,7 @@ def render():
         <div class="card" style="border-left: 6px solid #73EDFF; text-align:center;">
             <h3 style="color:#000078; margin-top:0;">Perfil</h3>
             <p style="color:#000078; margin-bottom:0;">
-                Determinación del perfil de riesgo del inversor a partir del cuestionario.
+                Determina el perfil de riesgo del inversor a partir del cuestionario
             </p>
         </div>
         """, unsafe_allow_html=True)
@@ -174,10 +203,43 @@ def render():
         <div class="card" style="border-left: 6px solid #73EDFF; text-align:center;">
             <h3 style="color:#000078; margin-top:0;">Cartera</h3>
             <p style="color:#000078; margin-bottom:0;">
-                Presentación de la cartera realizada
+                Muestra la cartera recomendada
             </p>
         </div>
         """, unsafe_allow_html=True)
+
+
+
+    st.markdown("""
+    <hr style="
+        border: none;
+        height: 2px;
+        background: linear-gradient(
+            to right,
+            transparent,
+            #73EDFF,
+            transparent
+        );
+        margin: 3rem 0 2rem 0;
+    ">
+    """, unsafe_allow_html=True)
+
+    st.markdown("""
+    <div style="text-align: center">
+        <h3 style="color:#000078; font-weight:500;">
+            Antes de empezar, es necesario llevar a cabo un cuestionario personal
+        </h3>
+    </div>
+    """, unsafe_allow_html=True)
+    st.markdown("""
+    <p style="text-align: center">
+        Responde a una serie de preguntas que permitan definir tu perfil de riesgo y así recomendarte una cartera adecuada
+    </p>
+        """, unsafe_allow_html=True)
+
+    if st.button("Completar cuestionario personal", use_container_width=True):
+        st.session_state["route"] = "questionnaire"
+
     #--------------- DISCLAIMER ---------------
     st.markdown("""
     <div style="
@@ -209,33 +271,3 @@ def render():
         </div>
     </div>
     """, unsafe_allow_html=True)
-
-    st.markdown("""
-    <hr style="
-        border: none;
-        height: 2px;
-        background: linear-gradient(
-            to right,
-            transparent,
-            #73EDFF,
-            transparent
-        );
-        margin: 3rem 0 2rem 0;
-    ">
-    """, unsafe_allow_html=True)
-
-    st.markdown("""
-    <div style="text-align: center">
-        <h3 style="color:#000078; font-weight:500;">
-            Antes de empezar, es necesario llevar a cabo un cuestionario personal
-        </h3>
-    </div>
-    """, unsafe_allow_html=True)
-    st.markdown("""
-    <p style="text-align: center">
-        Responde a una serie de preguntas que permitan definir tu perfil de riesgo y así recomendarte una cartera adecuada
-    </p>
-        """, unsafe_allow_html=True)
-
-    if st.button("Completar cuestionario personal", use_container_width=True):
-        st.session_state["route"] = "onboarding"
