@@ -118,20 +118,19 @@ def render_investor_questionnaire():
     st.header("Información referente a la capacidad de asumir riesgo")
 
     liquidity_options = {
-        1: "1 - Liquidez necesaria inmediata (muy alta necesidad de liquidez)",
-        2: "2 - Alta necesidad de liquidez",
-        3: "3 - Necesidad de liquidez media",
-        4: "4 - Baja necesidad de liquidez",
-        5: "5 - Muy baja necesidad de liquidez"
+        1: "1 - Inmediata (muy alta necesidad de liquidez)",
+        2: "2 - Alta",
+        3: "3 - Media",
+        4: "4 - Baja",
+        5: "5 - Muy baja"
     }
 
-
     income_options = {
-        1: "1 - Ingresos anuales muy bajos",
-        2: "2 - Ingresos anuales bajos",
-        3: "3 - Ingresos anuales medios",
-        4: "4 - Ingresos anuales altos",
-        5: "5 - Ingresos anuales muy altos"
+        1: "1 - Muy bajos",
+        2: "2 - Bajos",
+        3: "3 - Medios",
+        4: "4 - Altos",
+        5: "5 - Muy altos"
     }
 
     net_worth_options = {
@@ -156,18 +155,21 @@ def render_investor_questionnaire():
         3: "3 - Objetivo financiero flexible"
     }
 
-    liquidity_need = st.selectbox(
-        "4) Liquidez necesaria:",
-        options=list(liquidity_options.keys()),
-        format_func=lambda x: liquidity_options[x],
-        index=2
+
+    liquidity_need = radio_question(
+        number=1,
+        text="Liquidez necesaria",
+        options_dict=liquidity_options,
+        key="liquidity_need",
+        default_index=2,
     )
 
-    annual_income = st.selectbox(
-        "5) Ingresos anuales:",
-        options=list(income_options.keys()),
-        format_func=lambda x: income_options[x],
-        index=2
+    annual_income = radio_question(
+        number=2,
+        text="Ingresos anuales",
+        options_dict=income_options,
+        key="annual_income",
+        default_index=2,
     )
 
     net_worth = st.selectbox(
