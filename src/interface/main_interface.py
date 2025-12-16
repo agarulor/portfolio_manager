@@ -1,5 +1,11 @@
 import streamlit as st
 from types import MappingProxyType
+from pathlib import Path
+import sys
+import os
+sys.path.append(os.path.join(os.path.dirname(__file__), "src"))
+BASE_DIR = Path(__file__).resolve().parent
+ASSETS_PATH = BASE_DIR / "assets"
 RISK_COLOR = MappingProxyType({1: "#2ecc71", 2: "#2ecc71", 3: "#f39c12", 4: "#f39c12", 5: "#e74c3c", 6: "#e74c3c"})
 RISK_PROFILE_DICTIONARY = MappingProxyType({
     1: "Perfil bajo de riesgo",
@@ -11,17 +17,62 @@ RISK_PROFILE_DICTIONARY = MappingProxyType({
 })
 
 def apply_global_styles():
-    st.markdown(
-        """
-        <style>
-        /* Ajustes globales opcionales */
-        .main > div {
-            padding-top: 1rem;
-        }
-        </style>
-        """,
-        unsafe_allow_html=True
-    )
+    st.markdown("""
+    <style>
+    @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap');
+
+    html, body, [class*="css"] {
+        font-family: 'Roboto', sans-serif !important;
+    }
+
+    body {
+        background-color: #F8FAFC;
+    }
+
+    .main > div {
+        padding-top: 1rem;
+    }
+
+    .stButton > button {
+        background-color: #73EDFF;
+        color: #000078;
+        border-radius: 8px;
+        padding: 0.6rem 1.2rem;
+        font-size: 1.1rem;
+        font-weight: 700;
+        border: 2px solid #000078;
+    }
+
+    .stButton > button:hover {
+        background-color: #73EDFF;
+    }
+
+    .card {
+        background-color: white;
+        padding: 1.8rem;
+        border-radius: 12px;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+        height: 100%;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
+def render_sidebar_header():
+    with st.sidebar:
+        st.image(str(ASSETS_PATH / "202-nova-marca-uoc.jpg"), use_container_width=True)
+
+        st.markdown("""
+        <div style="margin-top:0.6rem; margin-bottom:0.8rem; text-align:center;">
+            <div style="color:#000078; font-weight:700; font-size:1.05rem;">
+                ROBO-UOC ADVISOR
+            </div>
+            <div style="color:#000078; opacity:0.85; font-size:0.9rem;">
+                TFG - UOC
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+
+        st.markdown("---")
 
 
 def render_sidebar_profile_summary():
@@ -51,6 +102,7 @@ def render_sidebar_profile_summary():
     )
 
 def render_sidebar():
+    render_sidebar_header()
     st.sidebar.title("Menú")
 
     page = st.sidebar.radio(
