@@ -10,7 +10,7 @@ from interface.landing_page import render as render_landing
 
 def run_app():
     st.set_page_config(page_title="UOC - Robo Advisor", page_icon="📈", layout="wide")
-    apply_global_styles()  # estilos globales 1 vez
+    apply_global_styles()
 
     if "route" not in st.session_state:
         st.session_state["route"] = "landing"

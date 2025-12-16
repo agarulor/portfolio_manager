@@ -54,8 +54,15 @@ def apply_global_styles():
         box-shadow: 0 10px 25px rgba(0,0,0,0.05);
         height: 100%;
     }
+    
+         div[role="radiogroup"] {
+        filter: hue-rotate(240deg);
+    
+    }
+    
     </style>
     """, unsafe_allow_html=True)
+
 
 def render_sidebar_header():
     with st.sidebar:

@@ -14,6 +14,38 @@ RISK_PROFILE_DICTIONARY = MappingProxyType({
     6: "Perfil agresivo de riesgo"
 })
 
+
+def radio_question(
+    number,
+    text,
+    options_dict,
+    key,
+    default_index=2,
+):
+    # Título
+    st.markdown(
+        f"""
+        <div style="
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: #000078;
+        margin-bottom: -3.0rem;
+        ">
+        {number}) {text}
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+    # Radio
+    return st.radio(
+        label=" ",
+        options=list(options_dict.keys()),
+        format_func=lambda x: options_dict[x],
+        index=default_index,
+        key=key,
+    )
+
 def render_investor_questionnaire():
 
     st.title("Cuestionario sobre la tolerancia al riesgo del inversor para su clasificación")
@@ -29,53 +61,58 @@ def render_investor_questionnaire():
 
     # We first create the dictionaries with the answers for each dropdown menu
     knowledge_options = {
-        1: "1 - Muy poco conocimiento sobre productos financieros",
-        2: "2 - Poco conocimiento sobre productos financieros",
-        3: "3 - Conocimiento medio sobre productos financieros",
-        4: "4 - Buen conocimiento sobre productos financieros",
-        5: "5 - Alto conocimiento sobre productos financieros",
-        6: "6 - Conocimiento experto sobre productos financieros"
+        1: "1 - Muy poco conocimiento",
+        2: "2 - Poco conocimiento",
+        3: "3 - Conocimiento medio",
+        4: "4 - Buen conocimiento",
+        5: "5 - Alto conocimiento",
+        6: "6 - Conocimiento experto"
     }
 
     risk_level_options = {
-        1: "1 - Nivel de riesgo dispuesto a asumir: bajo",
-        2: "2 - Nivel de riesgo dispuesto a asumir: medio-bajo",
-        3: "3 - Nivel de riesgo dispuesto a asumir: medio",
-        4: "4 - Nivel de riesgo dispuesto a asumir: medio-alto",
-        5: "5 - Nivel de riesgo dispuesto a asumir: alto",
-        6: "6 - Nivel de riesgo dispuesto a asumir: muy alto"
+        1: "1 - Bajo",
+        2: "2 - Medio-bajo",
+        3: "3 - Medio",
+        4: "4 - Medio-alto",
+        5: "5 - Alto",
+        6: "6 - Muy alto"
     }
 
     downside_reaction_options = {
-        1: "1 - Ante una caída fuerte vendería toda la inversión",
-        2: "2 - Ante una caída fuerte vendería una parte de la inversión",
-        3: "3 - Ante una caída fuerte mantendría la inversión",
-        4: "4 - Ante una caída fuerte compraría más para aprovechar la caída"
+        1: "1 - Vendería toda la inversión",
+        2: "2 - Vendería una parte de la inversión",
+        3: "3 - Mantendría la inversión",
+        4: "4 - Compraría más para aprovechar la caída"
     }
 
-    knowledge = st.selectbox("1) Conocimiento financiero y experiencia",
-                             options=list(knowledge_options.keys()),
-                             format_func= lambda x: knowledge_options[x],
-                             index= 2
-                             )
 
+    knowledge = radio_question(
+        number=1,
+        text="Conocimiento financiero y experiencia",
+        options_dict=knowledge_options,
+        key="knowledge",
+        default_index=2,
+    )
 
-    risk_level = st.selectbox("2) Nivel de riesgo dispuesto a asumir",
-                             options=list(risk_level_options.keys()),
-                             format_func= lambda x: risk_level_options[x],
-                             index= 2
-                             )
+    risk_level = radio_question(
+        number=2,
+        text="Nivel de riesgo dispuesto a asumir",
+        options_dict=risk_level_options,
+        key="risk_level",
+        default_index=2,
+    )
 
-    downside_reaction = st.selectbox("3) Reacción ante caídas fuertes del precio de los activos",
-                             options=list(downside_reaction_options.keys()),
-                             format_func= lambda x: downside_reaction_options[x],
-                             index= 2
-                             )
+    downside_reaction = radio_question(
+        number=2,
+        text="Nivel de riesgo dispuesto a asumir",
+        options_dict=downside_reaction_options,
+        key="downside_reaction",
+        default_index=2,
+    )
 
     #----------------------------------------------------------
     # RISK CAPACITY
     #----------------------------------------------------------
-
 
     st.header("Información referente a la capacidad de asumir riesgo")
 
