@@ -4,7 +4,7 @@ from investor_information.investor_profile import investor_target_volatility
 
 from interface.main_interface import render_sidebar_profile_summary
 
-RISK_COLOR = MappingProxyType({1: "#2ecc71", 2: "#2ecc71", 3: "#f39c12", 4: "#f39c12", 5: "#e74c3c", 6: "#e74c3c"})
+RISK_COLOR = MappingProxyType({   1: "#2ecc71", 2: "#6bdc8b", 3: "#f1c40f", 4: "#f39c12", 5: "#e67e22", 6: "#e74c3c",})
 RISK_PROFILE_DICTIONARY = MappingProxyType({
     1: "Perfil bajo de riesgo",
     2: "Perfil medio-bajo de riesgo",
@@ -22,7 +22,7 @@ def radio_question(
     key,
     default_index=2,
 ):
-    # Título
+
     st.markdown(
         f"""
         <div style="
@@ -46,6 +46,82 @@ def radio_question(
         index=default_index,
         key=key,
     )
+
+
+def render_risk_scale(rt_value: int):
+    # colors from clearer to red
+
+    blocks_html = ""
+    labels_html = ""
+    for i in range(1, 7):
+        active = i == rt_value
+        blocks_html += f"""
+        <div style="
+        flex:1;
+        height:{'52px' if active else '38px'};
+        background:{RISK_COLOR[i]};
+        border-radius:8px;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        font-weight:800;
+        color:white;
+        font-size:1.2rem;
+        box-shadow:{'0 0 0 3px #000078' if active else 'none'};
+        opacity:{'1' if active else '0.6'};
+        transition:all 0.2s ease;
+        ">
+            {i}
+        </div>
+        """
+
+        labels_html += f"""
+        <div style="
+        flex:1;
+        text-align:center;
+        font-size:0.85rem;
+        font-weight:{'700' if active else '500'};
+        color:{RISK_COLOR[i] if active else '#64748B'};
+        margin-top:0.4rem;
+        ">
+        {RISK_PROFILE_DICTIONARY[i]}
+        </div>
+        """
+    st.markdown(
+        f"""
+        <div style="margin-top:2.5rem;">
+        <div style="
+        text-align:center;
+        font-size:1.5rem;
+        font-weight:700;
+        color:#000078;
+        margin-bottom:1rem;
+        ">
+        Su perfil de riesgo es el siguiente
+        </div>
+        
+        <div style="
+        display:flex;
+        gap:0.5rem;
+        max-width:700px;
+        margin:0 auto;
+        ">
+        {blocks_html}
+        </div>
+        
+        <div style="
+        display:flex;
+        gap:0.5rem;
+        max-width:700px;
+        margin:0 auto;
+        ">
+        {labels_html}
+        </div>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
 
 def render_investor_questionnaire():
 
@@ -187,7 +263,6 @@ def render_investor_questionnaire():
         default_index=2,
     )
 
-
     financial_goal_importance = radio_question(
         number=5,
         text="Importancia del objetivo financiero",
@@ -219,52 +294,9 @@ def render_investor_questionnaire():
     return answers
 
 def render_investor_profile_view(RA, RC, RT, sigma_min, sigma_max):
-    st.subheader("Resultados del perfil de riesgo")
 
-    col1, col2 = st.columns(2)
-    col1.markdown(
-        f"""
-        <div style="text-align: center;">
-            <div style="font-size: 18px; font-weight: 500; color: #555;">
-                Apetito de riesgo:
-            </div>
-            <div style="font-size: 36px; font-weight: 800; margin-top: 4px;">
-                {RA}
-            </div>
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
-    col2.markdown(
-        f"""
-        <div style="text-align: center;">
-            <div style="font-size: 18px; font-weight: 500; color: #555;">
-                Capacidad de asumir riesgo
-            </div>
-            <div style="font-size: 36px; font-weight: 800; margin-top: 4px;">
-                {RC}
-            </div>
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
 
-    color_tolerance = RISK_COLOR[RT]
-    st.markdown(
-        f"""
-        <div style="text-align: center; font-size: 26px; font-weight: 600; margin-top: 40px">
-            Tolerancia final (RT)
-            <div style="font-size: 48px;font-weight: 800;color: {color_tolerance};margin-top: 10px">
-                {RT}
-            </div>
-            <div style="font-size: 24px;font-weight: 800; color: {color_tolerance};margin-top: 10px">
-                {RISK_PROFILE_DICTIONARY[RT]}
-            </div>
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
-
+    render_risk_scale(RT)
     st.subheader("Volatilidad objetivo de la cartera")
     st.write(
         f"Rango recomendado de volatilidad anualizada: "
