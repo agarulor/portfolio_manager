@@ -134,11 +134,11 @@ def render_investor_questionnaire():
     }
 
     net_worth_options = {
-        1: "1 - Ahorros y patrimonio muy bajos",
-        2: "2 - Ahorros y patrimonio bajos",
-        3: "3 - Ahorros y patrimonio medios",
-        4: "4 - Ahorros y patrimonio altos",
-        5: "5 - Ahorros y patrimonio muy altos"
+        1: "1 - Muy bajos",
+        2: "2 - Bajos",
+        3: "3 - Medios",
+        4: "4 - Altos",
+        5: "5 - Muy altos"
     }
 
     horizon_options = {
@@ -150,11 +150,10 @@ def render_investor_questionnaire():
     }
 
     goal_importance_options = {
-        1: "1 - Objetivo financiero crítico",
-        2: "2 - Objetivo financiero de importancia media",
-        3: "3 - Objetivo financiero flexible"
+        1: "1 - Crítico",
+        2: "2 - Importancia media",
+        3: "3 - Flexible"
     }
-
 
     liquidity_need = radio_question(
         number=1,
@@ -172,25 +171,29 @@ def render_investor_questionnaire():
         default_index=2,
     )
 
-    net_worth = st.selectbox(
-        "6) Ahorros y patrimonio:",
-        options=list(net_worth_options.keys()),
-        format_func=lambda x: net_worth_options[x],
-        index=2
+    net_worth = radio_question(
+        number=3,
+        text="Ahorros y patrimonio",
+        options_dict=net_worth_options,
+        key="net_worth",
+        default_index=2,
     )
 
-    investment_horizon = st.selectbox(
-        "7) Horizonte temporal:",
-        options=list(horizon_options.keys()),
-        format_func=lambda x: horizon_options[x],
-        index=2
+    investment_horizon = radio_question(
+        number=4,
+        text="Horizonte temporal",
+        options_dict=horizon_options,
+        key="investment_horizon",
+        default_index=2,
     )
 
-    financial_goal_importance = st.selectbox(
-        "8) Importancia del objetivo financiero:",
-        options=list(goal_importance_options.keys()),
-        format_func=lambda x: goal_importance_options[x],
-        index=1,
+
+    financial_goal_importance = radio_question(
+        number=5,
+        text="Importancia del objetivo financiero",
+        options_dict=goal_importance_options,
+        key="financial_goal",
+        default_index=2,
     )
 
     st.markdown("---")
