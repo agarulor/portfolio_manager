@@ -29,7 +29,8 @@ def radio_question(
         font-size: 1.1rem;
         font-weight: 700;
         color: #000078;
-        margin-bottom: -3.0rem;
+        margin-bottom: -5.0rem;
+        margin-top: 1.0rem;
         ">
         {number}) {text}
         </div>
@@ -61,12 +62,12 @@ def render_investor_questionnaire():
 
     # We first create the dictionaries with the answers for each dropdown menu
     knowledge_options = {
-        1: "1 - Muy poco conocimiento",
-        2: "2 - Poco conocimiento",
+        1: "1 - Conocimiento bajo",
+        2: "2 - Conocimiento medio-bajo",
         3: "3 - Conocimiento medio",
-        4: "4 - Buen conocimiento",
-        5: "5 - Alto conocimiento",
-        6: "6 - Conocimiento experto"
+        4: "4 - Conocimiento medio-alto",
+        5: "5 - Conocimiento alto",
+        6: "6 - Conocimiento muy alto"
     }
 
     risk_level_options = {
@@ -103,8 +104,8 @@ def render_investor_questionnaire():
     )
 
     downside_reaction = radio_question(
-        number=2,
-        text="Nivel de riesgo dispuesto a asumir",
+        number=3,
+        text="Reacción ante caídas fuertes del precio de los activos",
         options_dict=downside_reaction_options,
         key="downside_reaction",
         default_index=2,
