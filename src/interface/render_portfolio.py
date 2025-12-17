@@ -2,7 +2,7 @@ import sys
 import os
 
 import pandas as pd
-
+from interface.constraints import render_investor_constraints
 from portfolio_tools.risk_metrics import calculate_covariance  # si quieres usar covmat
 sys.path.append(os.path.join(os.path.dirname(__file__), "src"))
 import streamlit as st
@@ -157,6 +157,7 @@ def plot_portfolio_value(df_value: pd.DataFrame,
 
 
 def render_portfolio():
+    render_investor_constraints()
     dinero_invertido = 100
     if "risk_result" not in st.session_state:
         st.warning("Primero completa el cuestionario de perfil de riesgo.")
@@ -185,6 +186,7 @@ def render_portfolio():
 
     # covmat no lo usas realmente dentro de create_markowitz_table,
     # pero si quieres ser consistente puedes calcularlo:
+    """
     price_data, sectors = get_stock_prices("data/input/ibex_eurostoxx.csv",
                                            "ticker_yahoo",
                                            "name",
@@ -280,3 +282,4 @@ def render_portfolio():
     )
 
     print(trades_log.head(20))
+    """

@@ -154,3 +154,44 @@ def render_portfolio():
     # aquí luego puedes meter tu optimización y mostrar pesos
     st.info("Aquí iría la construcción de la cartera (pesos por activo, gráficos, etc.).")
 
+
+def header(text: str):
+    st.markdown(f"""
+                <div style="display:flex; justify-content:center; margin-bottom:1.5rem;">
+                <div style="
+                background: linear-gradient(135deg, rgba(115,237,255,0.15), rgba(115,237,255,0.05));
+                border: 2px solid #000078;
+                border-radius: 12px;
+                padding: 0.9rem 1.6rem;
+                box-shadow: 0 10px 30px rgba(115,237,255,0.15);
+                text-align: center;
+                ">
+                <span style="
+                display:block;
+                color:#000078;
+                font-size:3.15rem;
+                font-weight:800;
+                letter-spacing:0.1em;
+                line-height:1.1;
+                ">
+                {text}
+                </span>
+                </div>
+                </div>    
+                </div>""", unsafe_allow_html=True)
+
+def subheader(text: str, margin_bottom: str = "-1.0rem"):
+    st.markdown(f"""
+            <div style="
+            font-size: 1.1rem;
+            color: #000078;
+            line-height: 1.6;
+            margin-bottom: {margin_bottom};
+            text-align: center;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+            ">
+            {text}
+            </div>
+          """, unsafe_allow_html=True)

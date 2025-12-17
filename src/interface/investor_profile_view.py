@@ -1,6 +1,7 @@
 import streamlit as st
 from types import MappingProxyType # to avoid changes to a dictionary
 from investor_information.investor_profile import investor_target_volatility
+from interface.main_interface import header, subheader
 from interface.landing_page import add_separation
 
 from interface.main_interface import render_sidebar_profile_summary
@@ -168,43 +169,9 @@ def render_investor_questionnaire():
         st.progress(progress)
         st.caption(f"{int(progress * 100)}% completado")
 
-    st.markdown(f"""
-            <div style="display:flex; justify-content:center; margin-bottom:1.5rem;">
-            <div style="
-            background: linear-gradient(135deg, rgba(115,237,255,0.15), rgba(115,237,255,0.05));
-            border: 2px solid #000078;
-            border-radius: 12px;
-            padding: 0.9rem 1.6rem;
-            box-shadow: 0 10px 30px rgba(115,237,255,0.15);
-            text-align: center;
-            ">
-            <span style="
-            display:block;
-            color:#000078;
-            font-size:3.15rem;
-            font-weight:800;
-            letter-spacing:0.1em;
-            line-height:1.1;
-            ">
-            PERFIL DEL INVERSOR
-            </span>
-            </div>
-            </div>    
-            </div>
-            <div style="
-            font-size: 1.1rem;
-            color: #000078;
-            line-height: 1.6;
-            margin-bottom: -2rem;
-            text-align: center;
-            max-width: 800px;
-            margin-left: auto;
-            margin-right: auto;
-            ">
-            Por favor, responda a las siguientes preguntas para poder determinar su perfil de riesgo.
-            De esta forma podremos recomendarle una cartera de inversión acorde a sus necesidades.
-            </div>
-          """, unsafe_allow_html=True)
+    header("PERFIL DEL INVERSOR")
+    subheader("Por favor, responda a las siguientes preguntas para poder determinar su perfil de riesgo.\
+            De esta forma podremos recomendarle una cartera de inversión acorde a sus necesidades")
 
     # ----------------------------------------------------------
     # RISK APPETITE
