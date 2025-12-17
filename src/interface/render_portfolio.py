@@ -157,6 +157,7 @@ def plot_portfolio_value(df_value: pd.DataFrame,
 
 
 def render_portfolio():
+
     render_investor_constraints()
     dinero_invertido = 100
     if "risk_result" not in st.session_state:
