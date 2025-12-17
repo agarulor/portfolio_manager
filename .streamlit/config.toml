@@ -1,0 +1,5 @@
+[theme]
+primaryColor = "#73EDFF"        # azul corporativo
+backgroundColor = "#FFFFFF"
+secondaryBackgroundColor = "#F5F7FA"
+textColor = "#262730"

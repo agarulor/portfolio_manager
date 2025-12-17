@@ -55,9 +55,6 @@ def apply_global_styles():
         height: 100%;
     }
     
-         div[role="radiogroup"] {
-        filter: hue-rotate(240deg);
-    
     }
     .progress-sticky {
         position: sticky;
