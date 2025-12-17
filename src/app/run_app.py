@@ -30,7 +30,6 @@ def run_app():
 
     elif route == "questionnaire":
         page = render_sidebar()
-        st.header("Perfil de riesgo del inversor")
         answers = render_investor_questionnaire()
         show_investor_profile(answers)
         render_sidebar_profile_summary()

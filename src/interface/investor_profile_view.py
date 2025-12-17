@@ -1,10 +1,11 @@
 import streamlit as st
 from types import MappingProxyType # to avoid changes to a dictionary
 from investor_information.investor_profile import investor_target_volatility
+from interface.landing_page import add_separation
 
 from interface.main_interface import render_sidebar_profile_summary
 
-RISK_COLOR = MappingProxyType({   1: "#2ecc71", 2: "#6bdc8b", 3: "#f1c40f", 4: "#f39c12", 5: "#e67e22", 6: "#e74c3c",})
+RISK_COLOR = MappingProxyType({ 1: "#2ecc71", 2: "#6bdc8b", 3: "#f1c40f", 4: "#f39c12", 5: "#e67e22", 6: "#e74c3c"})
 RISK_PROFILE_DICTIONARY = MappingProxyType({
     1: "Perfil bajo de riesgo",
     2: "Perfil medio-bajo de riesgo",
@@ -13,14 +14,25 @@ RISK_PROFILE_DICTIONARY = MappingProxyType({
     5: "Perfil alto de riesgo",
     6: "Perfil agresivo de riesgo"
 })
+TOTAL_QUESTIONS = 8
 
+QUESTION_KEYS = [
+    "knowledge",
+    "risk_level",
+    "downside_reaction",
+    "liquidity_need",
+    "annual_income",
+    "net_worth",
+    "investment_horizon",
+    "financial_goal",
+]
 
 def radio_question(
     number,
     text,
     options_dict,
     key,
-    default_index=2,
+    default_index=None,
 ):
 
     st.markdown(
@@ -47,18 +59,35 @@ def radio_question(
         key=key,
     )
 
+def questionnaire_progress(keys):
+    answered = sum(
+        1 for k in keys
+        if k in st.session_state and st.session_state[k] is not None
+    )
+    progress = answered / len(keys)
 
-def render_risk_scale(rt_value: int):
-    # colors from clearer to red
+    return progress
 
+def render_risk_scale(
+    rt_value: int,
+    text: str,
+    block_height_active: str = "52px",
+    block_height_inactive: str = "38px",
+    block_font_size: str = "1.2rem",
+    label_font_size: str = "0.85rem",
+    title_font_size: str = "1.5rem",
+    max_width: str = "700px",
+):
     blocks_html = ""
     labels_html = ""
+
     for i in range(1, 7):
         active = i == rt_value
+
         blocks_html += f"""
         <div style="
         flex:1;
-        height:{'52px' if active else '38px'};
+        height:{block_height_active if active else block_height_inactive};
         background:{RISK_COLOR[i]};
         border-radius:8px;
         display:flex;
@@ -66,7 +95,7 @@ def render_risk_scale(rt_value: int):
         justify-content:center;
         font-weight:800;
         color:white;
-        font-size:1.2rem;
+        font-size:{block_font_size};
         box-shadow:{'0 0 0 3px #000078' if active else 'none'};
         opacity:{'1' if active else '0.6'};
         transition:all 0.2s ease;
@@ -79,7 +108,7 @@ def render_risk_scale(rt_value: int):
         <div style="
         flex:1;
         text-align:center;
-        font-size:0.85rem;
+        font-size:{label_font_size};
         font-weight:{'700' if active else '500'};
         color:{RISK_COLOR[i] if active else '#64748B'};
         margin-top:0.4rem;
@@ -87,32 +116,33 @@ def render_risk_scale(rt_value: int):
         {RISK_PROFILE_DICTIONARY[i]}
         </div>
         """
+
     st.markdown(
         f"""
         <div style="margin-top:2.5rem;">
         <div style="
         text-align:center;
-        font-size:1.5rem;
+        font-size:{title_font_size};
         font-weight:700;
         color:#000078;
         margin-bottom:1rem;
         ">
-        Su perfil de riesgo es el siguiente
+        {text}
         </div>
-        
+
         <div style="
         display:flex;
         gap:0.5rem;
-        max-width:700px;
+        max-width:{max_width};
         margin:0 auto;
         ">
         {blocks_html}
         </div>
-        
+
         <div style="
         display:flex;
         gap:0.5rem;
-        max-width:700px;
+        max-width:{max_width};
         margin:0 auto;
         ">
         {labels_html}
@@ -122,19 +152,64 @@ def render_risk_scale(rt_value: int):
         unsafe_allow_html=True
     )
 
+def render_sub_section(text: str):
+    add_separation()
+    st.markdown(F"""
+                <div style="text-align: center; margin-top: -2.0rem; margin-bottom: -2.0rem;">
+                <h1 style="color:#000078;">{text}</h1>
+                </div>""", unsafe_allow_html=True)
+
 
 def render_investor_questionnaire():
+    progress = questionnaire_progress(QUESTION_KEYS)
 
-    st.title("Cuestionario sobre la tolerancia al riesgo del inversor para su clasificación")
+    with st.sidebar:
+        st.markdown("### Progreso del cuestionario")
+        st.progress(progress)
+        st.caption(f"{int(progress * 100)}% completado")
 
-    st.write("""Por favor, responda a las siguientes preguntas para poder determinar su perfil de riesgo. """
-             """De esta forma podremos recomendarle una cartera de inversión acorde a sus necesidades""")
-
-    st.header("Información referente sobre su apetito de riesgo")
+    st.markdown(f"""
+            <div style="display:flex; justify-content:center; margin-bottom:1.5rem;">
+            <div style="
+            background: linear-gradient(135deg, rgba(115,237,255,0.15), rgba(115,237,255,0.05));
+            border: 2px solid #000078;
+            border-radius: 12px;
+            padding: 0.9rem 1.6rem;
+            box-shadow: 0 10px 30px rgba(115,237,255,0.15);
+            text-align: center;
+            ">
+            <span style="
+            display:block;
+            color:#000078;
+            font-size:3.15rem;
+            font-weight:800;
+            letter-spacing:0.1em;
+            line-height:1.1;
+            ">
+            PERFIL DEL INVERSOR
+            </span>
+            </div>
+            </div>    
+            </div>
+            <div style="
+            font-size: 1.1rem;
+            color: #000078;
+            line-height: 1.6;
+            margin-bottom: -2rem;
+            text-align: center;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+            ">
+            Por favor, responda a las siguientes preguntas para poder determinar su perfil de riesgo.
+            De esta forma podremos recomendarle una cartera de inversión acorde a sus necesidades.
+            </div>
+          """, unsafe_allow_html=True)
 
     # ----------------------------------------------------------
     # RISK APPETITE
     # ----------------------------------------------------------
+    render_sub_section("Cuestionario sobre apetito de riesgo")
 
     # We first create the dictionaries with the answers for each dropdown menu
     knowledge_options = {
@@ -162,13 +237,12 @@ def render_investor_questionnaire():
         4: "4 - Compraría más para aprovechar la caída"
     }
 
-
     knowledge = radio_question(
         number=1,
         text="Conocimiento financiero y experiencia",
         options_dict=knowledge_options,
         key="knowledge",
-        default_index=2,
+        default_index=None,
     )
 
     risk_level = radio_question(
@@ -176,7 +250,7 @@ def render_investor_questionnaire():
         text="Nivel de riesgo dispuesto a asumir",
         options_dict=risk_level_options,
         key="risk_level",
-        default_index=2,
+        default_index=None,
     )
 
     downside_reaction = radio_question(
@@ -184,14 +258,12 @@ def render_investor_questionnaire():
         text="Reacción ante caídas fuertes del precio de los activos",
         options_dict=downside_reaction_options,
         key="downside_reaction",
-        default_index=2,
+        default_index=None,
     )
-
     #----------------------------------------------------------
     # RISK CAPACITY
     #----------------------------------------------------------
-
-    st.header("Información referente a la capacidad de asumir riesgo")
+    render_sub_section("Cuestionario sobre capacidad de asumir riesgo")
 
     liquidity_options = {
         1: "1 - Inmediata (muy alta necesidad de liquidez)",
@@ -236,7 +308,7 @@ def render_investor_questionnaire():
         text="Liquidez necesaria",
         options_dict=liquidity_options,
         key="liquidity_need",
-        default_index=2,
+        default_index=None,
     )
 
     annual_income = radio_question(
@@ -244,7 +316,7 @@ def render_investor_questionnaire():
         text="Ingresos anuales",
         options_dict=income_options,
         key="annual_income",
-        default_index=2,
+        default_index=None,
     )
 
     net_worth = radio_question(
@@ -252,7 +324,7 @@ def render_investor_questionnaire():
         text="Ahorros y patrimonio",
         options_dict=net_worth_options,
         key="net_worth",
-        default_index=2,
+        default_index=None,
     )
 
     investment_horizon = radio_question(
@@ -260,7 +332,7 @@ def render_investor_questionnaire():
         text="Horizonte temporal",
         options_dict=horizon_options,
         key="investment_horizon",
-        default_index=2,
+        default_index=None,
     )
 
     financial_goal_importance = radio_question(
@@ -268,15 +340,19 @@ def render_investor_questionnaire():
         text="Importancia del objetivo financiero",
         options_dict=goal_importance_options,
         key="financial_goal",
-        default_index=2,
+        default_index=None,
     )
 
     st.markdown("---")
 
-    submitted = st.button("Obtener perfil de riesgo")
+    submitted = st.button("Obtener perfil de riesgo", use_container_width=True)
 
     if not submitted:
         # Button not yet pushed
+        return None
+
+    if any(st.session_state.get(k) is None for k in QUESTION_KEYS):
+        st.warning("Por favor, responde todas las preguntas antes de continuar.")
         return None
 
     # We build the dictionary
@@ -294,14 +370,52 @@ def render_investor_questionnaire():
     return answers
 
 def render_investor_profile_view(RA, RC, RT, sigma_min, sigma_max):
+    c1, c2 = st.columns(2)
 
+    with c1:
+        render_risk_scale(
+            rt_value=RA,
+            text="Apetito de riesgo",
+            max_width="450px",
+            title_font_size="1.2rem",
+            block_height_active="44px",
+            block_height_inactive="32px"
+        )
 
-    render_risk_scale(RT)
-    st.subheader("Volatilidad objetivo de la cartera")
-    st.write(
-        f"Rango recomendado de volatilidad anualizada: "
-        f"**{sigma_min * 100:.1f}% – {sigma_max * 100:.1f}%**"
-    )
+    with c2:
+        render_risk_scale(
+            rt_value=RC,
+            text="Capacidad de asumir riesgo",
+            max_width="450px",
+            title_font_size="1.2rem",
+            block_height_active="44px",
+            block_height_inactive="32px",
+        )
+    render_risk_scale(RT, "Su perfil de riesgo es:")
+
+    render_sub_section("Volatilidad Recomendada de la cartera")
+    st.markdown(
+        f"""
+        <div style="
+            margin-top:1.5rem;
+            text-align:center;
+        ">
+            <div style="
+                font-size:2rem;
+                font-weight:800;
+                color:#000078;
+            ">
+                {sigma_min * 100:.1f}% – {sigma_max * 100:.1f}%
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True)
+
+    submitted_cartera = st.button("Ir a carteras recomendadas", use_container_width=True)
+
+    if not submitted_cartera:
+        # Button not yet pushed
+        return None
 
 
 def show_investor_profile(answers):

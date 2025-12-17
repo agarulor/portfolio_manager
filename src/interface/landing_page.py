@@ -12,6 +12,21 @@ def _img_to_base64(img_path: Path) -> str:
     data = img_path.read_bytes()
     return base64.b64encode(data).decode("utf-8")
 
+def add_separation():
+    st.markdown("""
+    <hr style="
+        border: none;
+        height: 2px;
+        background: linear-gradient(
+            to right,
+            transparent,
+            #73EDFF,
+            transparent
+        );
+        margin: 3rem 0 2rem 0;
+    ">
+    """, unsafe_allow_html=True)
+
 def render():
 
     portada_path = ASSETS_PATH / "portada.png"
@@ -89,19 +104,7 @@ def render():
                 st.rerun()
 
 
-    st.markdown("""
-    <hr style="
-        border: none;
-        height: 2px;
-        background: linear-gradient(
-            to right,
-            transparent,
-            #73EDFF,
-            transparent
-        );
-        margin: 3rem 0 2rem 0;
-    ">
-    """, unsafe_allow_html=True)
+    add_separation()
 
     st.markdown("""
     <div style="text-align:center; margin-top: 0.0rem; margin-bottom: 0.0rem;">
@@ -142,19 +145,7 @@ def render():
         """, unsafe_allow_html=True)
 
 
-    st.markdown("""
-    <hr style="
-        border: none;
-        height: 2px;
-        background: linear-gradient(
-            to right,
-            transparent,
-            #73EDFF,
-            transparent
-        );
-        margin: 3rem 0 2rem 0;
-    ">
-    """, unsafe_allow_html=True)
+    add_separation()
 
     st.markdown("""
        <div style="text-align:center; margin-top: 0rem; margin-bottom: 0rem;">
@@ -193,19 +184,7 @@ def render():
         </div>
         """, unsafe_allow_html=True)
 
-    st.markdown("""
-    <hr style="
-        border: none;
-        height: 2px;
-        background: linear-gradient(
-            to right,
-            transparent,
-            #73EDFF,
-            transparent
-        );
-        margin: 3rem 0 2rem 0;
-    ">
-    """, unsafe_allow_html=True)
+    add_separation()
 
     #--------------- DISCLAIMER ---------------
     st.markdown("""

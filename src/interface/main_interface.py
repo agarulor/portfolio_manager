@@ -6,7 +6,7 @@ import os
 sys.path.append(os.path.join(os.path.dirname(__file__), "src"))
 BASE_DIR = Path(__file__).resolve().parent
 ASSETS_PATH = BASE_DIR / "assets"
-RISK_COLOR = MappingProxyType({1: "#2ecc71", 2: "#2ecc71", 3: "#f39c12", 4: "#f39c12", 5: "#e74c3c", 6: "#e74c3c"})
+RISK_COLOR = MappingProxyType({ 1: "#2ecc71", 2: "#6bdc8b", 3: "#f1c40f", 4: "#f39c12", 5: "#e67e22", 6: "#e74c3c"})
 RISK_PROFILE_DICTIONARY = MappingProxyType({
     1: "Perfil bajo de riesgo",
     2: "Perfil medio-bajo de riesgo",
@@ -59,9 +59,21 @@ def apply_global_styles():
         filter: hue-rotate(240deg);
     
     }
+    .progress-sticky {
+        position: sticky;
+        top: 0;
+        z-index: 9999;        
+        background: #F8FAFC;
+        }
+        
+        .stApp {
+        overflow: visible;
+        }
     
     </style>
     """, unsafe_allow_html=True)
+
+
 
 
 def render_sidebar_header():
@@ -91,17 +103,15 @@ def render_sidebar_profile_summary():
     color = RISK_COLOR[RT]
 
     st.sidebar.markdown("---")
-    st.sidebar.markdown("#### Perfil del inversor")
 
     st.sidebar.markdown(
         f"""
-        <div style="text-align: center; font-size: 14px; font-weight: 500; color: #555;">
-            Tolerancia final (RT)
-            <div style="font-size: 32px; font-weight: 800; color: {color}; margin-top: 6px;">
-                {RT}
-            </div>
-            <div style="font-size: 14px; font-weight: 600; color: {color}; margin-top: 4px;">
+        <div style="text-align: center">
+            <div style="font-size: 18px; font-weight: 1200; color: {color}; margin-top: 6px;">
                 {RISK_PROFILE_DICTIONARY[RT]}
+            </div>
+            <div style="font-size: 28px; font-weight: 1200; color: {color}; margin-top: 6px;">
+                {RT}
             </div>
         </div>
         """,
