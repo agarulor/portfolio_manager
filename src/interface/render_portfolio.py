@@ -2,6 +2,7 @@ import sys
 import os
 
 import pandas as pd
+from interface.main_interface import header
 from interface.constraints import render_investor_constraints
 from portfolio_tools.risk_metrics import calculate_covariance  # si quieres usar covmat
 sys.path.append(os.path.join(os.path.dirname(__file__), "src"))
@@ -157,12 +158,15 @@ def plot_portfolio_value(df_value: pd.DataFrame,
 
 
 def render_portfolio():
-
+    header("CARTERA")
     render_investor_constraints()
     dinero_invertido = 100
     if "risk_result" not in st.session_state:
         st.warning("Primero completa el cuestionario de perfil de riesgo.")
         return
+
+    if "investor_constraints" not in st.session_state:
+        st.warning("Asegurate de seleccionar los porcentajes por sector y acciones y la inversión inicial")
 
     res = st.session_state["risk_result"]
     RT = res["RT"]
@@ -170,7 +174,9 @@ def render_portfolio():
     sigma_max = res["sigma_max"]
 
     st.header("Cartera de inversión recomendada")
-
+    constraints = st.session_state["investor_constraints"]
+    amount = constraints["amount"]
+    max_sector_pct = constraints["max_sector_pct"] / 100
     st.write(
         f"Perfil de riesgo final: **{RT} – {RISK_PROFILE_DICTIONARY[RT]}**"
     )
@@ -184,10 +190,12 @@ def render_portfolio():
     # -----------------------------
     st.subheader(f"Dinero Invertido **{dinero_invertido}**")
     st.subheader("Cartera de inversión recomendada")
+    st.write(max_sector_pct)
+    st.write()
 
     # covmat no lo usas realmente dentro de create_markowitz_table,
     # pero si quieres ser consistente puedes calcularlo:
-    """
+
     price_data, sectors = get_stock_prices("data/input/ibex_eurostoxx.csv",
                                            "ticker_yahoo",
                                            "name",
@@ -206,14 +214,14 @@ def render_portfolio():
                                             periods_per_year=256,
                                            custom_target_volatility=sigma_recomended,
                                                                         sectors_df=sectors,
-                                                                        sector_max_weight=0.25,
+                                                                        sector_max_weight=max_sector_pct,
                                                                         risk_free_ticker="RISK_FREE")
 
     sectores = get_sector_exposure_table(df_weights, sectors)
 
     #print(check_portfolio_weights(df))
 
-    df_resultados_updated, money, stock_returns = get_updated_results(test_set, weights, initial_investment= 100, rf_annual=0.035, periods_per_year=254.5)
+    df_resultados_updated, money, stock_returns = get_updated_results(test_set, weights, initial_investment = amount, rf_annual=0.035, periods_per_year=254.5)
     print(df_resultados_updated)
     # Versión interactiva
     st.dataframe(
@@ -283,4 +291,3 @@ def render_portfolio():
     )
 
     print(trades_log.head(20))
-    """

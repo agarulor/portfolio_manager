@@ -165,9 +165,38 @@ def render_investor_questionnaire():
     progress = questionnaire_progress(QUESTION_KEYS)
 
     with st.sidebar:
-        st.markdown("### Progreso del cuestionario")
+        st.markdown(
+            f"""
+             <div style="
+             font-size: 1rem;
+             font-weight: 700;
+             color: #000078;
+             margin-bottom: 0.5rem;
+             margin-top: 2.0rem;
+             text-align:center;
+             ">
+             Progreso del cuestionario
+             </div>
+             """,
+            unsafe_allow_html=True
+        )
         st.progress(progress)
-        st.caption(f"{int(progress * 100)}% completado")
+
+        st.markdown(
+            f"""
+                <div style="
+                font-size: 1rem;
+                font-weight: 700;
+                color: #000078;
+                margin-bottom: -1.0rem;
+                margin-top: 0.0rem;
+                text-align:center;
+                "> 
+               {int(progress * 100)}% completado
+                </div>
+                """,
+            unsafe_allow_html=True
+        )
 
     header("PERFIL DEL INVERSOR")
     subheader("Por favor, responda a las siguientes preguntas para poder determinar su perfil de riesgo.\
@@ -406,7 +435,7 @@ def show_investor_profile(answers):
 
     elif "risk_result" in st.session_state:
         # No update of the questionnaire,
-        # But we can show a past resulta
+        # But we can show a past result
         res = st.session_state["risk_result"]
         render_investor_profile_view(
             RA=res["RA"],

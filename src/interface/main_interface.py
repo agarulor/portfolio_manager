@@ -115,8 +115,10 @@ def render_sidebar_profile_summary():
         unsafe_allow_html=True
     )
 
+
 def render_sidebar():
     render_sidebar_header()
+    """
     st.sidebar.title("Menú")
 
     page = st.sidebar.radio(
@@ -125,7 +127,7 @@ def render_sidebar():
         index=0
     )
 
-    return page
+    return page"""
 
 
 def render_portfolio():
