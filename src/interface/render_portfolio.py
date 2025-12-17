@@ -176,6 +176,7 @@ def render_portfolio():
         f"Volatilidad objetivo: **{sigma_min*100:.1f}% – {sigma_max*100:.1f}%**"
     )
 
+    sigma_recomended = (sigma_max + sigma_min) / 2
     # -----------------------------
     # AQUÍ IMPRIMES LA TABLA
     # -----------------------------
@@ -193,16 +194,16 @@ def render_portfolio():
     print(sectors)
     f = calculate_daily_returns(prices, method="simple")
 
-    train_set, test_set = split_data_markowtiz(returns=f, test_date_start="2024-10-01", test_date_end="2025-09-30")
+    train_set, test_set = split_data_markowtiz(returns=f, test_date_start="2024-10-01", test_date_end="2025-9-30")
 
     df_resultados, df_weights, weights = get_investor_initial_portfolio(train_set,
                                            min_w=0.025,
                                            max_w=0.15,
                                            rf_annual = 0.035,
                                             periods_per_year=256,
-                                           custom_target_volatility=0.02,
+                                           custom_target_volatility=sigma_recomended,
                                                                         sectors_df=sectors,
-                                                                        sector_max_weight=0.30,
+                                                                        sector_max_weight=0.25,
                                                                         risk_free_ticker="RISK_FREE")
 
     sectores = get_sector_exposure_table(df_weights, sectors)

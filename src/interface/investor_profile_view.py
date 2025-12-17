@@ -411,11 +411,15 @@ def render_investor_profile_view(RA, RC, RT, sigma_min, sigma_max):
         """,
         unsafe_allow_html=True)
 
-    submitted_cartera = st.button("Ir a carteras recomendadas", use_container_width=True)
+    submitted_cartera = st.button("Ir a creación de carteras recomendadas", use_container_width=True)
+    if submitted_cartera:
+        st.session_state["route"] = "portfolio"
+        st.rerun()
 
-    if not submitted_cartera:
+    elif not submitted_cartera:
         # Button not yet pushed
         return None
+    return None
 
 
 def show_investor_profile(answers):

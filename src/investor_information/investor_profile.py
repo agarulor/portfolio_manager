@@ -5,13 +5,12 @@ RISK_LEVEL_WEIGHT = 0.4
 DOWNSIDE_REACTION_WEIGHT = 0.3
 VOLATILITY_MAPPING = MappingProxyType( {
     1: (0.00, 0.065),
-    2: (0.065, 0.13),
-    3: (0.13, 0.195),
-    4: (0.195, 0.26),
-    5: (0.26, 0.325),
-    6: (0.325, 0.40)
+    2: (0.065, 0.11),
+    3: (0.11, 0.155),
+    4: (0.155, 0.19),
+    5: (0.19, 0.23),
+    6: (0.23, 0.33)
 })
-
 
 
 def risk_appetite(knowledge:int, risk_level: int, downside_reaction: int) -> int:
