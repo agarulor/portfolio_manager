@@ -179,10 +179,10 @@ def header(text: str):
                 </div>    
                 </div>""", unsafe_allow_html=True)
 
-def subheader(text: str, margin_bottom: str = "-1.0rem"):
+def subheader(text: str, font_size: str = "1.1rem", margin_bottom: str = "-1.0rem"):
     st.markdown(f"""
             <div style="
-            font-size: 1.1rem;
+            font-size: {font_size};
             color: #000078;
             line-height: 1.6;
             margin-bottom: {margin_bottom};

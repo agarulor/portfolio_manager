@@ -12,8 +12,8 @@ def _img_to_base64(img_path: Path) -> str:
     data = img_path.read_bytes()
     return base64.b64encode(data).decode("utf-8")
 
-def add_separation():
-    st.markdown("""
+def add_separation(margin_top: str = "1rem", margin_bottom: str = "1rem"):
+    st.markdown(f"""
     <hr style="
         border: none;
         height: 2px;
@@ -24,6 +24,8 @@ def add_separation():
             transparent
         );
         margin: 3rem 0 2rem 0;
+        margin-bottom: {margin_bottom};
+        margin-top: {margin_top}
     ">
     """, unsafe_allow_html=True)
 

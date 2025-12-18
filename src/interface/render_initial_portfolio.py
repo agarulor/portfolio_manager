@@ -1,13 +1,46 @@
 import streamlit as st
-from interface.main_interface import header, subheader
+from interface.main_interface import subheader, header
+from data_management.get_data import get_stock_prices
+from data_management.clean_data import clean_and_align_data
+from portfolio_tools.return_metrics import calculate_daily_returns
+from interface.landing_page import add_separation
 import datetime as dt
 
 import plotly.graph_objects as go
+FILENAME_PATH = "data/input/ibex_eurostoxx.csv"
+TICKER_COL = "ticker_yahoo"
+COMPANIES_COL = "name"
+START_DATE = "2005-01-01"
+ENDING_DATE = "2025-09-30"
 FONT_SIZE = "0.9rem"
 FONT_WEIGHT = "700"
 FONT_COLOR = "#000078"
 INITIAL_DATE = dt.date(2020, 10, 1)
 END_DATE = dt.date(2025, 9, 30)
+
+
+
+
+def get_clean_initial_data(filename_path: str = FILENAME_PATH,
+                           ticker_col: str = TICKER_COL,
+                           adjusted: bool = False,
+                           companies_col: str = COMPANIES_COL,
+                           start_date: str = START_DATE,
+                           end_date: str = ENDING_DATE):
+
+    price_data, sectors = get_stock_prices(file_path=filename_path,
+                                           ticker_col=ticker_col,
+                                           adjusted=adjusted,
+                                           companies_col= companies_col,
+                                           start_date=start_date,
+                                           end_date=end_date,
+                                           )
+    prices, report, summary = clean_and_align_data(price_data, beginning_data=True)
+
+    daily_returns = calculate_daily_returns(prices, method="simple")
+
+    train_set, test_set = split_data_markowtiz(returns=daily_returns, test_date_start="2024-10-01", test_date_end="2025-9-30")
+
 
 def render_slider(text:str,
                   text_slider: str,
@@ -160,15 +193,19 @@ def render_investor_constraints():
     subheader("Defina el grado de diversificación y el importe inicial para la propuesta de cartera",
               margin_bottom="1.0rem")
 
-    c1, c2, c3 = st.columns(3)
+    add_separation()
 
-    with c1:
-        max_sector_pct = render_slider(text="Selecciona el peso máximo por sector",
-                                       text_slider="% máximo asignado a un sector",
-                                       key="max_sector_pct",
-                                       min_value=0.0,
-                                       max_value=100.0)
 
+    with st.container(border=True):
+        subheader("Pesos de la cartera", font_size="2.0rem")
+        c1, c2, c3 = st.columns(3, gap = "large")
+
+        with c1:
+            max_sector_pct = render_slider(text="Selecciona el peso máximo por sector",
+                                           text_slider="% máximo asignado a un sector",
+                                           key="max_sector_pct",
+                                           min_value=0.0,
+                                           max_value=100.0)
 
         with c2:
             max_stock_pct = render_slider(text="Selecciona peso máximo por acción",
@@ -185,56 +222,36 @@ def render_investor_constraints():
                                           min_value = 0.0,
                                           max_value = 100.0)
 
+    with st.container(border=True):
+        subheader("Selección de fechas", font_size="2.0rem")
+        s1, s2= st.columns(2)
 
+        with s1:
+            st1, st2 = st.columns(2)
+            with st2:
+                render_date("Fecha de inicio de datos", key="date" , reference_date=INITIAL_DATE)
+        with s2:
+            stt1, stt2 = st.columns(2)
+            with stt1:
+                render_date("Fecha de fin de datos", font_color="#FF0000", key="date2", reference_date=END_DATE)
 
+    with st.container(border=True):
+        subheader("Inversión inicial", font_size="2.0rem")
+        t1, t2, t3 = st.columns(3)
+        with t2:
+            amount = render_number_input("Inversión inicial",
+                                         min_value=0.0,
+                                         init_value=10000.0,
+                                         step=100.0,
+                                         key="cash_contribution")
 
-
-    s1, s2= st.columns(2)
-
-    with s1:
-        st1, st2 = st.columns(2)
-        with st2:
-            render_date("Fecha de inicio de datos", key="date" , reference_date=INITIAL_DATE)
-    with s2:
-        stt1, stt2 = st.columns(2)
-        with stt1:
-            render_date("Fecha de fin de datos", font_color="#FF0000", key="date2", reference_date=END_DATE)
-
-
-    t1, t2, t3 = st.columns(3)
-    with t2:
-        amount = render_number_input("Inversión inicial",
-                                     min_value=0.0,
-                                     init_value=10000.0,
-                                     step=100.0,
-                                     key="cash_contribution")
-
-
-
-
-    u1, u2, u3 = st.columns(3)
-    with u2:
-        generate_cartera = st.button("Generar cartera", use_container_width=True)
-
-        # Save session state
+    # Save session state
     st.session_state["investor_constraints"] = {
         "max_sector_pct": max_sector_pct,
         "max_stock_pct": max_stock_pct,
         "min_stock_pct": min_stock_pct,
         "amount": amount
     }
-    return
-
-    """
-    if submitted_cartera:
-        # st.session_state["route"] = "portfolio"
-        #st.rerun()
-
-    elif not submitted_cartera:
-        # Button not yet pushed
-        return None
-    return None
-    """
 
 def render_initial_portfolio():
 
@@ -269,3 +286,11 @@ def render_initial_portfolio():
         st.markdown(f""" <div> <p> {max_stock_pct} + {max_sector_pct} = {min_stock_pct} + {amount}</p> </div>
 
 """, unsafe_allow_html=True)
+
+def render_constraints_portfolio():
+    header("AJUSTES DE LA CARTERA INICIAL")
+    with st.container(border=True):
+        render_investor_constraints()
+        c1, c2, c3 = st.columns(3)
+        with c2:
+            generate_cartera = st.button("Generar cartera", use_container_width=True)

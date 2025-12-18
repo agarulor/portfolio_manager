@@ -2,9 +2,12 @@ import sys
 import os
 FILENAME_PATH = "data/input/ibex_eurostoxx.csv"
 TICKER_COL = "ticker_yahoo"
+COMPANIES_COL = "name"
+START_DATE = "2005-01-01"
+END_DATE = "2025-09-30"
 import pandas as pd
 from interface.main_interface import header
-from interface.render_initial_portfolio import render_investor_constraints, render_initial_portfolio
+from interface.render_initial_portfolio import render_investor_constraints, render_initial_portfolio, render_constraints_portfolio
 from portfolio_tools.risk_metrics import calculate_covariance  # si quieres usar covmat
 sys.path.append(os.path.join(os.path.dirname(__file__), "src"))
 import streamlit as st
@@ -38,20 +41,7 @@ RISK_PROFILE_DICTIONARY = MappingProxyType({
 })
 
 
-def get_clean_initial_data(filename_path: str = FILENAME_PATH,
-                           ticker_col = TICKER_COL,):
-    price_data, sectors = get_stock_prices(file_path=filename_path,
-                                           ticker_col=ticker_col,
-                                           adjusted=False,
-                                           companies_col= "name",
-                                           start_date="2020-10-01",
-                                           end_date="2020-10-30"
-                                           )
-    prices, report, summary = clean_and_align_data(price_data, beginning_data=True)
-    print(sectors)
-    f = calculate_daily_returns(prices, method="simple")
 
-    train_set, test_set = split_data_markowtiz(returns=f, test_date_start="2024-10-01", test_date_end="2025-9-30")
 
 def show_portfolio(
     df_weights: pd.DataFrame,
@@ -174,8 +164,7 @@ def plot_portfolio_value(df_value: pd.DataFrame,
 
 
 def render_portfolio():
-    header("CARTERA")
-    render_investor_constraints()
+    render_constraints_portfolio()
     render_initial_portfolio()
 """
     price_data, sectors = get_stock_prices("data/input/ibex_eurostoxx.csv",
