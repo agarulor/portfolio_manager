@@ -1,6 +1,7 @@
 import streamlit as st
 from interface.main_interface import subheader, header
 from data_management.get_data import get_stock_prices
+from data_management.dataset_preparation import split_data_markowtiz
 from data_management.clean_data import clean_and_align_data
 from portfolio_tools.return_metrics import calculate_daily_returns
 from interface.landing_page import add_separation
@@ -291,6 +292,16 @@ def render_constraints_portfolio():
     header("AJUSTES DE LA CARTERA INICIAL")
     with st.container(border=True):
         render_investor_constraints()
+        if "data_ready" not in st.session_state:
+            st.session_state.data_ready = False
+        if "data_bundle" not in st.session_state:
+            st.session_state.data_bundle = None
+
+        if st.button("Cargar y preparar datos"):
+            with st.spinner("Procesando datos..."):
+                st.session_state.data_bundle = get_clean_initial_data()
+                st.session_state.data_ready = True
+
         c1, c2, c3 = st.columns(3)
         with c2:
             generate_cartera = st.button("Generar cartera", use_container_width=True)
