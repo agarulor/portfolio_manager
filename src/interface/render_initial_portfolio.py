@@ -230,11 +230,11 @@ def render_investor_constraints():
         with s1:
             st1, st2 = st.columns(2)
             with st2:
-                render_date("Fecha de inicio de datos", key="date" , reference_date=INITIAL_DATE)
+                data_start_date = render_date("Fecha de inicio de datos", key="date" , reference_date=INITIAL_DATE)
         with s2:
             stt1, stt2 = st.columns(2)
             with stt1:
-                render_date("Fecha de fin de datos", font_color="#FF0000", key="date2", reference_date=END_DATE)
+                data_end_date = render_date("Fecha de fin de datos", font_color="#FF0000", key="date2", reference_date=END_DATE)
 
     with st.container(border=True):
         subheader("Inversión inicial", font_size="2.0rem")
@@ -251,42 +251,14 @@ def render_investor_constraints():
         "max_sector_pct": max_sector_pct,
         "max_stock_pct": max_stock_pct,
         "min_stock_pct": min_stock_pct,
+        "data_start_date": data_start_date,
+        "data_end_date": data_end_date,
         "amount": amount
     }
 
 def render_initial_portfolio():
+    get_clean_initial_data()
 
-    # We first extract the status
-    if "risk_result" not in st.session_state:
-        st.warning("Primero completa el cuestionario de perfil de riesgo.")
-        return
-
-    if "investor_constraints" not in st.session_state:
-        st.warning("Asegurate de seleccionar los porcentajes por sector y acciones y la inversión inicial")
-
-    # We extract the risk values
-    res = st.session_state["risk_result"]
-    sigma_min = res["sigma_min"]
-    sigma_max = res["sigma_max"]
-
-    # We get the average
-    sigma_investor = (sigma_min + sigma_max) / 2
-
-    # We now extract the values for the portfolio allocations
-    constraints = st.session_state["investor_constraints"]
-
-    col1, col2 = st.columns(2)
-
-    with col1:
-
-        amount = constraints["amount"]
-        max_sector_pct = constraints["max_sector_pct"] / 100
-        max_stock_pct = constraints["max_stock_pct"] / 100
-        min_stock_pct = constraints["min_stock_pct"] / 100
-
-        st.markdown(f""" <div> <p> {max_stock_pct} + {max_sector_pct} = {min_stock_pct} + {amount}</p> </div>
-
-""", unsafe_allow_html=True)
 
 def render_constraints_portfolio():
     header("AJUSTES DE LA CARTERA INICIAL")
@@ -297,11 +269,9 @@ def render_constraints_portfolio():
         if "data_bundle" not in st.session_state:
             st.session_state.data_bundle = None
 
-        if st.button("Cargar y preparar datos"):
-            with st.spinner("Procesando datos..."):
-                st.session_state.data_bundle = get_clean_initial_data()
-                st.session_state.data_ready = True
-
         c1, c2, c3 = st.columns(3)
         with c2:
-            generate_cartera = st.button("Generar cartera", use_container_width=True)
+            if st.button("Generar cartera", use_container_width=True):
+                with st.spinner("Procesando datos..."):
+                    st.session_state.data_bundle = get_clean_initial_data()
+                    st.session_state.data_ready = True
