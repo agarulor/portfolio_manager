@@ -1,9 +1,10 @@
 import sys
 import os
-
+FILENAME_PATH = "data/input/ibex_eurostoxx.csv"
+TICKER_COL = "ticker_yahoo"
 import pandas as pd
 from interface.main_interface import header
-from interface.constraints import render_investor_constraints
+from interface.render_initial_portfolio import render_investor_constraints, render_initial_portfolio
 from portfolio_tools.risk_metrics import calculate_covariance  # si quieres usar covmat
 sys.path.append(os.path.join(os.path.dirname(__file__), "src"))
 import streamlit as st
@@ -36,6 +37,21 @@ RISK_PROFILE_DICTIONARY = MappingProxyType({
     6: "Perfil agresivo de riesgo"
 })
 
+
+def get_clean_initial_data(filename_path: str = FILENAME_PATH,
+                           ticker_col = TICKER_COL,):
+    price_data, sectors = get_stock_prices(file_path=filename_path,
+                                           ticker_col=ticker_col,
+                                           adjusted=False,
+                                           companies_col= "name",
+                                           start_date="2020-10-01",
+                                           end_date="2020-10-30"
+                                           )
+    prices, report, summary = clean_and_align_data(price_data, beginning_data=True)
+    print(sectors)
+    f = calculate_daily_returns(prices, method="simple")
+
+    train_set, test_set = split_data_markowtiz(returns=f, test_date_start="2024-10-01", test_date_end="2025-9-30")
 
 def show_portfolio(
     df_weights: pd.DataFrame,
@@ -160,42 +176,8 @@ def plot_portfolio_value(df_value: pd.DataFrame,
 def render_portfolio():
     header("CARTERA")
     render_investor_constraints()
-    dinero_invertido = 100
-    if "risk_result" not in st.session_state:
-        st.warning("Primero completa el cuestionario de perfil de riesgo.")
-        return
-
-    if "investor_constraints" not in st.session_state:
-        st.warning("Asegurate de seleccionar los porcentajes por sector y acciones y la inversión inicial")
-
-    res = st.session_state["risk_result"]
-    RT = res["RT"]
-    sigma_min = res["sigma_min"]
-    sigma_max = res["sigma_max"]
-
-    st.header("Cartera de inversión recomendada")
-    constraints = st.session_state["investor_constraints"]
-    amount = constraints["amount"]
-    max_sector_pct = constraints["max_sector_pct"] / 100
-    st.write(
-        f"Perfil de riesgo final: **{RT} – {RISK_PROFILE_DICTIONARY[RT]}**"
-    )
-    st.write(
-        f"Volatilidad objetivo: **{sigma_min*100:.1f}% – {sigma_max*100:.1f}%**"
-    )
-
-    sigma_recomended = (sigma_max + sigma_min) / 2
-    # -----------------------------
-    # AQUÍ IMPRIMES LA TABLA
-    # -----------------------------
-    st.subheader(f"Dinero Invertido **{dinero_invertido}**")
-    st.subheader("Cartera de inversión recomendada")
-    st.write(max_sector_pct)
-    st.write()
-
-    # covmat no lo usas realmente dentro de create_markowitz_table,
-    # pero si quieres ser consistente puedes calcularlo:
-
+    render_initial_portfolio()
+"""
     price_data, sectors = get_stock_prices("data/input/ibex_eurostoxx.csv",
                                            "ticker_yahoo",
                                            "name",
@@ -291,3 +273,4 @@ def render_portfolio():
     )
 
     print(trades_log.head(20))
+"""
