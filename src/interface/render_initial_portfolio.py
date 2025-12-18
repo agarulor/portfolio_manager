@@ -5,6 +5,7 @@ from data_management.dataset_preparation import split_data_markowtiz
 from data_management.clean_data import clean_and_align_data
 from portfolio_tools.return_metrics import calculate_daily_returns
 from interface.landing_page import add_separation
+from portfolio_management.investor_portfolios import  get_investor_initial_portfolio, get_updated_results, get_cumulative_returns, get_sector_exposure_table
 import datetime as dt
 
 import plotly.graph_objects as go
@@ -41,6 +42,15 @@ def get_clean_initial_data(filename_path: str = FILENAME_PATH,
     daily_returns = calculate_daily_returns(prices, method="simple")
 
     train_set, test_set = split_data_markowtiz(returns=daily_returns, test_date_start="2024-10-01", test_date_end="2025-9-30")
+
+    # We return relevant data
+    return {
+        "prices": prices,
+        "daily_returns": daily_returns,
+        "train_set": train_set,
+        "test_set": test_set,
+        "sectors": sectors
+    }
 
 
 def render_slider(text:str,
@@ -247,7 +257,7 @@ def render_investor_constraints():
                                          key="cash_contribution")
 
     # Save session state
-    st.session_state["investor_constraints"] = {
+    st.session_state["investor_constraints_draft"] = {
         "max_sector_pct": max_sector_pct,
         "max_stock_pct": max_stock_pct,
         "min_stock_pct": min_stock_pct,
@@ -262,6 +272,14 @@ def render_initial_portfolio():
 
 def render_constraints_portfolio():
     header("AJUSTES DE LA CARTERA INICIAL")
+
+    st.session_state.setdefault("data_ready", False)
+    st.session_state.setdefault("data_bundle", None)
+    st.session_state.setdefault("investor_constraints_applied", None)
+    st.session_state.setdefault("investor_constraints_draft", None)
+    st.session_state.setdefault("risk_result", None)
+
+
     with st.container(border=True):
         render_investor_constraints()
         if "data_ready" not in st.session_state:
@@ -271,7 +289,44 @@ def render_constraints_portfolio():
 
         c1, c2, c3 = st.columns(3)
         with c2:
-            if st.button("Generar cartera", use_container_width=True):
-                with st.spinner("Procesando datos..."):
-                    st.session_state.data_bundle = get_clean_initial_data()
-                    st.session_state.data_ready = True
+            clicked = st.button("Generar cartera", use_container_width=True, type="primary")
+
+        if clicked:
+            draft = st.session_state["investor_constraints_draft"]
+
+            with st.spinner("Procesando datos..."):
+                # We store the draft values at that point in applied and we avoid re-runs
+                st.session_state["investor_constraints_applied"] = draft
+                st.session_state["data_bundle"] = get_clean_initial_data(
+                    start_date=draft["data_start_date"].isoformat(),
+                    end_date=draft["data_end_date"].isoformat(),
+                )
+                st.session_state.data_ready = True
+
+                resultados = st.session_state["data_bundle"]
+                train_set = resultados["train_set"]
+                sectors = resultados["sectors"]
+                df_resultados, df_weights, weights = get_investor_initial_portfolio(train_set,
+                                                                                    min_w=0.025,
+                                                                                    max_w=0.15,
+                                                                                    rf_annual=0.035,
+                                                                                    periods_per_year=256,
+                                                                                    custom_target_volatility=0.1,
+                                                                                    sectors_df=sectors,
+                                                                                    sector_max_weight=0.25,
+                                                                                    risk_free_ticker="RISK_FREE")
+
+                sectores = get_sector_exposure_table(df_weights, sectors)
+
+                st.dataframe(
+                    df_resultados.style.format(
+                        {
+                            "Returns": "{:.4f}%",
+                            "Volatility": "{:.4f}%",
+                            "Sharpe Ratio": "{:.4f}",
+                            "max_drawdown": "{:.4f}%",
+                        }
+                    )
+                )
+
+

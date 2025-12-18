@@ -165,18 +165,8 @@ def plot_portfolio_value(df_value: pd.DataFrame,
 
 def render_portfolio():
     render_constraints_portfolio()
-    render_initial_portfolio()
 """
-    price_data, sectors = get_stock_prices("data/input/ibex_eurostoxx.csv",
-                                           "ticker_yahoo",
-                                           "name",
-                                           start_date="2020-10-01",
-                                           )
-    prices, report, summary = clean_and_align_data(price_data, beginning_data=True)
-    print(sectors)
-    f = calculate_daily_returns(prices, method="simple")
 
-    train_set, test_set = split_data_markowtiz(returns=f, test_date_start="2024-10-01", test_date_end="2025-9-30")
 
     df_resultados, df_weights, weights = get_investor_initial_portfolio(train_set,
                                            min_w=0.025,
