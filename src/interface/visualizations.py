@@ -93,3 +93,96 @@ def show_portfolio(
     )
 
     st.plotly_chart(fig, use_container_width=True)
+
+
+def render_results_table(
+        df: pd.DataFrame,
+        title: str = "Resultados",
+        percent_cols: Optional[list[str]] = None,
+        float_cols: Optional[list[str]] = None,
+        highlight: bool = True,
+        hide_index: bool = True,
+        height: int = 320,
+        use_container_width: bool = True) -> None:
+
+    """
+    It renders a nice table with results (Sharpe ratio, returns, volatility, drawdown)
+    :param df:
+    :param title:
+    :param percent_cols:
+    :param float_cols:
+    :param highlight:
+    :param hide_index:
+    :param height:
+    :param use_container_width:
+    :return:
+    """
+
+    if df is None or df.empty:
+        st.warning("No hay datos para mostrar")
+        return
+    PRIMARY = "#000078"
+    SECONDARY = "#1f3a5f"
+    # We robustly create the columns or use typical columns
+    percent_cols = percent_cols or ["Returns", "Volatility", "max_drawdown"]
+    float_cols = float_cols or ["Sharpe Ratio"]
+
+    # We create map with formats for columns
+    fmt: Dict[str, str] = {}
+    for c in percent_cols:
+        if c in df.columns:
+            fmt[c] = "{:.4f}%"
+    for c in float_cols:
+        if c in df.columns:
+            fmt[c] = "{:.4f}"
+
+    # we now set the styler
+
+    styler = (
+        df.style
+        .format(fmt, na_rep="—")
+        .set_properties(**{
+            "text-align": "center",
+            "font-size": "50px",
+            "color": PRIMARY,
+        })
+        .set_table_styles([
+            {
+                "selector": "thead th",
+                "props": [
+                    ("text-align", "center"),
+                    ("font-size", "18px"),
+                    ("font-weight", "800"),
+                    ("color", "white"),
+                    ("background-color", SECONDARY),
+                    ("padding", "10px"),
+                ],
+            },
+            {
+                "selector": "tbody td",
+                "props": [
+                    ("padding", "8px 10px"),
+                ],
+            },
+        ])
+    )
+
+    if hide_index:
+        styler = styler.hide(axis="index")
+
+
+    if highlight:
+        if "Returns" in df.columns:
+            styler = styler.background_gradient(subset=["Returns"], cmap="Greens")
+        if "Sharpe Ratio" in df.columns:
+            styler = styler.background_gradient(subset=["Sharpe Ratio"], cmap="Greens")
+        if "Volatility" in df.columns:
+            styler = styler.background_gradient(subset=["Volatility"], cmap="Blues")
+        if "max_drawdown" in df.columns:
+            # Para drawdown normalmente queremos “menos malo” (más cercano a 0) como mejor
+            styler = styler.background_gradient(subset=["max_drawdown"], cmap="Reds")
+
+    if title:
+        st.markdown(f"### **{title}**")
+
+    st.table(styler)

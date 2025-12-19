@@ -5,7 +5,7 @@ from data_management.dataset_preparation import split_data_markowtiz
 from data_management.clean_data import clean_and_align_data
 from portfolio_tools.return_metrics import calculate_daily_returns
 from interface.landing_page import add_separation
-from interface.visualizations import show_portfolio
+from interface.visualizations import show_portfolio, render_results_table
 from portfolio_management.investor_portfolios import  get_investor_initial_portfolio, get_updated_results, get_cumulative_returns, get_sector_exposure_table
 from data_management.save_data import save_preprocessed_data
 import datetime as dt
@@ -217,8 +217,6 @@ def render_investor_constraints():
               margin_bottom="1.0rem")
 
     add_separation()
-
-
     with st.container(border=True):
         subheader("Pesos de la cartera", font_size="2.0rem")
         c1, c2, c3 = st.columns(3, gap = "large")
@@ -317,7 +315,7 @@ def get_initial_portfolio():
     profile = st.session_state["risk_result"]
     volatility = (profile["sigma_min"] + profile["sigma_max"]) / 2
 
-    # porfolio data
+    # portfolio data
     resultados = st.session_state["initial_data"]
     train_set = resultados["train_set"]
     sectors = resultados["sectors"]
@@ -332,7 +330,7 @@ def get_initial_portfolio():
                                                                         risk_free_ticker="RISK_FREE")
 
 
-def create_visualizations():
+def create_portfolio_visualizations():
 
     df_weights = st.session_state["initial_results"][1]
     sectors = st.session_state["initial_data"]["sectors"]
@@ -356,11 +354,12 @@ def create_visualizations():
                 weight_col="Pesos",
                 weights_in_percent=True
             )
+    df_results = st.session_state["initial_results"][0]
+    render_results_table(df_results)
 
 
 def render_constraints_portfolio():
     header("AJUSTES DE LA CARTERA INICIAL")
-
     st.session_state.setdefault("data_ready", False)
     st.session_state.setdefault("data_bundle", None)
     st.session_state.setdefault("investor_constraints_applied", None)
@@ -387,20 +386,6 @@ def render_constraints_portfolio():
             get_initial_portfolio()
 
         header("RESULTADOS")
-        #initial_results = st.session_state["initial_results"]
-
-
-        create_visualizations()
-        #df_resultados = initial_results[0]
-        st.dataframe(
-            df_resultados.style.format(
-                {
-                    "Returns": "{:.4f}%",
-                    "Volatility": "{:.4f}%",
-                    "Sharpe Ratio": "{:.4f}",
-                    "max_drawdown": "{:.4f}%",
-                }
-            )
-        )
+        create_portfolio_visualizations()
 
 
