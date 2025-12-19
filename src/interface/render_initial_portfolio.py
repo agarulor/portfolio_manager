@@ -1,12 +1,15 @@
 import streamlit as st
 from interface.main_interface import subheader, header
-from data_management.get_data import get_stock_prices
+from data_management.get_data import get_stock_prices, read_price_file
 from data_management.dataset_preparation import split_data_markowtiz
 from data_management.clean_data import clean_and_align_data
 from portfolio_tools.return_metrics import calculate_daily_returns
 from interface.landing_page import add_separation
+from interface.visualizations import show_portfolio
 from portfolio_management.investor_portfolios import  get_investor_initial_portfolio, get_updated_results, get_cumulative_returns, get_sector_exposure_table
+from data_management.save_data import save_preprocessed_data
 import datetime as dt
+import pandas as pd
 
 import plotly.graph_objects as go
 FILENAME_PATH = "data/input/ibex_eurostoxx.csv"
@@ -30,6 +33,7 @@ def get_clean_initial_data(filename_path: str = FILENAME_PATH,
                            start_date: str = START_DATE,
                            end_date: str = ENDING_DATE):
 
+    """
     price_data, sectors = get_stock_prices(file_path=filename_path,
                                            ticker_col=ticker_col,
                                            adjusted=adjusted,
@@ -37,7 +41,14 @@ def get_clean_initial_data(filename_path: str = FILENAME_PATH,
                                            start_date=start_date,
                                            end_date=end_date,
                                            )
+    """
+    price_data = read_price_file("data/processed/prices_20251218-234715.csv")
+    sectors = read_price_file("data/processed/sectores_20251218-234715.csv")
     prices, report, summary = clean_and_align_data(price_data, beginning_data=True)
+    #save_preprocessed_data(prices, file_prefix="prices")
+    #save_preprocessed_data(sectors, file_prefix="sectores")
+
+
 
     daily_returns = calculate_daily_returns(prices, method="simple")
 
@@ -58,6 +69,7 @@ def render_slider(text:str,
                   key: str,
                   min_value: float,
                   max_value: float,
+                  value = 25.0,
                   font_color: str = FONT_COLOR,
                   font_size: str = FONT_SIZE,
                   font_weight: str = FONT_WEIGHT):
@@ -76,7 +88,7 @@ def render_slider(text:str,
          """, unsafe_allow_html=True)
     max_pct = st.slider(
         text_slider,
-        min_value=min_value, max_value=max_value, value=25.0, step=1.0,
+        min_value=min_value, max_value=max_value, value=value, step=0.5,
         label_visibility="collapsed",
         key= key
     )
@@ -198,7 +210,6 @@ def render_date(text:str,
     return date
 
 
-
 def render_investor_constraints():
 
     subheader("Defina el grado de diversificación y el importe inicial para la propuesta de cartera",
@@ -231,7 +242,8 @@ def render_investor_constraints():
                                           text_slider="% mínimo asignado a una acción",
                                           key="min_stock_pct",
                                           min_value = 0.0,
-                                          max_value = 100.0)
+                                          max_value = 100.0,
+                                          value=2.5)
 
     with st.container(border=True):
         subheader("Selección de fechas", font_size="2.0rem")
@@ -266,8 +278,56 @@ def render_investor_constraints():
         "amount": amount
     }
 
-def render_initial_portfolio():
-    get_clean_initial_data()
+def get_initial_data():
+
+    constraints = st.session_state["investor_constraints_draft"]
+    data_start_date = constraints["data_start_date"]
+    data_end_date = constraints["data_start_date"]
+    st.session_state["initial_data"] = get_clean_initial_data(
+        start_date=data_start_date,
+        end_date=data_end_date,
+    )
+    st.session_state.data_ready = True
+
+def get_initial_portfolio():
+    # We get the relevant information constraints
+    constraints = st.session_state["investor_constraints_draft"]
+    max_stock_pct = constraints["max_stock_pct"] / 100
+    min_stock_pct = constraints["min_stock_pct"] / 100
+    max_sector_pct = constraints["max_sector_pct"] / 100
+
+    # Investor profile
+    profile = st.session_state["risk_result"]
+    volatility = (profile["sigma_min"] + profile["sigma_max"]) / 2
+
+    # porfolio data
+    resultados = st.session_state["initial_data"]
+    train_set = resultados["train_set"]
+    sectors = resultados["sectors"]
+    st.session_state["initial_results"] = get_investor_initial_portfolio(train_set,
+                                                                        min_w=min_stock_pct,
+                                                                        max_w=max_stock_pct,
+                                                                        rf_annual=0.035,
+                                                                        periods_per_year=256,
+                                                                        custom_target_volatility=volatility,
+                                                                        sectors_df=sectors,
+                                                                        sector_max_weight=max_sector_pct,
+                                                                        risk_free_ticker="RISK_FREE")
+
+
+def create_visualizations():
+    df_weights = st.session_state["initial_results"][1]
+    with st.container():
+        col1, col2 = st.columns(2)
+        with col1:
+            show_portfolio(
+                df_weights=df_weights,
+                title="Composición por activo",
+                label_name="Activo",
+                weight_col="Pesos",
+                weights_in_percent=False
+            )
+
 
 
 def render_constraints_portfolio():
@@ -279,7 +339,6 @@ def render_constraints_portfolio():
     st.session_state.setdefault("investor_constraints_draft", None)
     st.session_state.setdefault("risk_result", None)
 
-
     with st.container(border=True):
         render_investor_constraints()
         if "data_ready" not in st.session_state:
@@ -287,46 +346,45 @@ def render_constraints_portfolio():
         if "data_bundle" not in st.session_state:
             st.session_state.data_bundle = None
 
-        c1, c2, c3 = st.columns(3)
-        with c2:
-            clicked = st.button("Generar cartera", use_container_width=True, type="primary")
+    c1, c2, c3 = st.columns(3)
+    with c2:
+        clicked = st.button("Generar cartera", use_container_width=True, type="primary")
 
-        if clicked:
-            draft = st.session_state["investor_constraints_draft"]
+    if clicked:
+        draft = st.session_state["investor_constraints_draft"]
 
-            with st.spinner("Procesando datos..."):
-                # We store the draft values at that point in applied and we avoid re-runs
-                st.session_state["investor_constraints_applied"] = draft
-                st.session_state["data_bundle"] = get_clean_initial_data(
-                    start_date=draft["data_start_date"].isoformat(),
-                    end_date=draft["data_end_date"].isoformat(),
-                )
-                st.session_state.data_ready = True
+        with st.spinner("Procesando datos..."):
+            # We store the draft values at that point in applied and we avoid re-runs
+            get_initial_data()
+            get_initial_portfolio()
 
-                resultados = st.session_state["data_bundle"]
-                train_set = resultados["train_set"]
-                sectors = resultados["sectors"]
-                df_resultados, df_weights, weights = get_investor_initial_portfolio(train_set,
-                                                                                    min_w=0.025,
-                                                                                    max_w=0.15,
-                                                                                    rf_annual=0.035,
-                                                                                    periods_per_year=256,
-                                                                                    custom_target_volatility=0.1,
-                                                                                    sectors_df=sectors,
-                                                                                    sector_max_weight=0.25,
-                                                                                    risk_free_ticker="RISK_FREE")
+        header("RESULTADOS")
+        initial_results = st.session_state["initial_results"]
+        df_weights = initial_results[1]
+        sectors  = st.session_state["initial_data"]["sectors"]
+        sectores = get_sector_exposure_table(df_weights, sectors)
+        df_resultados = initial_results[0]
+        create_visualizations()
+        st.dataframe(
+            df_resultados.style.format(
+                {
+                    "Returns": "{:.4f}%",
+                    "Volatility": "{:.4f}%",
+                    "Sharpe Ratio": "{:.4f}",
+                    "max_drawdown": "{:.4f}%",
+                }
+            )
+        )
 
-                sectores = get_sector_exposure_table(df_weights, sectors)
+        st.dataframe(
+            sectores.style.format(
+            )
+        )
 
-                st.dataframe(
-                    df_resultados.style.format(
-                        {
-                            "Returns": "{:.4f}%",
-                            "Volatility": "{:.4f}%",
-                            "Sharpe Ratio": "{:.4f}",
-                            "max_drawdown": "{:.4f}%",
-                        }
-                    )
-                )
+        # Versión interactiva
+        st.dataframe(
+            df_weights.style.format()
+        )
+
 
 

@@ -1,6 +1,6 @@
 import pandas as pd
 import os
-from typing import Optional
+from typing import Optional, Tuple
 import yfinance as yf
 
 
@@ -70,7 +70,7 @@ def get_stock_prices(file_path: str,
                      companies_col: str,
                      adjusted: bool = False,
                      start_date: str = "2005-01-01",
-                     end_date: str = "2025-09-30") -> Optional[pd.DataFrame]:
+                     end_date: str = "2025-09-30") -> Tuple[pd.DataFrame, pd.DataFrame]:
     """
     Download historical stock price data from Yahoo Finance.
 
@@ -96,9 +96,11 @@ def get_stock_prices(file_path: str,
 
     Returns
     -------
-    pandas.DataFrame or None
-        A DataFrame containing the adjusted closing prices for each stock. Dates are in the rows
+    pandas.DataFrame : A DataFrame containing the adjusted closing prices for each stock. Dates are in the rows
         and tickers in the columns. Returns None if the file, or filename is invalid or downloading fails.
+
+    pandas.DataFrame : A DataFrame containing the sectors adjusted closing prices for each stock. Dates are in the rows
+
 
     Raises
     ------

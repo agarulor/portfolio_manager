@@ -7,7 +7,7 @@ START_DATE = "2005-01-01"
 END_DATE = "2025-09-30"
 import pandas as pd
 from interface.main_interface import header
-from interface.render_initial_portfolio import render_investor_constraints, render_initial_portfolio, render_constraints_portfolio
+from interface.render_initial_portfolio import render_investor_constraints, render_constraints_portfolio
 from portfolio_tools.risk_metrics import calculate_covariance  # si quieres usar covmat
 sys.path.append(os.path.join(os.path.dirname(__file__), "src"))
 import streamlit as st
@@ -26,7 +26,6 @@ from data_management.dataset_preparation import split_data_markowtiz
 from portfolio_management.portfolio_management import check_portfolio_weights, get_sector_weights_at_date, simulate_rebalance_6m_from_returns
 from investor_information.investor_profile import investor_target_volatility
 from types import MappingProxyType
-from interface.tables import show_table
 
 import os
 import random
@@ -43,103 +42,7 @@ RISK_PROFILE_DICTIONARY = MappingProxyType({
 
 
 
-def show_portfolio(
-    df_weights: pd.DataFrame,
-    chart_type: Literal["pie", "bar"] = "bar",
-    title: str = "Composición de la cartera",
-    label_name: str = "Activo",
-    weight_col: Optional[str] = None,          # <- NUEVO: columna de pesos a usar
-    weights_in_percent: bool = True,           # <- si tus pesos vienen en 0-1 pon False
-) -> None:
-    """
-    Muestra la composición (activos o sectores) usando Plotly Express en Streamlit.
 
-    Acepta:
-    - DataFrame con índice = etiqueta (ticker/sector) y 1 columna de pesos, o
-    - DataFrame con múltiples columnas si indicas weight_col (o existe una columna típica).
-    """
-
-    if df_weights is None or df_weights.empty:
-        st.warning("No hay datos para mostrar.")
-        return
-
-    df = df_weights.copy()
-
-    # ----------------------------
-    # 1) Elegir columna de pesos
-    # ----------------------------
-    if weight_col is None:
-        # si tiene 1 columna, usamos esa
-        if df.shape[1] == 1:
-            weight_col = df.columns[0]
-        else:
-            # intentamos encontrar una columna típica
-            candidates = ["Pesos", "Peso", "weight", "weights", "Weight", "Weights"]
-            found = [c for c in candidates if c in df.columns]
-            if not found:
-                raise ValueError(
-                    f"No se pudo inferir la columna de pesos. "
-                    f"Columnas disponibles: {list(df.columns)}. "
-                    f"Pasa el parámetro weight_col='...'."
-                )
-            weight_col = found[0]
-
-    if weight_col not in df.columns:
-        raise ValueError(f"La columna de pesos '{weight_col}' no existe en el DataFrame.")
-
-    # ----------------------------
-    # 2) Preparar DF para plotly
-    # ----------------------------
-    df_plot = df[[weight_col]].copy()
-
-    # Asegurar numérico
-    df_plot[weight_col] = pd.to_numeric(df_plot[weight_col], errors="coerce")
-    df_plot = df_plot.dropna(subset=[weight_col])
-
-    # Convertir a % si vienen en 0-1
-    if not weights_in_percent:
-        df_plot[weight_col] = df_plot[weight_col] * 100
-
-    # reset index para tener la etiqueta como columna
-    df_plot = df_plot.reset_index()
-    df_plot.columns = [label_name, "Peso"]  # renombramos a "Peso" para el gráfico
-
-    # Orden bonito
-    df_plot = df_plot.sort_values("Peso", ascending=True)
-
-    st.subheader(title)
-
-    # ----------------------------
-    # 3) Plot
-    # ----------------------------
-    if chart_type == "bar":
-        fig = px.bar(
-            df_plot,
-            x="Peso",
-            y=label_name,
-            orientation="h",
-            text="Peso",
-            title=title,
-        )
-        fig.update_traces(texttemplate="%{text:.2f}%", textposition="outside")
-        fig.update_layout(
-            xaxis_title="Peso (%)",
-            yaxis_title=label_name,
-            yaxis=dict(categoryorder="total ascending"),
-            hovermode="y",
-        )
-
-    elif chart_type == "pie":
-        fig = px.pie(
-            df_plot,
-            names=label_name,
-            values="Peso",
-            title=title,
-        )
-    else:
-        raise ValueError("chart_type must be 'bar' or 'pie'")
-
-    st.plotly_chart(fig, use_container_width=True)
 
 def plot_portfolio_value(df_value: pd.DataFrame,
                          title: str = "Evolución de la cartera") -> None:

@@ -3,19 +3,7 @@ import os
 
 sys.path.append(os.path.join(os.path.dirname(__file__), "src"))
 from app.run_app import run_app
-import streamlit as st
-from data_management.get_data import read_price_file, get_stock_prices
-from data_management.save_data import save_preprocessed_data
-from data_management.clean_data import clean_and_align_data
-from portfolio_tools.return_metrics import calculate_daily_returns
-from portfolio_tools.risk_metrics import calculate_covariance
 
-from portfolio_tools.markowitz import plot_frontier
-
-from data_management.dataset_preparation import split_data_markowtiz
-from investor_information.investor_profile import investor_target_volatility
-
-from interface.tables import show_table
 
 import os
 import random
