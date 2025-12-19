@@ -118,7 +118,8 @@ def render_number_input(text:str,
                         key:str,
                         font_color: str = FONT_COLOR,
                         font_size: str = FONT_SIZE,
-                        font_weight: str = FONT_WEIGHT):
+                        font_weight: str = FONT_WEIGHT,
+                        unit: str = "EUR"):
     st.markdown(f"""
     <div style="
         font-size: {font_size};
@@ -133,7 +134,7 @@ def render_number_input(text:str,
     """, unsafe_allow_html=True)
 
     amount = st.number_input(
-        "Importe de la aportación (€)",
+        text,
         min_value=min_value,
         value=init_value,
         step=step,
@@ -159,7 +160,7 @@ def render_number_input(text:str,
          margin-top: 0.0rem;
          text-align:center;
          "> 
-        {formatted_amount} EUR
+        {formatted_amount} {unit}
          </div>
          """,
         unsafe_allow_html=True
@@ -235,6 +236,7 @@ def render_investor_constraints():
                                           key="max_stock_pct",
                                           min_value=0.0,
                                           max_value=100.0,
+                                          value=15.0,
                                           font_color="#FF0000")
 
         with c3:
@@ -259,14 +261,27 @@ def render_investor_constraints():
                 data_end_date = render_date("Fecha de fin de datos", font_color="#FF0000", key="date2", reference_date=END_DATE)
 
     with st.container(border=True):
-        subheader("Inversión inicial", font_size="2.0rem")
-        t1, t2, t3 = st.columns(3)
+        subheader("Inversión inicial y tipo de interés libre de riesgo", font_size="2.0rem")
+        t1, t2 = st.columns(2)
+        with t1:
+            tt1, tt2 = st.columns(2)
+            with tt1, tt2:
+                amount = render_number_input("Inversión inicial",
+                                             min_value=0.0,
+                                             init_value=10000.0,
+                                             step=100.0,
+                                             key="cash_contribution")
+
         with t2:
-            amount = render_number_input("Inversión inicial",
-                                         min_value=0.0,
-                                         init_value=10000.0,
-                                         step=100.0,
-                                         key="cash_contribution")
+            tt3, tt4 = st.columns(2)
+            with tt3:
+                risk_free_rate = render_number_input("Tipo de interés libre de riesgo",
+                                                     min_value=0.0,
+                                                     init_value=3.0,
+                                                     step=0.01,
+                                                     font_color="#FF0000",
+                                                     key="risk_free_rate",
+                                                     unit="%")
 
     # Save session state
     st.session_state["investor_constraints_draft"] = {
@@ -275,7 +290,8 @@ def render_investor_constraints():
         "min_stock_pct": min_stock_pct,
         "data_start_date": data_start_date,
         "data_end_date": data_end_date,
-        "amount": amount
+        "amount": amount,
+        "risk_free_rate": risk_free_rate,
     }
 
 def get_initial_data():
@@ -295,6 +311,7 @@ def get_initial_portfolio():
     max_stock_pct = constraints["max_stock_pct"] / 100
     min_stock_pct = constraints["min_stock_pct"] / 100
     max_sector_pct = constraints["max_sector_pct"] / 100
+    risk_free_rate = constraints["risk_free_rate"] / 100
 
     # Investor profile
     profile = st.session_state["risk_result"]
@@ -307,7 +324,7 @@ def get_initial_portfolio():
     st.session_state["initial_results"] = get_investor_initial_portfolio(train_set,
                                                                         min_w=min_stock_pct,
                                                                         max_w=max_stock_pct,
-                                                                        rf_annual=0.035,
+                                                                        rf_annual=risk_free_rate,
                                                                         periods_per_year=256,
                                                                         custom_target_volatility=volatility,
                                                                         sectors_df=sectors,
@@ -374,7 +391,7 @@ def render_constraints_portfolio():
 
 
         create_visualizations()
-        df_resultados = initial_results[0]
+        #df_resultados = initial_results[0]
         st.dataframe(
             df_resultados.style.format(
                 {
