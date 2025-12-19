@@ -5,11 +5,12 @@ import streamlit as st
 from interface.main_interface import subheader, header
 
 def show_portfolio(
-    df_weights: pd.DataFrame,
-    title: str = "Composición de la cartera",
-    label_name: str = "Activo",
-    weight_col: Optional[str] = None,
-    weights_in_percent: bool = True,
+        df_weights: pd.DataFrame,
+        title: str = "Composición de la cartera",
+        label_name: str = "Activo",
+        weight_col: Optional[str] = None,
+        weights_in_percent: bool = True,
+        colorscale: str = "PuBu"
 ) -> None:
     """
     Muestra la composición (activos o sectores) usando Plotly Express en Streamlit.
@@ -18,7 +19,6 @@ def show_portfolio(
     - DataFrame con índice = etiqueta (ticker/sector) y 1 columna de pesos, o
     - DataFrame con múltiples columnas si indicas weight_col (o existe una columna típica).
     """
-
     if df_weights is None or df_weights.empty:
         st.warning("No hay datos para mostrar.")
         return
@@ -54,13 +54,18 @@ def show_portfolio(
         text="Peso",
         title=title,
     )
-    fig.update_traces(texttemplate="%{text:.2f}%",
-                      textposition="outside",
-                      marker=dict(
-                          color=df_plot["Peso"],
-                          colorscale="Cividis"
-                      )
-                      )
+    fig.update_traces(
+        texttemplate="%{text:.2f}%",
+        textposition="outside",
+        textfont=dict(
+            color="#000078",  # mismo azul que los ejes
+            size=14
+        ),
+        marker=dict(
+            color=df_plot["Peso"],
+            colorscale=colorscale
+        )
+    )
     axis_color = "#000078"
     fig.update_layout(
         title=dict(

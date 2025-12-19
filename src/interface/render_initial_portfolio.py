@@ -316,8 +316,12 @@ def get_initial_portfolio():
 
 
 def create_visualizations():
+
     df_weights = st.session_state["initial_results"][1]
-    with st.container():
+    sectors = st.session_state["initial_data"]["sectors"]
+    sectores = get_sector_exposure_table(df_weights, sectors)
+    with st.container(border=True):
+        subheader("Composición de la cartera", font_size="2.0rem")
         col1, col2 = st.columns(2)
         with col1:
             show_portfolio(
@@ -327,7 +331,14 @@ def create_visualizations():
                 weight_col="Pesos",
                 weights_in_percent=False
             )
-
+        with col2:
+            show_portfolio(
+                df_weights=sectores.set_index("sector"),
+                title="Composición por sector",
+                label_name="Sector",
+                weight_col="Pesos",
+                weights_in_percent=True
+            )
 
 
 def render_constraints_portfolio():
@@ -359,12 +370,11 @@ def render_constraints_portfolio():
             get_initial_portfolio()
 
         header("RESULTADOS")
-        initial_results = st.session_state["initial_results"]
-        df_weights = initial_results[1]
-        sectors  = st.session_state["initial_data"]["sectors"]
-        sectores = get_sector_exposure_table(df_weights, sectors)
-        df_resultados = initial_results[0]
+        #initial_results = st.session_state["initial_results"]
+
+
         create_visualizations()
+        df_resultados = initial_results[0]
         st.dataframe(
             df_resultados.style.format(
                 {
@@ -375,16 +385,5 @@ def render_constraints_portfolio():
                 }
             )
         )
-
-        st.dataframe(
-            sectores.style.format(
-            )
-        )
-
-        # Versión interactiva
-        st.dataframe(
-            df_weights.style.format()
-        )
-
 
 
