@@ -6,7 +6,7 @@ from data_management.clean_data import clean_and_align_data
 from portfolio_tools.return_metrics import calculate_daily_returns
 from interface.landing_page import add_separation
 from interface.visualizations import show_portfolio, render_results_table
-from portfolio_management.investor_portfolios import  get_investor_initial_portfolio, get_updated_results, get_cumulative_returns, get_sector_exposure_table
+from portfolio_management.investor_portfolios import  get_investor_initial_portfolio, get_sector_exposure_table, create_output_table_portfolios
 from data_management.save_data import save_preprocessed_data
 import datetime as dt
 import pandas as pd
@@ -319,8 +319,7 @@ def get_initial_portfolio():
     resultados = st.session_state["initial_data"]
     train_set = resultados["train_set"]
     sectors = resultados["sectors"]
-    st.session_state["initial_results"] = get_investor_initial_portfolio(train_set,
-                                                                         portfolio_type="gmv",
+    st.session_state["initial_results"] = create_output_table_portfolios(train_set,
                                                                          min_w=min_stock_pct,
                                                                          max_w=max_stock_pct,
                                                                          rf_annual=risk_free_rate,
@@ -333,28 +332,7 @@ def get_initial_portfolio():
 
 def create_portfolio_visualizations():
 
-    df_weights = st.session_state["initial_results"][1]
-    sectors = st.session_state["initial_data"]["sectors"]
-    sectores = get_sector_exposure_table(df_weights, sectors)
-    with st.container(border=True):
-        subheader("Composición de la cartera", font_size="2.0rem")
-        col1, col2 = st.columns(2)
-        with col1:
-            show_portfolio(
-                df_weights=df_weights,
-                title="Composición por activo",
-                label_name="Activo",
-                weight_col="Pesos",
-                weights_in_percent=False
-            )
-        with col2:
-            show_portfolio(
-                df_weights=sectores.set_index("sector"),
-                title="Composición por sector",
-                label_name="Sector",
-                weight_col="Pesos",
-                weights_in_percent=True
-            )
+
     df_results = st.session_state["initial_results"][0]
     render_results_table(df_results)
 

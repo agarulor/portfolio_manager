@@ -125,9 +125,11 @@ def get_investor_initial_portfolio(returns: pd.DataFrame,
     """
 
     covmat = calculate_covariance(returns)
-    if rf_annual is not None:
-        returns, covmat = add_risk_free_asset(returns, covmat, rf_annual, periods_per_year)
+
     if portfolio_type == "investor":
+        if rf_annual is not None:
+            returns, covmat = add_risk_free_asset(returns, covmat, rf_annual, periods_per_year)
+
         weights = get_investor_weights(returns,
                                        covmat,
                                        method,
@@ -299,6 +301,8 @@ def create_output_table_portfolios(returns: pd.DataFrame,
 
     results = []
     dict_weights = {}
+    dict_df_weights = {}
+
     for portfolio_type in list_portfolio_types:
         df_results, df_weights, weights = get_investor_initial_portfolio(returns,
                                                                         method=method,
@@ -313,14 +317,23 @@ def create_output_table_portfolios(returns: pd.DataFrame,
                                                                         sector_col=sector_col,
                                                                         sector_max_weight=sector_max_weight,
                                                                         risk_free_ticker=risk_free_ticker)
-        dict_weights[portfolio_type] = weights
+
+        # We create a ddf with the acumulated results
         df_r = df_results.copy()
+        # We want the index are our porfolios
         df_r.index = [portfolio_type]
+        # we add the name of the index
         df_r.index.name = "Tipo de portfolio"
-
+        # We append the df to a list
         results.append(df_r)
+        # we add the df_weights to a dict
+        dict_df_weights[portfolio_type] = df_weights
+        # We add the weights to another dict
+        dict_weights[portfolio_type] = weights
 
+
+    # we comcact the results in a new df
     df_results_all = pd.concat(results)
 
-    return df_results_all, dict_weights
+    return df_results_all, dict_df_weights, dict_weights
 
