@@ -84,10 +84,10 @@ def get_results(returns: pd.DataFrame,
     # We get the maximum drawdown
     max_drawdown = calculate_max_drawdown(weights, returns)
     # We convert it into a dictionary and multiply by 100 to get %
-    portfolio_information = {"Returns": float(round(pf_return * 100, 3)),
-                             "Volatility": float(round(pf_volatility * 100, 3)),
-                             "Sharpe Ratio": float(round(portfolio_sharpe_ratio, 3)),
-                             "max_drawdown": float(round(max_drawdown * 100, 3)) }
+    portfolio_information = {"Retorno anualizado": float(round(pf_return * 100, 3)),
+                             "Volatilidad": float(round(pf_volatility * 100, 3)),
+                             "Ratio de Sharpe": float(round(portfolio_sharpe_ratio, 3)),
+                             "Max Drawdown": float(round(max_drawdown * 100, 3)) }
 
     return portfolio_information
 
@@ -230,10 +230,10 @@ def get_updated_results(returns: pd.DataFrame,
     max_drawdown = max_drawdown_from_value_series(df_returns)
 
     # We get the maximum drawdown
-    resultados = {"Returno anualizado": float(round(annualized_return * 100, 3)),
-                  "Volatility": float(round(pf_volatility * 100, 3)),
-                  "Sharpe Ratio": float(round(portfolio_sharpe_ratio, 3)),
-                  "max_drawdown": float(round(max_drawdown * 100, 3))}
+    resultados = {"Retorno anualizado": float(round(annualized_return * 100, 3)),
+                  "Volatilidad": float(round(pf_volatility * 100, 3)),
+                  "Ratio de Sharpe": float(round(portfolio_sharpe_ratio, 3)),
+                  "Max Drawdown": float(round(max_drawdown * 100, 3))}
 
     df_results = pd.DataFrame(resultados, index=[0])
 

@@ -1,8 +1,13 @@
+
+
+
+from portfolio_tools.markowitz import  maximize_return, msr, gmv, ew, random_weights, get_weights
 import plotly.express as px
+import plotly.graph_objects as go
 import pandas as pd
-from typing import Optional
+from typing import Optional, Literal
 import streamlit as st
-from interface.main_interface import subheader, header
+from portfolio_tools.risk_metrics import calculate_covariance, portfolio_returns, portfolio_volatility
 
 def show_portfolio(
         df_weights: pd.DataFrame,
@@ -92,18 +97,15 @@ def show_portfolio(
         hovermode="y",
     )
 
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, width="stretch")
 
 
 def render_results_table(
         df: pd.DataFrame,
-        title: str = "Resultados",
         percent_cols: Optional[list[str]] = None,
         float_cols: Optional[list[str]] = None,
         highlight: bool = True,
-        hide_index: bool = True,
-        height: int = 320,
-        use_container_width: bool = True) -> None:
+        hide_index: bool = True)-> None:
 
     """
     It renders a nice table with results (Sharpe ratio, returns, volatility, drawdown)
@@ -124,8 +126,8 @@ def render_results_table(
     PRIMARY = "#000078"
     SECONDARY = "#1f3a5f"
     # We robustly create the columns or use typical columns
-    percent_cols = percent_cols or ["Returns", "Volatility", "max_drawdown"]
-    float_cols = float_cols or ["Sharpe Ratio"]
+    percent_cols = percent_cols or ["Retorno anualizado", "Volatilidad", "Max Drawdown"]
+    float_cols = float_cols or ["Ratio de Sharpe"]
 
     # We create map with formats for columns
     fmt: Dict[str, str] = {}
@@ -150,9 +152,6 @@ def render_results_table(
             {
                 "selector": "thead th",
                 "props": [
-                    ("text-align", "center"),
-                    ("font-size", "18px"),
-                    ("font-weight", "800"),
                     ("color", "white"),
                     ("background-color", SECONDARY),
                     ("padding", "10px"),
@@ -166,23 +165,68 @@ def render_results_table(
             },
         ])
     )
-
     if hide_index:
         styler = styler.hide(axis="index")
 
-
     if highlight:
-        if "Returns" in df.columns:
-            styler = styler.background_gradient(subset=["Returns"], cmap="Greens")
-        if "Sharpe Ratio" in df.columns:
-            styler = styler.background_gradient(subset=["Sharpe Ratio"], cmap="Greens")
-        if "Volatility" in df.columns:
-            styler = styler.background_gradient(subset=["Volatility"], cmap="Blues")
-        if "max_drawdown" in df.columns:
-            # Para drawdown normalmente queremos “menos malo” (más cercano a 0) como mejor
-            styler = styler.background_gradient(subset=["max_drawdown"], cmap="Reds")
+        if "Retorno anualizado" in df.columns:
+            styler = styler.background_gradient(subset=["Retorno anualizado"], cmap="Greens", low=0.6, high=0.0)
+        if "Ratio de Sharpe" in df.columns:
+            styler = styler.background_gradient(subset=["Ratio de Sharpe"], cmap="Greens", low=0.6, high=0.0)
+        if "Volatilidad" in df.columns:
+            styler = styler.background_gradient(subset=["Volatilidad"], cmap="Reds", low=0.6, high=0.0)
+        if "Max Drawdown" in df.columns:
+            styler = styler.background_gradient(subset=["Max Drawdown"], cmap="Reds", low=0.6, high=0.0)
 
-    if title:
-        st.markdown(f"### **{title}**")
 
     st.table(styler)
+
+def show_markowitz_results(n_returns: int,
+                           returns: pd.DataFrame,
+                           df_results: pd.DataFrame,
+    method: Literal["simple", "log"] = "simple",
+    periods_per_year: int = 252,
+    plot_cml: bool = True
+    ):
+
+    covmat = calculate_covariance(returns)
+    weights = get_weights(n_returns, returns, covmat, method, periods_per_year)
+
+    retornos = [portfolio_returns(w, returns, method, periods_per_year) for w in weights]
+    volatilities = [portfolio_volatility(w, covmat, periods_per_year) for w in weights]
+
+    ef = pd.DataFrame({
+        "Retorno anualizado": retornos,
+        "Volatilidad": volatilities
+    })
+
+    fig = px.line(
+        ef,
+        x="Volatilidad",
+        y="Retorno anualizado"
+    )
+    dfp = df_results.reset_index().rename(columns={"Tipo de portfolio": "Tipo de portfolio"})
+
+    fig.add_trace(
+                go.Scatter(
+                    x=dfp["Volatilidad"] / 100,
+                    y=dfp["Retorno anualizado"] / 100,
+                    mode="markers+text",
+                    text=dfp["Tipo de portfolio"],
+                    textposition="top center",
+                    name="Portfolios",
+                    marker=dict(
+                        color="red",
+                        size=14,
+                    )
+                )
+            )
+    fig.update_layout(
+        xaxis_title="Volatilidad (anualizada)",
+        yaxis_title="Retorno anualizado",
+        legend_title_text="",
+        height=700
+    )
+    fig.update_xaxes(rangemode="tozero")
+
+    st.plotly_chart(fig, width="stretch")

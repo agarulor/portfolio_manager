@@ -101,7 +101,7 @@ def render():
 
         c1, c2, c3 = st.columns([2, 1, 2])
         with c2:
-            if st.button("Completar cuestionario personal", use_container_width=True):
+            if st.button("Completar cuestionario personal", width="stretch"):
                 st.session_state["route"] = "questionnaire"
                 st.rerun()
 

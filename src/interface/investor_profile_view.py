@@ -341,7 +341,7 @@ def render_investor_questionnaire():
 
     st.markdown("---")
 
-    submitted = st.button("Obtener perfil de riesgo", use_container_width=True)
+    submitted = st.button("Obtener perfil de riesgo", width="stretch")
 
     if not submitted:
         # Button not yet pushed
@@ -407,7 +407,7 @@ def render_investor_profile_view(RA, RC, RT, sigma_min, sigma_max):
         """,
         unsafe_allow_html=True)
 
-    submitted_cartera = st.button("Ir a creación de carteras recomendadas", use_container_width=True)
+    submitted_cartera = st.button("Ir a creación de carteras recomendadas", width="stretch")
     if submitted_cartera:
         st.session_state["route"] = "portfolio"
         st.rerun()

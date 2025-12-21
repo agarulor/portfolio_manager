@@ -5,11 +5,12 @@ from data_management.dataset_preparation import split_data_markowtiz
 from data_management.clean_data import clean_and_align_data
 from portfolio_tools.return_metrics import calculate_daily_returns
 from interface.landing_page import add_separation
-from interface.visualizations import show_portfolio, render_results_table
+from interface.visualizations import show_portfolio, render_results_table, show_markowitz_results
 from portfolio_management.investor_portfolios import  get_investor_initial_portfolio, get_sector_exposure_table, create_output_table_portfolios
 from data_management.save_data import save_preprocessed_data
 import datetime as dt
 import pandas as pd
+PERIODS_PER_YEAR = 255
 
 import plotly.graph_objects as go
 FILENAME_PATH = "data/input/ibex_eurostoxx.csv"
@@ -323,7 +324,7 @@ def get_initial_portfolio():
                                                                          min_w=min_stock_pct,
                                                                          max_w=max_stock_pct,
                                                                          rf_annual=risk_free_rate,
-                                                                         periods_per_year=256,
+                                                                         periods_per_year=PERIODS_PER_YEAR,
                                                                          custom_target_volatility=volatility,
                                                                          sectors_df=sectors,
                                                                          sector_max_weight=max_sector_pct,
@@ -332,9 +333,44 @@ def get_initial_portfolio():
 
 def create_portfolio_visualizations():
 
+    df_weights = st.session_state["initial_results"][1]["investor"]
+    sectors = st.session_state["initial_data"]["sectors"]
+    sectores = get_sector_exposure_table(df_weights, sectors)
 
-    df_results = st.session_state["initial_results"][0]
-    render_results_table(df_results)
+    with st.container(border=True):
+        subheader("Composición de la cartera", font_size="2.0rem")
+        col1, col2 = st.columns(2)
+        with col1:
+            show_portfolio(
+                df_weights=df_weights,
+                title="Composición por activo",
+                label_name="Activo",
+                weight_col="Pesos",
+                weights_in_percent=False
+            )
+        with col2:
+            show_portfolio(
+                df_weights=sectores.set_index("sector"),
+                title="Composición por sector",
+                label_name="Sector",
+                weight_col="Pesos",
+                weights_in_percent=True
+            )
+
+
+    # We now render the main table of results and comparable portfolios
+    with st.container(border=True):
+        subheader("Resultados de la cartera", font_size="2.0rem")
+        st.write("")
+        st.write("")
+        df_results = st.session_state["initial_results"][0]
+        render_results_table(df_results)
+
+    # We now render the efficient frontier and the comparable portfolios
+    with st.container(border=True):
+        subheader("Frontera eficiente y portfolios", font_size="2.0rem")
+        df_returns = st.session_state["initial_data"]["daily_returns"]
+        show_markowitz_results(n_returns=100, returns= df_returns, df_results=df_results, periods_per_year=PERIODS_PER_YEAR)
 
 
 def render_constraints_portfolio():
@@ -354,7 +390,7 @@ def render_constraints_portfolio():
 
     c1, c2, c3 = st.columns(3)
     with c2:
-        clicked = st.button("Generar cartera", use_container_width=True, type="primary")
+        clicked = st.button("Generar cartera", width="stretch", type="primary")
 
     if clicked:
         draft = st.session_state["investor_constraints_draft"]

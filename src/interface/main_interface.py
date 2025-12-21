@@ -75,7 +75,7 @@ def apply_global_styles():
 
 def render_sidebar_header():
     with st.sidebar:
-        st.image(str(ASSETS_PATH / "202-nova-marca-uoc.jpg"), use_container_width=True)
+        st.image(str(ASSETS_PATH / "202-nova-marca-uoc.jpg"), width="stretch")
 
         st.markdown("""
         <div style="margin-top:0.6rem; margin-bottom:0.8rem; text-align:center;">
