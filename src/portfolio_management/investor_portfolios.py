@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 from typing import Literal, Tuple, Optional
 
-from portfolio_tools.markowitz import  maximize_return
+from portfolio_tools.markowitz import  maximize_return, msr, gmv, ew, random_weights
 from portfolio_tools.return_metrics import portfolio_returns
 from portfolio_tools.risk_metrics import portfolio_volatility, calculate_max_drawdown, calculate_covariance, max_drawdown_from_value_series
 
@@ -93,6 +93,7 @@ def get_results(returns: pd.DataFrame,
 
 def get_investor_initial_portfolio(returns: pd.DataFrame,
                                    method: Literal["simple", "log"] = "simple",
+                                   portfolio_type: Literal["investor", "msr", "gmv", "ew", "random"] = "investor",
                                    periods_per_year: float = 252,
                                    min_w: float = 0.00,
                                    max_w: float = 1.00,
@@ -110,7 +111,8 @@ def get_investor_initial_portfolio(returns: pd.DataFrame,
     Parameters
     ----------
     returns: pd.DataFrame. Expected return of the portfolio.
-    method: str. "simple" or "log
+    method: str. "simple" or "log"
+    portfolio_type: str. "investor" or "msr
     periods_per_year: int. Number of years over which to calculate volatility.
     min_w: float. Minimum weight of the portfolio.
     max_w: float. Maximum weight of the portfolio.
@@ -125,19 +127,31 @@ def get_investor_initial_portfolio(returns: pd.DataFrame,
     covmat = calculate_covariance(returns)
     if rf_annual is not None:
         returns, covmat = add_risk_free_asset(returns, covmat, rf_annual, periods_per_year)
-    weights = get_investor_weights(returns,
-                                   covmat,
-                                   method,
-                                   min_w,
-                                   max_w,
-                                   custom_target_volatility,
-                                   sectors_df=sectors_df,
-                                   ticker_col=ticker_col,
-                                   sector_col=sector_col,
-                                   sector_max_weight=sector_max_weight,
-                                   risk_free_ticker = risk_free_ticker
-                                   )
+    if portfolio_type == "investor":
+        weights = get_investor_weights(returns,
+                                       covmat,
+                                       method,
+                                       min_w,
+                                       max_w,
+                                       custom_target_volatility,
+                                       sectors_df=sectors_df,
+                                       ticker_col=ticker_col,
+                                       sector_col=sector_col,
+                                       sector_max_weight=sector_max_weight,
+                                       risk_free_ticker = risk_free_ticker
+                                       )
+    elif portfolio_type == "msr":
+        weights = msr(returns, covmat, rf_annual, method, periods_per_year, min_w, max_w)
+    elif portfolio_type == "gmv":
+        weights = gmv(covmat, min_w, max_w)
+    elif portfolio_type == "ew":
+        # We calculate the weights for an equally weighted portfolio
+        weights = ew(returns)
+    elif portfolio_type == "random":
+        weights = random_weights(returns)
 
+    else:
+        raise ValueError(f"Unknown portfolio type: {portfolio_type}")
     resultados = get_results(returns, covmat, weights, method, periods_per_year, rf_annual)
 
     # we now extract tickers
@@ -152,6 +166,8 @@ def get_investor_initial_portfolio(returns: pd.DataFrame,
     df_weights = df_weights[df_weights["Pesos"] > 0]
     df_weights = df_weights.sort_values(by=["Pesos"], ascending=False)
 
+    print(df_weights)
+    print(df_results)
     return df_results, df_weights, weights
 
 
@@ -262,3 +278,49 @@ def get_sector_exposure_table(
     ).reset_index(drop=True)
 
     return sector_table
+
+
+def create_output_table_portfolios(returns: pd.DataFrame,
+                                   method: Literal["simple", "log"] = "simple",
+                                   list_portfolio_types=None,
+                                   periods_per_year: float = 252,
+                                   min_w: float = 0.00,
+                                   max_w: float = 1.00,
+                                   rf_annual: float | None = None,
+                                   custom_target_volatility: float = 0.15,
+                                   sectors_df: Optional[pd.DataFrame] = None,
+                                   ticker_col: str = "ticker",
+                                   sector_col: str = "sector",
+                                   sector_max_weight: Optional[float] = None,
+                                   risk_free_ticker: str = "RISK_FREE") -> pd.DataFrame:
+
+    if list_portfolio_types is None:
+        list_portfolio_types = ["investor", "msr", "gmv", "ew", "random"]
+
+    results = []
+    dict_weights = {}
+    for portfolio_type in list_portfolio_types:
+        df_results, df_weights, weights = get_investor_initial_portfolio(returns,
+                                                                        method=method,
+                                                                        portfolio_type=portfolio_type,
+                                                                        min_w=min_w,
+                                                                        max_w=max_w,
+                                                                        rf_annual=rf_annual,
+                                                                        periods_per_year=256,
+                                                                        custom_target_volatility=custom_target_volatility,
+                                                                        sectors_df=sectors_df,
+                                                                        ticker_col=ticker_col,
+                                                                        sector_col=sector_col,
+                                                                        sector_max_weight=sector_max_weight,
+                                                                        risk_free_ticker=risk_free_ticker)
+        dict_weights[portfolio_type] = weights
+        df_r = df_results.copy()
+        df_r.index = [portfolio_type]
+        df_r.index.name = "Tipo de portfolio"
+
+        results.append(df_r)
+
+    df_results_all = pd.concat(results)
+
+    return df_results_all, dict_weights
+

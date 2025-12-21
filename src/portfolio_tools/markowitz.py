@@ -317,11 +317,9 @@ def gmv(covmat: pd.DataFrame,
     -------
     np.ndarray: Weights of the portfolio.
     """
-    # We extract values
-    covmat_values = covmat.values
 
     # We get the number of assets
-    n = covmat_values.shape[0]
+    n = covmat.shape[0]
 
     # Create initial guess
     init_guess = np.ones(n) / n
@@ -336,7 +334,7 @@ def gmv(covmat: pd.DataFrame,
     )
 
     # Minimize the function to get the MGV
-    weights = minimize(lambda w: float(w @ covmat_values @ w),
+    weights = minimize(lambda w: float(w @ covmat @ w),
                    init_guess,
                    method='COBYLA',
                    bounds=bounds,
@@ -434,7 +432,7 @@ def get_weights_from_min_volatility(n_volatilities: int,
 
 def portfolio_output(returns: pd.DataFrame,
                      covmat: pd.DataFrame,
-                     portfolio_type: Literal["msr", "gmv", "portfolio", "ew", "random"] = "msr",
+                     portfolio_type: Literal["msr", "gmv", "ew", "random"] = "msr",
                      rf: float = 0.0,
                      method: Literal["simple", "log"] = "simple",
                      periods_per_year: int = 252,
@@ -462,8 +460,6 @@ def portfolio_output(returns: pd.DataFrame,
         weights = msr(returns, covmat, rf, method, periods_per_year, min_w, max_w)
     elif portfolio_type == "gmv":
         weights = gmv(covmat, min_w, max_w)
-    elif portfolio_type == "portfolio":
-        weights = 0
     elif portfolio_type == "ew":
         # We calculate the weights for an equally weighted portfolio
         weights = ew(returns)

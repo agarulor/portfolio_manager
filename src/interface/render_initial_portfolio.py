@@ -320,14 +320,15 @@ def get_initial_portfolio():
     train_set = resultados["train_set"]
     sectors = resultados["sectors"]
     st.session_state["initial_results"] = get_investor_initial_portfolio(train_set,
-                                                                        min_w=min_stock_pct,
-                                                                        max_w=max_stock_pct,
-                                                                        rf_annual=risk_free_rate,
-                                                                        periods_per_year=256,
-                                                                        custom_target_volatility=volatility,
-                                                                        sectors_df=sectors,
-                                                                        sector_max_weight=max_sector_pct,
-                                                                        risk_free_ticker="RISK_FREE")
+                                                                         portfolio_type="gmv",
+                                                                         min_w=min_stock_pct,
+                                                                         max_w=max_stock_pct,
+                                                                         rf_annual=risk_free_rate,
+                                                                         periods_per_year=256,
+                                                                         custom_target_volatility=volatility,
+                                                                         sectors_df=sectors,
+                                                                         sector_max_weight=max_sector_pct,
+                                                                         risk_free_ticker="RISK_FREE")
 
 
 def create_portfolio_visualizations():
