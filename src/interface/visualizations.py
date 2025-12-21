@@ -145,16 +145,24 @@ def render_results_table(
         .format(fmt, na_rep="—")
         .set_properties(**{
             "text-align": "center",
-            "font-size": "50px",
+            "font-size": "18px",
             "color": PRIMARY,
+            "line-height": "1.5"
         })
         .set_table_styles([
             {
+                "selector": "",
+                "props": [("width", "80%"), ("border-collapse", "collapse")]
+            },
+            {
                 "selector": "thead th",
                 "props": [
+                    ("text-align", "center"),
+                    ("font-size", "22px"),
+                    ("font-weight", "800"),
                     ("color", "white"),
                     ("background-color", SECONDARY),
-                    ("padding", "10px"),
+                    ("padding", "14px"),
                 ],
             },
             {
@@ -165,8 +173,10 @@ def render_results_table(
             },
         ])
     )
+
     if hide_index:
         styler = styler.hide(axis="index")
+
 
     if highlight:
         if "Retorno anualizado" in df.columns:
@@ -178,8 +188,9 @@ def render_results_table(
         if "Max Drawdown" in df.columns:
             styler = styler.background_gradient(subset=["Max Drawdown"], cmap="Reds", low=0.6, high=0.0)
 
+    html_table = styler.to_html()
 
-    st.table(styler)
+    st.markdown(html, unsafe_allow_html=True)
 
 def show_markowitz_results(n_returns: int,
                            returns: pd.DataFrame,

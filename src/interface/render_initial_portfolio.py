@@ -361,8 +361,6 @@ def create_portfolio_visualizations():
     # We now render the main table of results and comparable portfolios
     with st.container(border=True):
         subheader("Resultados de la cartera", font_size="2.0rem")
-        st.write("")
-        st.write("")
         df_results = st.session_state["initial_results"][0]
         render_results_table(df_results)
 
