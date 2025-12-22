@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+import streamlit as st
 from typing import Literal, Tuple, Optional
 from portfolio_tools.return_metrics import portfolio_returns, annualize_returns
 from portfolio_tools.risk_metrics import (
@@ -7,7 +8,8 @@ from portfolio_tools.risk_metrics import (
     neg_sharpe_ratio,
     calculate_max_drawdown,
     calculate_standard_deviation,
-    annualize_standard_deviation)
+    annualize_standard_deviation,
+    calculate_covariance)
 from scipy.optimize import minimize
 import matplotlib.pyplot as plt
 
@@ -535,3 +537,21 @@ def get_cml(target_volatility: float,
     cml_pf_return = float(rf + a * (pf_return - rf))
 
     return weight_risky, weight_risk_free, cml_pf_return, cml_pf_volatility
+
+@st.cache_data(show_spinner=False)
+def compute_efficient_frontier(
+    returns: pd.DataFrame,
+    n_returns: int,
+    method: str,
+    periods_per_year: int,
+) -> pd.DataFrame:
+    covmat = calculate_covariance(returns)
+    weights = get_weights(n_returns, returns, covmat, method, periods_per_year)
+
+    retornos = [portfolio_returns(w, returns, method, periods_per_year) for w in weights]
+    volatilities = [portfolio_volatility(w, covmat, periods_per_year) for w in weights]
+
+    return pd.DataFrame({
+        "Retorno anualizado": retornos,
+        "Volatilidad": volatilities
+    })

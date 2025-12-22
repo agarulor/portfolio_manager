@@ -1,4 +1,4 @@
-from portfolio_tools.markowitz import  maximize_return, msr, gmv, ew, random_weights, get_weights
+from portfolio_tools.markowitz import  compute_efficient_frontier, get_weights
 import plotly.express as px
 import plotly.graph_objects as go
 import pandas as pd
@@ -194,16 +194,7 @@ def show_markowitz_results(n_returns: int,
     method: Literal["simple", "log"] = "simple",
     periods_per_year: int = 252):
 
-    covmat = calculate_covariance(returns)
-    weights = get_weights(n_returns, returns, covmat, method, periods_per_year)
-
-    retornos = [portfolio_returns(w, returns, method, periods_per_year) for w in weights]
-    volatilities = [portfolio_volatility(w, covmat, periods_per_year) for w in weights]
-
-    ef = pd.DataFrame({
-        "Retorno anualizado": retornos,
-        "Volatilidad": volatilities
-    })
+    ef = compute_efficient_frontier(returns, n_returns, method, periods_per_year)
 
     fig = px.line(
         ef,
@@ -295,4 +286,4 @@ def plot_portfolio_values(results: dict) -> None:
     fig.update_xaxes(showgrid=False)
     fig.update_yaxes(showgrid=False)
 
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, width="stretch")
