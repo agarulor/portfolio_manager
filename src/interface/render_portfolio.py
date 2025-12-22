@@ -6,25 +6,13 @@ COMPANIES_COL = "name"
 START_DATE = "2005-01-01"
 END_DATE = "2025-09-30"
 import pandas as pd
-from interface.main_interface import header
 from interface.render_initial_portfolio import render_investor_constraints, render_constraints_portfolio
-from portfolio_tools.risk_metrics import calculate_covariance  # si quieres usar covmat
+
 sys.path.append(os.path.join(os.path.dirname(__file__), "src"))
 import streamlit as st
-from typing import Literal, Optional
+
 import plotly.express as px
-from data_management.get_data import read_price_file, get_stock_prices
 
-from data_management.save_data import save_preprocessed_data
-from data_management.clean_data import clean_and_align_data
-from portfolio_tools.return_metrics import calculate_daily_returns
-from portfolio_tools.risk_metrics import calculate_covariance
-
-from portfolio_tools.markowitz import plot_frontier
-from portfolio_management.investor_portfolios import  get_investor_initial_portfolio, get_updated_results, get_cumulative_returns, get_sector_exposure_table
-from data_management.dataset_preparation import split_data_markowtiz
-from portfolio_management.portfolio_management import check_portfolio_weights, get_sector_weights_at_date, simulate_rebalance_6m_from_returns
-from investor_information.investor_profile import investor_target_volatility
 from types import MappingProxyType
 
 import os
@@ -44,26 +32,7 @@ RISK_PROFILE_DICTIONARY = MappingProxyType({
 
 
 
-def plot_portfolio_value(df_value: pd.DataFrame,
-                         title: str = "Evolución de la cartera") -> None:
 
-    # We order by date
-    df_value = df_value.reset_index()
-    df_value.columns = ["Fecha", "Valor"]
-
-    fig = px.line(df_value,
-                  x="Fecha",
-                  y="Valor",
-                  title = title,
-                  markers=False)
-
-    fig.update_layout(template="plotly_white",
-                      xaxis_title="Fecha",
-                      yaxis_title="Valor (€)",
-                      hovermode= "x unified",
-                      height=450,
-    )
-    st.plotly_chart(fig, use_container_width=True)
 
 
 def render_portfolio():

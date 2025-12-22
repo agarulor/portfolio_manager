@@ -8,6 +8,7 @@ import pandas as pd
 from typing import Optional, Literal
 import streamlit as st
 from portfolio_tools.risk_metrics import calculate_covariance, portfolio_returns, portfolio_volatility
+from portfolio_management.investor_portfolios import get_cumulative_returns, get_total_results
 
 def show_portfolio(
         df_weights: pd.DataFrame,
@@ -190,7 +191,7 @@ def render_results_table(
 
     html_table = styler.to_html()
 
-    st.markdown(html, unsafe_allow_html=True)
+    st.markdown(html_table, unsafe_allow_html=True)
 
 def show_markowitz_results(n_returns: int,
                            returns: pd.DataFrame,
@@ -239,5 +240,27 @@ def show_markowitz_results(n_returns: int,
         height=700
     )
     fig.update_xaxes(rangemode="tozero")
-
     st.plotly_chart(fig, width="stretch")
+
+
+
+
+    def plot_portfolio_value(df_value: pd.DataFrame,
+                             title: str = "Evolución de la cartera") -> None:
+        # We order by date
+        df_value = df_value.reset_index()
+        df_value.columns = ["Fecha", "Valor"]
+
+        fig = px.line(df_value,
+                      x="Fecha",
+                      y="Valor",
+                      title=title,
+                      markers=False)
+
+        fig.update_layout(template="plotly_white",
+                          xaxis_title="Fecha",
+                          yaxis_title="Valor (€)",
+                          hovermode="x unified",
+                          height=450,
+                          )
+        st.plotly_chart(fig, use_container_width=True)

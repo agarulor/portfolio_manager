@@ -195,7 +195,7 @@ def get_cumulative_returns(returns: pd.DataFrame,
     return adjusted_total_value, adjusted_value
 
 
-def get_updated_results(returns: pd.DataFrame,
+def get_total_results(returns: pd.DataFrame,
                         weights: pd.DataFrame,
                         initial_investment: float = 1,
                         method: Literal["simple", "log"] = "simple",

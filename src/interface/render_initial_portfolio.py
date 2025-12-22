@@ -1,4 +1,6 @@
 import streamlit as st
+from torchgen.gen_functionalization_type import return_str
+
 from interface.main_interface import subheader, header
 from data_management.get_data import get_stock_prices, read_price_file
 from data_management.dataset_preparation import split_data_markowtiz
@@ -6,7 +8,7 @@ from data_management.clean_data import clean_and_align_data
 from portfolio_tools.return_metrics import calculate_daily_returns
 from interface.landing_page import add_separation
 from interface.visualizations import show_portfolio, render_results_table, show_markowitz_results
-from portfolio_management.investor_portfolios import  get_investor_initial_portfolio, get_sector_exposure_table, create_output_table_portfolios
+from portfolio_management.investor_portfolios import get_sector_exposure_table, create_output_table_portfolios, get_cumulative_returns, get_total_results
 from data_management.save_data import save_preprocessed_data
 import datetime as dt
 import pandas as pd
@@ -311,6 +313,8 @@ def get_initial_portfolio():
     min_stock_pct = constraints["min_stock_pct"] / 100
     max_sector_pct = constraints["max_sector_pct"] / 100
     risk_free_rate = constraints["risk_free_rate"] / 100
+    investment_amount = constraints["amount"]
+    weights = st.session_state["initial_results"][2]["investor"]
 
     # Investor profile
     profile = st.session_state["risk_result"]
@@ -330,12 +334,32 @@ def get_initial_portfolio():
                                                                          sector_max_weight=max_sector_pct,
                                                                          risk_free_ticker="RISK_FREE")
 
+    df_returns_portfolio, money, stock_returns = get_total_results(returns=train_set,
+                                                                     weights=weights,
+                                                                     initial_investment = investment_amount,
+                                                                     periods_per_year=PERIODS_PER_YEAR,
+                                                                     rf_annual=risk_free_rate)
+
+    #print(df_returns_portfolio)
+    print(money)
+    print(stock_returns)
+    st.session_state["historical_returns"] = {
+        "historical_portfolio_returns": df_returns_portfolio,
+        "historical_result_obtained": money,
+        "historical_stock_returns": stock_returns
+    }
+
 
 def create_portfolio_visualizations():
 
     df_weights = st.session_state["initial_results"][1]["investor"]
     sectors = st.session_state["initial_data"]["sectors"]
     sectores = get_sector_exposure_table(df_weights, sectors)
+    weights = st.session_state["initial_results"][2]["investor"]
+    initial_investment = st.session_state["investor_constraints_draft"]["amount"]
+    rf_annual = st.session_state["investor_constraints_draft"]["risk_free_rate"]
+    df_results = st.session_state["initial_results"][0]
+    df_returns = st.session_state["initial_data"]["train_set"]
 
     with st.container(border=True):
         subheader("Composición de la cartera", font_size="2.0rem")
@@ -357,19 +381,27 @@ def create_portfolio_visualizations():
                 weights_in_percent=True
             )
 
-
+    """
     # We now render the main table of results and comparable portfolios
     with st.container(border=True):
         subheader("Resultados de la cartera", font_size="2.0rem")
-        df_results = st.session_state["initial_results"][0]
         render_results_table(df_results)
 
     # We now render the efficient frontier and the comparable portfolios
     with st.container(border=True):
         subheader("Frontera eficiente y portfolios", font_size="2.0rem")
-        df_returns = st.session_state["initial_data"]["daily_returns"]
         show_markowitz_results(n_returns=100, returns= df_returns, df_results=df_results, periods_per_year=PERIODS_PER_YEAR)
+    """
 
+
+    resultaditos = get_cumulative_returns(returns=df_returns,
+                           weights=weights,
+                           initial_investment=initial_investment,
+                           rf_annual = rf_annual,
+                           periods_per_year=PERIODS_PER_YEAR
+                           )
+
+    print(resultaditos)
 
 def render_constraints_portfolio():
     header("AJUSTES DE LA CARTERA INICIAL")
