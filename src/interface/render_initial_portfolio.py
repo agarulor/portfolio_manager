@@ -1,17 +1,13 @@
 import streamlit as st
-from torchgen.gen_functionalization_type import return_str
-
 from interface.main_interface import subheader, header
 from data_management.get_data import get_stock_prices, read_price_file
 from data_management.dataset_preparation import split_data_markowtiz
 from data_management.clean_data import clean_and_align_data
 from portfolio_tools.return_metrics import calculate_daily_returns
 from interface.landing_page import add_separation
-from interface.visualizations import show_portfolio, render_results_table, show_markowitz_results, plot_portfolio_value
+from interface.visualizations import show_portfolio, render_results_table, show_markowitz_results, plot_portfolio_values
 from portfolio_management.investor_portfolios import get_sector_exposure_table, create_output_table_portfolios, render_historical_portfolios_results
-from data_management.save_data import save_preprocessed_data
 import datetime as dt
-import pandas as pd
 PERIODS_PER_YEAR = 255
 
 import plotly.graph_objects as go
@@ -299,10 +295,10 @@ def get_initial_data():
 
     constraints = st.session_state["investor_constraints_draft"]
     data_start_date = constraints["data_start_date"]
-    data_end_date = constraints["data_start_date"]
+    data_end_date = constraints["data_end_date"]
     st.session_state["initial_data"] = get_clean_initial_data(
-        start_date=data_start_date,
-        end_date=data_end_date,
+        start_date=data_start_date.isoformat(),
+        end_date=data_end_date.isoformat(),
     )
     st.session_state.data_ready = True
 
@@ -340,10 +336,6 @@ def create_portfolio_visualizations():
     df_weights = st.session_state["initial_results"][1]["investor"]
     sectors = st.session_state["initial_data"]["sectors"]
     sectores = get_sector_exposure_table(df_weights, sectors)
-    weights = st.session_state["initial_results"][2]
-
-    initial_investment = st.session_state["investor_constraints_draft"]["amount"]
-    rf_annual = st.session_state["investor_constraints_draft"]["risk_free_rate"]
     df_results = st.session_state["initial_results"][0]
     df_returns = st.session_state["initial_data"]["train_set"]
 
@@ -367,7 +359,6 @@ def create_portfolio_visualizations():
                 weights_in_percent=True
             )
 
-
     # We now render the main table of results and comparable portfolios
     with st.container(border=True):
         c1, c2 = st.columns(2)
@@ -380,16 +371,16 @@ def create_portfolio_visualizations():
             subheader("Frontera eficiente y portfolios", font_size="2.0rem")
             show_markowitz_results(n_returns=100, returns= df_returns, df_results=df_results, periods_per_year=PERIODS_PER_YEAR)
 
+
+def create_results_visualizations():
     with st.container(border=True):
-        dict_pf_results, dict_stock_results =  render_historical_portfolios_results(df_returns,
-                                                                                    1,
-                                                                                    weights,
-                                                                                    periods_per_year=PERIODS_PER_YEAR,
-                                                                                    rf_annual=rf_annual)
+        subheader("Resultados históricos de la cartera antes de inversión", font_size="2.0rem")
+        dict_pf_results = st.session_state.get("dict_pf_results")
+        if dict_pf_results is None:
+            st.info("Pulsa **Generar cartera** para calcular los resultados históricos.")
+            return
 
-        plot_portfolio_value(dict_pf_results["investor"])
-
-
+        plot_portfolio_values(dict_pf_results)
 def render_constraints_portfolio():
     header("AJUSTES DE LA CARTERA INICIAL")
     st.session_state.setdefault("data_ready", False)
@@ -397,6 +388,8 @@ def render_constraints_portfolio():
     st.session_state.setdefault("investor_constraints_applied", None)
     st.session_state.setdefault("investor_constraints_draft", None)
     st.session_state.setdefault("risk_result", None)
+    st.session_state.setdefault("dict_pf_results", None)
+    st.session_state.setdefault("dict_stock_results", None)
 
     with st.container(border=True):
         render_investor_constraints()
@@ -417,7 +410,24 @@ def render_constraints_portfolio():
             get_initial_data()
             get_initial_portfolio()
 
+            df_returns = st.session_state["initial_data"]["train_set"]
+            weights = st.session_state["initial_results"][2]
+            rf_annual = st.session_state["investor_constraints_draft"]["risk_free_rate"]
+
+            dict_pf_results, dict_stock_results = render_historical_portfolios_results(
+                df_returns,
+                1,
+                weights,
+                periods_per_year=PERIODS_PER_YEAR,
+                rf_annual=rf_annual
+            )
+            st.session_state["dict_pf_results"] = dict_pf_results
+            st.session_state["dict_stock_results"] = dict_stock_results
+
+        st.session_state["data_ready"] = True
+
+    create_portfolio_visualizations()
+    if st.session_state.get("data_ready"):
         header("RESULTADOS")
-        create_portfolio_visualizations()
 
-
+        create_results_visualizations()

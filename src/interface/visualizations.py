@@ -155,17 +155,17 @@ def render_results_table(
                 "selector": "thead th",
                 "props": [
                     ("text-align", "center"),
-                    ("font-size", "18px"),
-                    ("font-weight", "700"),
+                    ("font-size", "16px"),
+                    ("font-weight", "600"),
                     ("color", "white"),
                     ("background-color", SECONDARY),
-                    ("padding", "12px"),
+                    ("padding", "8px"),
                 ],
             },
             {
                 "selector": "tbody td",
                 "props": [
-                    ("padding", "8px 10px"),
+                    ("padding", "6px 8px"),
                 ],
             },
         ])
@@ -186,16 +186,13 @@ def render_results_table(
             styler = styler.background_gradient(subset=["Max Drawdown"], cmap="Reds", low=0.6, high=0.0)
 
     html_table = styler.to_html()
-
     st.markdown(html_table, unsafe_allow_html=True)
 
 def show_markowitz_results(n_returns: int,
                            returns: pd.DataFrame,
                            df_results: pd.DataFrame,
     method: Literal["simple", "log"] = "simple",
-    periods_per_year: int = 252,
-    plot_cml: bool = True
-    ):
+    periods_per_year: int = 252):
 
     covmat = calculate_covariance(returns)
     weights = get_weights(n_returns, returns, covmat, method, periods_per_year)
@@ -240,8 +237,7 @@ def show_markowitz_results(n_returns: int,
     st.plotly_chart(fig, width="stretch")
 
 
-def plot_portfolio_value(df_value: pd.DataFrame,
-                         title: str = "Evolución de la cartera") -> None:
+def plot_portfolio_value(df_value: pd.DataFrame) -> None:
 
     # We order by date
     df_value = df_value.reset_index()
@@ -250,7 +246,6 @@ def plot_portfolio_value(df_value: pd.DataFrame,
     fig = px.line(df_value,
                   x="Fecha",
                   y="Valor",
-                  title=title,
                   markers=False)
 
     fig.update_layout(template="plotly_white",
@@ -259,6 +254,44 @@ def plot_portfolio_value(df_value: pd.DataFrame,
                       hovermode="x unified",
                       height=700,
                       )
+    fig.update_xaxes(showgrid=False)
+    fig.update_yaxes(showgrid=False)
+
+    st.plotly_chart(fig, use_container_width=True)
+
+
+def plot_portfolio_values(results: dict) -> None:
+
+    # We first extract the keys
+    names = list(results.keys())
+
+    selected = st.multiselect("Carteras a comparar",
+                              options=names,
+                              default=names[:1] if names else names)
+    if not selected:
+        st.info("Por favor, seleccione al menos una cartera")
+        return
+
+    fig = go.Figure()
+
+    for i, name in enumerate(selected):
+        df = results[name]
+        fig.add_trace(
+            go.Scatter(
+                x = df.index,
+                y = df.values,
+                mode = "lines",
+                name = name,
+                line=dict(width=4 if i == 0 else 2)
+
+            )
+        )
+
+    fig.update_layout(template="plotly_white",
+                      xaxis_title="Fecha",
+                      yaxis_title="Valor (€)",
+                      hovermode="x unified",
+                      height=700)
     fig.update_xaxes(showgrid=False)
     fig.update_yaxes(showgrid=False)
 
