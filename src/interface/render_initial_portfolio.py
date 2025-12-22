@@ -391,7 +391,29 @@ def create_results_visualizations():
         plot_portfolio_values(dict_pf_results)
 
 
+def reset_portfolio_results():
+    keys_to_reset = [
+        "initial_data",
+        "initial_results",
+        "dict_pf_results",
+        "dict_stock_results",
+        "data_ready",
+    ]
+    for k in keys_to_reset:
+        st.session_state[k] = None
+
+    st.session_state["data_ready"] = False
+
+
 def render_sidebar_display_options():
+
+    st.sidebar.header("Navegación")
+    if st.sidebar.button("Volver cuestionario", use_container_width=True):
+        reset_portfolio_results()
+        st.session_state["route"] = "questionnaire"
+        st.rerun()
+
+
     st.sidebar.header("Selecciona visualizaciones")
 
     st.session_state.setdefault("show_alloc_assets", True)
@@ -405,6 +427,9 @@ def render_sidebar_display_options():
     st.sidebar.checkbox("Tabla de resultados", key="show_results_table")
     st.sidebar.checkbox("Frontera eficiente", key="show_frontier")
     st.sidebar.checkbox("Histórico (valor cartera)", key="show_historical")
+
+
+
 
 def render_constraints_portfolio():
     header("AJUSTES DE LA CARTERA INICIAL")

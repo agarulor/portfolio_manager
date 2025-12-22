@@ -8,21 +8,21 @@ from interface.main_interface import apply_global_styles, render_sidebar
 from interface.render_portfolio import render_portfolio
 from interface.landing_page import render as render_landing
 
+
 def run_app():
     st.set_page_config(page_title="UOC - Robo Advisor", page_icon="📈", layout="wide")
     apply_global_styles()
 
-    if "route" not in st.session_state:
-        st.session_state["route"] = "landing"
+    st.session_state.setdefault("route", "landing")
 
-    # capturar query params (click del botón HTML)
+    st.session_state.setdefault("route", "landing")
+
     qp = st.query_params
     if qp.get("route"):
         st.session_state["route"] = qp.get("route")
         st.query_params.clear()
         st.rerun()
 
-    # router
     route = st.session_state["route"]
 
     if route == "landing":
@@ -32,7 +32,6 @@ def run_app():
         page = render_sidebar()
         answers = render_investor_questionnaire()
         show_investor_profile(answers)
-        render_sidebar_profile_summary()
 
     elif route == "portfolio":
         page = render_sidebar()
@@ -41,18 +40,3 @@ def run_app():
     else:
         st.session_state["route"] = "landing"
         st.rerun()
-
-""" st.set_page_config(page_title="Gestor de carteras", layout="centered")
-
-  apply_global_styles()
-  page = render_sidebar()
-
-  if page == "Perfil de riesgo":
-      st.header("Perfil de riesgo del inversor")
-      answers = render_investor_questionnaire()
-      show_investor_profile(answers)
-
-  elif page == "Cartera de inversión":
-      render_portfolio()
-
-  render_sidebar_profile_summary()"""
