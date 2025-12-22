@@ -370,13 +370,15 @@ def create_portfolio_visualizations():
 
     # We now render the main table of results and comparable portfolios
     with st.container(border=True):
-        subheader("Resultados de la cartera", font_size="2.0rem")
-        render_results_table(df_results)
+        c1, c2 = st.columns(2)
+        with c1:
+            subheader("Resultados de la cartera", font_size="2.0rem")
+            render_results_table(df_results)
 
     # We now render the efficient frontier and the comparable portfolios
-    with st.container(border=True):
-        subheader("Frontera eficiente y portfolios", font_size="2.0rem")
-        show_markowitz_results(n_returns=100, returns= df_returns, df_results=df_results, periods_per_year=PERIODS_PER_YEAR)
+        with c2:
+            subheader("Frontera eficiente y portfolios", font_size="2.0rem")
+            show_markowitz_results(n_returns=100, returns= df_returns, df_results=df_results, periods_per_year=PERIODS_PER_YEAR)
 
     with st.container(border=True):
         dict_pf_results, dict_stock_results =  render_historical_portfolios_results(df_returns,

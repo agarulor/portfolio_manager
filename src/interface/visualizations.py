@@ -103,7 +103,7 @@ def render_results_table(
         percent_cols: Optional[list[str]] = None,
         float_cols: Optional[list[str]] = None,
         highlight: bool = True,
-        hide_index: bool = True)-> None:
+        hide_index: bool = False)-> None:
 
     """
     It renders a nice table with results (Sharpe ratio, returns, volatility, drawdown)
@@ -137,13 +137,12 @@ def render_results_table(
             fmt[c] = "{:.4f}"
 
     # we now set the styler
-
     styler = (
         df.style
         .format(fmt, na_rep="—")
         .set_properties(**{
             "text-align": "center",
-            "font-size": "18px",
+            "font-size": "16px",
             "color": PRIMARY,
             "line-height": "1.5"
         })
@@ -156,11 +155,11 @@ def render_results_table(
                 "selector": "thead th",
                 "props": [
                     ("text-align", "center"),
-                    ("font-size", "22px"),
-                    ("font-weight", "800"),
+                    ("font-size", "18px"),
+                    ("font-weight", "700"),
                     ("color", "white"),
                     ("background-color", SECONDARY),
-                    ("padding", "14px"),
+                    ("padding", "12px"),
                 ],
             },
             {
@@ -234,7 +233,7 @@ def show_markowitz_results(n_returns: int,
         xaxis_title="Volatilidad (anualizada)",
         yaxis_title="Retorno anualizado",
         legend_title_text="",
-        height=700
+        height=500
     )
     fig.update_xaxes(rangemode="tozero", showgrid=False)
     fig.update_yaxes(showgrid=False)
