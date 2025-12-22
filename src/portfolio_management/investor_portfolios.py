@@ -168,8 +168,6 @@ def get_investor_initial_portfolio(returns: pd.DataFrame,
     df_weights = df_weights[df_weights["Pesos"] > 0]
     df_weights = df_weights.sort_values(by=["Pesos"], ascending=False)
 
-    print(df_weights)
-    print(df_results)
     return df_results, df_weights, weights
 
 
@@ -208,13 +206,9 @@ def get_total_results(returns: pd.DataFrame,
 
     absolute_return = df_returns.iloc[-1] / initial_investment
 
-    print(absolute_return)
-
     t = df_returns.shape[0]
 
     annualized_return = absolute_return**(periods_per_year / t) - 1
-
-    print(f"Retorno {annualized_return}")
 
     if rf_annual is not None:
         returns, covmat = add_risk_free_asset(returns, covmat, rf_annual, periods_per_year)
@@ -337,3 +331,27 @@ def create_output_table_portfolios(returns: pd.DataFrame,
 
     return df_results_all, dict_df_weights, dict_weights
 
+
+def render_historical_portfolios_results(returns: pd.DataFrame,
+                                         initial_investment: float,
+                                         weights,
+                                         list_portfolio_types=None,
+                                         periods_per_year: float = 252,
+                                         rf_annual: float = None):
+    if list_portfolio_types is None:
+        list_portfolio_types = ["investor", "msr", "gmv", "ew", "random"]
+
+    dict_pf_results = {}
+    dict_stock_results = {}
+    for pf_type in list_portfolio_types:
+        pf_weights = weights[pf_type]
+        df_returns_portfolio, money, stock_returns = get_total_results(returns=returns,
+                                                                   weights=pf_weights,
+                                                                   initial_investment=initial_investment,
+                                                                   periods_per_year=periods_per_year,
+                                                                   rf_annual=rf_annual)
+        dict_pf_results[pf_type] = money
+        dict_stock_results[pf_type] = stock_returns
+
+
+    return dict_pf_results, dict_stock_results
