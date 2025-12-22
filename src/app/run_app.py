@@ -15,8 +15,6 @@ def run_app():
 
     st.session_state.setdefault("route", "landing")
 
-    st.session_state.setdefault("route", "landing")
-
     qp = st.query_params
     if qp.get("route"):
         st.session_state["route"] = qp.get("route")

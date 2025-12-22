@@ -408,11 +408,15 @@ def reset_portfolio_results():
 def render_sidebar_display_options():
 
     st.sidebar.header("Navegación")
-    if st.sidebar.button("Volver cuestionario", use_container_width=True):
+    if st.sidebar.button("Volver a cuestionario", use_container_width=True):
         reset_portfolio_results()
         st.session_state["route"] = "questionnaire"
         st.rerun()
 
+    if st.session_state["step2_enabled"]:
+        if st.sidebar.button("Ver evolución cartera", width="stretch"):
+            st.session_state["route"] = "results"
+            st.rerun()
 
     st.sidebar.header("Selecciona visualizaciones")
 
@@ -441,6 +445,8 @@ def render_constraints_portfolio():
     st.session_state.setdefault("dict_pf_results", None)
     st.session_state.setdefault("dict_stock_results", None)
     st.session_state.setdefault("initial_results", None)
+    st.session_state.setdefault("step2_enabled", False)
+
     render_sidebar_display_options()
 
     with st.container(border=True):
@@ -477,7 +483,14 @@ def render_constraints_portfolio():
             st.session_state["dict_stock_results"] = dict_stock_results
 
         st.session_state["data_ready"] = True
-    header("RESULTADOS")
-    create_portfolio_visualizations()
+        st.session_state["step2_enabled"] = True
+
+
     if st.session_state.get("data_ready"):
+        header("RESULTADOS")
+        create_portfolio_visualizations()
         create_results_visualizations()
+
+    else:
+        st.info("Configura parámetros y pulsa **Generar cartera**.")
+
