@@ -248,7 +248,9 @@ def plot_portfolio_value(df_value: pd.DataFrame) -> None:
     fig.update_xaxes(showgrid=False)
     fig.update_yaxes(showgrid=False)
 
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, width="stretch")
+
+
 
 
 def plot_portfolio_values(results: dict) -> None:

@@ -333,6 +333,8 @@ def get_initial_portfolio():
 
 def create_portfolio_visualizations():
 
+    if not st.session_state.get("data_ready", False):
+        return
     df_weights = st.session_state["initial_results"][1]["investor"]
     sectors = st.session_state["initial_data"]["sectors"]
     sectores = get_sector_exposure_table(df_weights, sectors)
@@ -340,39 +342,45 @@ def create_portfolio_visualizations():
     df_returns = st.session_state["initial_data"]["train_set"]
 
     with st.container(border=True):
-        subheader("Composición de la cartera", font_size="2.0rem")
         col1, col2 = st.columns(2)
-        with col1:
-            show_portfolio(
-                df_weights=df_weights,
-                title="Composición por activo",
-                label_name="Activo",
-                weight_col="Pesos",
-                weights_in_percent=False
-            )
-        with col2:
-            show_portfolio(
-                df_weights=sectores.set_index("sector"),
-                title="Composición por sector",
-                label_name="Sector",
-                weight_col="Pesos",
-                weights_in_percent=True
-            )
+        if st.session_state.get("show_alloc_assets", True):
+            with col1:
+                show_portfolio(
+                    df_weights=df_weights,
+                    title="Composición por activo",
+                    label_name="Activo",
+                    weight_col="Pesos",
+                    weights_in_percent=False
+                )
+
+        if st.session_state.get("show_alloc_sectors", True):
+            with col2:
+                show_portfolio(
+                    df_weights=sectores.set_index("sector"),
+                    title="Composición por sector",
+                    label_name="Sector",
+                    weight_col="Pesos",
+                    weights_in_percent=True
+                )
 
     # We now render the main table of results and comparable portfolios
     with st.container(border=True):
         c1, c2 = st.columns(2)
-        with c1:
-            subheader("Resultados de la cartera", font_size="2.0rem")
-            render_results_table(df_results)
+        if st.session_state.get("show_results_table", True):
+            with c1:
+                subheader("Resultados de la cartera", font_size="2.0rem")
+                render_results_table(df_results)
 
     # We now render the efficient frontier and the comparable portfolios
-        with c2:
-            subheader("Frontera eficiente y portfolios", font_size="2.0rem")
-            show_markowitz_results(n_returns=100, returns= df_returns, df_results=df_results, periods_per_year=PERIODS_PER_YEAR)
+        if st.session_state.get("show_frontier", True):
+            with c2:
+                subheader("Frontera eficiente y portfolios", font_size="2.0rem")
+                show_markowitz_results(n_returns=100, returns= df_returns, df_results=df_results, periods_per_year=PERIODS_PER_YEAR)
 
 
 def create_results_visualizations():
+    if not st.session_state.get("show_historical", True):
+        return
     with st.container(border=True):
         subheader("Resultados históricos de la cartera antes de inversión", font_size="2.0rem")
         dict_pf_results = st.session_state.get("dict_pf_results")
@@ -381,6 +389,23 @@ def create_results_visualizations():
             return
 
         plot_portfolio_values(dict_pf_results)
+
+
+def render_sidebar_display_options():
+    st.sidebar.header("Selecciona visualizaciones")
+
+    st.session_state.setdefault("show_alloc_assets", True)
+    st.session_state.setdefault("show_alloc_sectors", True)
+    st.session_state.setdefault("show_results_table", True)
+    st.session_state.setdefault("show_frontier", True)
+    st.session_state.setdefault("show_historical", True)
+
+    st.sidebar.checkbox("Composición por activo", key="show_alloc_assets")
+    st.sidebar.checkbox("Composición por sector", key="show_alloc_sectors")
+    st.sidebar.checkbox("Tabla de resultados", key="show_results_table")
+    st.sidebar.checkbox("Frontera eficiente", key="show_frontier")
+    st.sidebar.checkbox("Histórico (valor cartera)", key="show_historical")
+
 def render_constraints_portfolio():
     header("AJUSTES DE LA CARTERA INICIAL")
     st.session_state.setdefault("data_ready", False)
@@ -390,6 +415,8 @@ def render_constraints_portfolio():
     st.session_state.setdefault("risk_result", None)
     st.session_state.setdefault("dict_pf_results", None)
     st.session_state.setdefault("dict_stock_results", None)
+    st.session_state.setdefault("initial_results", None)
+    render_sidebar_display_options()
 
     with st.container(border=True):
         render_investor_constraints()
@@ -425,9 +452,7 @@ def render_constraints_portfolio():
             st.session_state["dict_stock_results"] = dict_stock_results
 
         st.session_state["data_ready"] = True
-
+    header("RESULTADOS")
     create_portfolio_visualizations()
     if st.session_state.get("data_ready"):
-        header("RESULTADOS")
-
         create_results_visualizations()
