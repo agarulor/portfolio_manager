@@ -288,7 +288,7 @@ def render_investor_constraints():
         "data_start_date": data_start_date,
         "data_end_date": data_end_date,
         "amount": amount,
-        "risk_free_rate": risk_free_rate,
+        "risk_free_rate": risk_free_rate/100,
     }
 
 def get_initial_data():
@@ -308,7 +308,7 @@ def get_initial_portfolio():
     max_stock_pct = constraints["max_stock_pct"] / 100
     min_stock_pct = constraints["min_stock_pct"] / 100
     max_sector_pct = constraints["max_sector_pct"] / 100
-    risk_free_rate = constraints["risk_free_rate"] / 100
+    risk_free_rate = constraints["risk_free_rate"]
     investment_amount = constraints["amount"]
 
     # Investor profile
@@ -331,7 +331,7 @@ def get_initial_portfolio():
 
 
 
-def create_portfolio_visualizations():
+def create_historical_portfolio_visualizations():
 
     if not st.session_state.get("data_ready", False):
         return
@@ -378,7 +378,7 @@ def create_portfolio_visualizations():
                 show_markowitz_results(n_returns=100, returns= df_returns, df_results=df_results, periods_per_year=PERIODS_PER_YEAR)
 
 
-def create_results_visualizations():
+def create_historical_results_visualizations():
     if not st.session_state.get("show_historical", True):
         return
     with st.container(border=True):
@@ -488,8 +488,8 @@ def render_constraints_portfolio():
 
     if st.session_state.get("data_ready"):
         header("RESULTADOS")
-        create_portfolio_visualizations()
-        create_results_visualizations()
+        create_historical_portfolio_visualizations()
+        create_historical_results_visualizations()
 
     else:
         st.info("Configura parámetros y pulsa **Generar cartera**.")

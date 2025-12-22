@@ -7,6 +7,7 @@ from interface.investor_profile_view import (
 from interface.main_interface import apply_global_styles, render_sidebar
 from interface.render_portfolio import render_portfolio
 from interface.landing_page import render as render_landing
+from interface.render_porfolio_results import render_results
 
 
 def run_app():
@@ -34,6 +35,11 @@ def run_app():
     elif route == "portfolio":
         page = render_sidebar()
         render_portfolio()
+
+
+    elif route == "results":
+        page = render_sidebar()
+        render_results()
 
     else:
         st.session_state["route"] = "landing"
