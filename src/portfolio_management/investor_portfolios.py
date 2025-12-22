@@ -175,11 +175,12 @@ def get_cumulative_returns(returns: pd.DataFrame,
                            weights: np.ndarray,
                            initial_investment: float = 1,
                            rf_annual: float | None = None,
-                           periods_per_year: float = 252
+                           periods_per_year: float = 252,
+                           portfolio_type: str = "investor",
                            ) -> pd.DataFrame:
 
     money_invested = weights * initial_investment
-    if rf_annual is not None:
+    if rf_annual is not None and portfolio_type == "investor":
         returns = add_risk_free_column(returns, rf_annual, periods_per_year)
 
     adjust_returns = (1+returns)
@@ -198,11 +199,12 @@ def get_total_results(returns: pd.DataFrame,
                         initial_investment: float = 1,
                         method: Literal["simple", "log"] = "simple",
                         periods_per_year: float = 252,
-                        rf_annual: float | None = None):
+                        rf_annual: float | None = None,
+                      portfolio_type: str = "investor",):
 
     covmat = calculate_covariance(returns)
 
-    df_returns, df_stock_returns = get_cumulative_returns(returns, weights, initial_investment, rf_annual, periods_per_year)
+    df_returns, df_stock_returns = get_cumulative_returns(returns, weights, initial_investment, rf_annual, periods_per_year, portfolio_type)
 
     absolute_return = df_returns.iloc[-1] / initial_investment
 
@@ -210,7 +212,7 @@ def get_total_results(returns: pd.DataFrame,
 
     annualized_return = absolute_return**(periods_per_year / t) - 1
 
-    if rf_annual is not None:
+    if rf_annual is not None and portfolio_type == "investor":
         returns, covmat = add_risk_free_asset(returns, covmat, rf_annual, periods_per_year)
 
 
@@ -349,7 +351,8 @@ def render_historical_portfolios_results(returns: pd.DataFrame,
                                                                    weights=pf_weights,
                                                                    initial_investment=initial_investment,
                                                                    periods_per_year=periods_per_year,
-                                                                   rf_annual=rf_annual)
+                                                                   rf_annual=rf_annual,
+                                                                       portfolio_type=pf_type)
         dict_pf_results[pf_type] = money
         dict_stock_results[pf_type] = stock_returns
 

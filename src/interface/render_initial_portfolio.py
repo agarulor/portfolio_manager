@@ -380,12 +380,12 @@ def create_portfolio_visualizations():
 
     with st.container(border=True):
         dict_pf_results, dict_stock_results =  render_historical_portfolios_results(df_returns,
-                                                                                    initial_investment,
+                                                                                    1,
                                                                                     weights,
                                                                                     periods_per_year=PERIODS_PER_YEAR,
                                                                                     rf_annual=rf_annual)
-        print(dict_pf_results["investor"])
-        #plot_portfolio_value(dict_pf_results["investor"])
+
+        plot_portfolio_value(dict_pf_results["investor"])
 
 
 def render_constraints_portfolio():

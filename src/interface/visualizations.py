@@ -1,6 +1,3 @@
-
-
-
 from portfolio_tools.markowitz import  maximize_return, msr, gmv, ew, random_weights, get_weights
 import plotly.express as px
 import plotly.graph_objects as go
@@ -239,17 +236,13 @@ def show_markowitz_results(n_returns: int,
         legend_title_text="",
         height=700
     )
-    fig.update_xaxes(rangemode="tozero")
+    fig.update_xaxes(rangemode="tozero", showgrid=False)
+    fig.update_yaxes(showgrid=False)
     st.plotly_chart(fig, width="stretch")
-
-
 
 
 def plot_portfolio_value(df_value: pd.DataFrame,
                          title: str = "Evolución de la cartera") -> None:
-
-
-
 
     # We order by date
     df_value = df_value.reset_index()
@@ -265,6 +258,9 @@ def plot_portfolio_value(df_value: pd.DataFrame,
                       xaxis_title="Fecha",
                       yaxis_title="Valor (€)",
                       hovermode="x unified",
-                      height=450,
+                      height=700,
                       )
+    fig.update_xaxes(showgrid=False)
+    fig.update_yaxes(showgrid=False)
+
     st.plotly_chart(fig, use_container_width=True)
