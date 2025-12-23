@@ -2,6 +2,7 @@ import streamlit as st
 from interface.main_interface import subheader, header
 from portfolio_management.investor_portfolios import get_sector_exposure_table, create_output_table_portfolios, render_historical_portfolios_results
 from interface.render_initial_portfolio import  reset_portfolio_results
+from portfolio_management.portfolio_management import get_sector_weights_at_date, check_portfolio_weights
 from interface.visualizations import show_portfolio, render_results_table, show_markowitz_results, plot_portfolio_values
 PERIODS_PER_YEAR = 255
 
@@ -93,9 +94,12 @@ def render_results():
 
     st.session_state["data_ready"] = True
     st.session_state["step2_enabled"] = True
-
+    resultados = st.session_state["initial_data"]
+    sectors = resultados["sectors"]
 
     if st.session_state.get("data_ready"):
         header("EVOLUCIÓN CARTERA")
         create_portfolio_visualizations()
         create_results_visualizations()
+        print(get_sector_weights_at_date(dict_stock_results_forecast["investor"], sectors, "2025-09-30"))
+        print(check_portfolio_weights(dict_stock_results_forecast["investor"], "2025-09-30"))
