@@ -19,12 +19,11 @@ def render_sidebar_display_results():
         st.rerun()
 
 
-def create_historical_portfolio_visualizations():
+def create_portfolio_visualizations():
 
     if not st.session_state.get("data_ready", False):
         return
-
-
+    df_results = st.session_state["dict_pf_results_forecasts"]
     # We now render the main table of results and comparable portfolios
     with st.container(border=True):
         if st.session_state.get("show_results_table", True):
@@ -37,12 +36,12 @@ def create_results_visualizations():
      #   return
     with st.container(border=True):
         subheader("Resultados de la cartera de inversión", font_size="2.0rem")
-        dict_pf_results = st.session_state.get("dict_pf_results_forecast")
-        if dict_pf_results is None:
+        dict_pf_returns_forecast = st.session_state.get("dict_pf_returns_forecast")
+        if dict_pf_returns_forecast is None:
             st.info("Pulsa **Generar cartera** para calcular los resultados históricos.")
             return
 
-        plot_portfolio_values(dict_pf_results)
+        plot_portfolio_values(dict_pf_returns_forecast)
 
 
 def render_results():
@@ -53,26 +52,18 @@ def render_results():
     rf_annual = st.session_state["investor_constraints_draft"]["risk_free_rate"]
     amount = st.session_state["investor_constraints_draft"]["amount"]
 
-    st.session_state["forecast_results"] = create_output_table_portfolios(test_set,
-                                                                         min_w=min_stock_pct,
-                                                                         max_w=max_stock_pct,
-                                                                         rf_annual=risk_free_rate,
-                                                                         periods_per_year=PERIODS_PER_YEAR,
-                                                                         custom_target_volatility=volatility,
-                                                                         sectors_df=sectors,
-                                                                         sector_max_weight=max_sector_pct,
-                                                                         risk_free_ticker="RISK_FREE")
 
 
-    dict_pf_results, dict_stock_results = render_historical_portfolios_results(
+    dict_pf_returns_forecast, dict_stock_returns_forecast, dict_pf_results_forecasts = render_historical_portfolios_results(
         df_returns,
         amount,
         weights,
         periods_per_year=PERIODS_PER_YEAR,
         rf_annual=rf_annual
     )
-    st.session_state["dict_pf_results_forecast"] = dict_pf_results
-    st.session_state["dict_stock_results_forecast"] = dict_stock_results
+    st.session_state["dict_pf_returns_forecast"] = dict_pf_returns_forecast
+    st.session_state["dict_stock_returns_forecast"] = dict_stock_returns_forecast
+    st.session_state["dict_pf_results_forecasts"] = dict_pf_results_forecasts
 
     st.session_state["data_ready"] = True
     st.session_state["step2_enabled"] = True
@@ -80,4 +71,5 @@ def render_results():
 
     if st.session_state.get("data_ready"):
         header("EVOLUCIÓN CARTERA")
+        create_portfolio_visualizations()
         create_results_visualizations()

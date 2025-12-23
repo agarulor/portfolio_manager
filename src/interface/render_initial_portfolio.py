@@ -383,19 +383,19 @@ def create_historical_results_visualizations():
         return
     with st.container(border=True):
         subheader("Resultados históricos de la cartera antes de inversión", font_size="2.0rem")
-        dict_pf_results = st.session_state.get("dict_pf_results")
-        if dict_pf_results is None:
+        dict_pf_returns = st.session_state.get("dict_pf_returns")
+        if dict_pf_returns is None:
             st.info("Pulsa **Generar cartera** para calcular los resultados históricos.")
             return
 
-        plot_portfolio_values(dict_pf_results)
+        plot_portfolio_values(dict_pf_returns)
 
 
 def reset_portfolio_results():
     keys_to_reset = [
         "initial_data",
         "initial_results",
-        "dict_pf_results",
+        "dict_pf_returns",
         "dict_stock_results",
         "data_ready",
     ]
@@ -442,7 +442,7 @@ def render_constraints_portfolio():
     st.session_state.setdefault("investor_constraints_applied", None)
     st.session_state.setdefault("investor_constraints_draft", None)
     st.session_state.setdefault("risk_result", None)
-    st.session_state.setdefault("dict_pf_results", None)
+    st.session_state.setdefault("dict_pf_returns", None)
     st.session_state.setdefault("dict_stock_results", None)
     st.session_state.setdefault("initial_results", None)
     st.session_state.setdefault("step2_enabled", False)
@@ -463,7 +463,7 @@ def render_constraints_portfolio():
     if clicked:
         draft = st.session_state["investor_constraints_draft"]
 
-        with st.spinner("Procesando datos..."):
+        with (st.spinner("Procesando datos...")):
             # We store the draft values at that point in applied and we avoid re-runs
             get_initial_data()
             get_initial_portfolio()
@@ -472,14 +472,14 @@ def render_constraints_portfolio():
             weights = st.session_state["initial_results"][2]
             rf_annual = st.session_state["investor_constraints_draft"]["risk_free_rate"]
 
-            dict_pf_results, dict_stock_results = render_historical_portfolios_results(
+            dict_pf_returns, dict_stock_results, dict_pf_results = render_historical_portfolios_results(
                 df_returns,
                 1,
                 weights,
                 periods_per_year=PERIODS_PER_YEAR,
                 rf_annual=rf_annual
             )
-            st.session_state["dict_pf_results"] = dict_pf_results
+            st.session_state["dict_pf_returns"] = dict_pf_returns
             st.session_state["dict_stock_results"] = dict_stock_results
 
         st.session_state["data_ready"] = True

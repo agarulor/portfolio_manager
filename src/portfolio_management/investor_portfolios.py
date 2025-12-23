@@ -343,8 +343,9 @@ def render_historical_portfolios_results(returns: pd.DataFrame,
     if list_portfolio_types is None:
         list_portfolio_types = ["investor", "msr", "gmv", "ew", "random"]
 
-    dict_pf_results = {}
+    dict_pf_returns = {}
     dict_stock_results = {}
+    dict_pf_results = {}
     for pf_type in list_portfolio_types:
         pf_weights = weights[pf_type]
         df_returns_portfolio, money, stock_returns = get_total_results(returns=returns,
@@ -353,40 +354,11 @@ def render_historical_portfolios_results(returns: pd.DataFrame,
                                                                    periods_per_year=periods_per_year,
                                                                    rf_annual=rf_annual,
                                                                        portfolio_type=pf_type)
-        dict_pf_results[pf_type] = money
+        dict_pf_returns[pf_type] = money
         dict_stock_results[pf_type] = stock_returns
-
-
-    return dict_pf_results, dict_stock_results
-
-
-def get_results(returns: pd.DataFrame,
-                covmat: pd.DataFrame,
-                weights: pd.DataFrame,
-                method: Literal["simple", "log"] = "simple",
-                periods_per_year: float = 252,
-                rf_annual: float|None = None) -> dict:
+        dict_pf_results[pf_type] = df_returns_portfolio
+    df_pf_results = pd.concat(dict_pf_results, axis=0)
 
 
 
-
-
-    # We get the historical returns
-    pf_return = portfolio_returns(weights, returns, method, periods_per_year)
-
-
-    # We get the historical volatility
-    pf_volatility = portfolio_volatility(weights, covmat, periods_per_year)
-
-    # We calculate the sharpe ratio
-    portfolio_sharpe_ratio = (pf_return - rf_annual) / pf_volatility
-
-    # We get the maximum drawdown
-    max_drawdown = calculate_max_drawdown(weights, returns)
-    # We convert it into a dictionary and multiply by 100 to get %
-    portfolio_information = {"Retorno anualizado": float(round(pf_return * 100, 3)),
-                             "Volatilidad": float(round(pf_volatility * 100, 3)),
-                             "Ratio de Sharpe": float(round(portfolio_sharpe_ratio, 3)),
-                             "Max Drawdown": float(round(max_drawdown * 100, 3)) }
-
-    return portfolio_information
+    return dict_pf_returns, dict_stock_results, df_pf_results
