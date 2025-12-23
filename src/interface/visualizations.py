@@ -253,26 +253,66 @@ def plot_portfolio_value(df_value: pd.DataFrame) -> None:
 
 
 
-def plot_portfolio_values(results: dict) -> None:
+def plot_portfolio_values(results: dict | pd.DataFrame, key: str, portfolio_type: Literal["stock", "global"] = "global") -> None:
+    if portfolio_type == "global":
+        if not isinstance(results, dict):
+            st.error("For portfolio_type = global, results must be a dict")
+            return
+        # We first extract the keys
+        names = list(results.keys())
 
-    # We first extract the keys
-    names = list(results.keys())
+        selected = st.multiselect("Carteras a comparar",
+                                  options=names,
+                                  default=names[:1] if names else names,
+                                  key=key)
+        if not selected:
+            st.info("Por favor, seleccione al menos una cartera")
+            return
 
-    selected = st.multiselect("Carteras a comparar",
-                              options=names,
-                              default=names[:1] if names else names)
-    if not selected:
-        st.info("Por favor, seleccione al menos una cartera")
+
+    elif portfolio_type == "stock":
+
+        if not isinstance(results, pd.DataFrame):
+            st.error("For portfolio_type = stock results must be a Pandas DataFrame.")
+            return
+
+        df_clean = results.copy()
+        df_clean = df_clean.drop(columns=df_clean.columns[(df_clean == 0).all()], errors="ignore")
+        df_clean = df_clean.drop(columns=df_clean.columns[df_clean.isna().all()], errors="ignore")
+
+
+        names = list(df_clean.columns)
+
+        selected = st.multiselect("Evolución de activos de la cartera",
+                                  options=names,
+                                  default=names[:1] if names else names,
+                                  key=key)
+        if not selected:
+            st.info("Por favor, seleccione al menos un activo")
+            return
+    else:
+        print("Please, choose either stock or global")
         return
+
+
 
     fig = go.Figure()
 
     for i, name in enumerate(selected):
-        df = results[name]
+        series = results[name]
+        # series could be Series or DataFrame
+        if isinstance(series, pd.DataFrame):
+            y = series.iloc[:, 0].to_numpy()
+            x = series.index
+        else:
+            # Case of series
+            x = series.index
+            y = series.to_numpy()
+
         fig.add_trace(
             go.Scatter(
-                x = df.index,
-                y = df.values,
+                x = x,
+                y = y,
                 mode = "lines",
                 name = name,
                 line=dict(width=4 if i == 0 else 2)

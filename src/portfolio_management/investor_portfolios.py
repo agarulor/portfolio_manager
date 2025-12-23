@@ -357,7 +357,7 @@ def render_historical_portfolios_results(returns: pd.DataFrame,
         dict_pf_returns[pf_type] = money
         dict_stock_results[pf_type] = stock_returns
         dict_pf_results[pf_type] = df_returns_portfolio
-    df_pf_results = pd.concat(dict_pf_results, axis=0)
+    df_pf_results = pd.concat(dict_pf_results)
 
 
 

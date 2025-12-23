@@ -41,7 +41,8 @@ def create_results_visualizations():
             st.info("Pulsa **Generar cartera** para calcular los resultados históricos.")
             return
 
-        plot_portfolio_values(dict_pf_returns_forecast)
+        plot_portfolio_values(dict_pf_returns_forecast, key="forecast_portfolio")
+
 
 
 def render_results():

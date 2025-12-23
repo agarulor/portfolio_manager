@@ -388,8 +388,20 @@ def create_historical_results_visualizations():
             st.info("Pulsa **Generar cartera** para calcular los resultados históricos.")
             return
 
-        plot_portfolio_values(dict_pf_returns)
+        plot_portfolio_values(dict_pf_returns, key="historic_portfolio")
 
+    if not st.session_state.get("show_historical_stocks", True):
+        return
+    with st.container(border=True):
+        subheader("Resultados históricos de las acciones de la cartera", font_size="2.0rem")
+        dict_stock_results = st.session_state.get("dict_stock_results")
+        if dict_stock_results is None:
+            st.info("Pulsa **Generar cartera** para calcular los resultados históricos de las acciones.")
+            return
+
+
+        investor_results = dict_stock_results["investor"]
+        plot_portfolio_values(investor_results, key="investor_portfolio", portfolio_type="stock")
 
 def reset_portfolio_results():
     keys_to_reset = [
@@ -425,12 +437,14 @@ def render_sidebar_display_options():
     st.session_state.setdefault("show_results_table", True)
     st.session_state.setdefault("show_frontier", True)
     st.session_state.setdefault("show_historical", True)
+    st.session_state.setdefault("show_historical_stocks", True)
 
     st.sidebar.checkbox("Composición por activo", key="show_alloc_assets")
     st.sidebar.checkbox("Composición por sector", key="show_alloc_sectors")
     st.sidebar.checkbox("Tabla de resultados", key="show_results_table")
     st.sidebar.checkbox("Frontera eficiente", key="show_frontier")
     st.sidebar.checkbox("Histórico (valor cartera)", key="show_historical")
+    st.sidebar.checkbox("Histórico (valor acciones)", key="show_historical_stocks")
 
 
 
