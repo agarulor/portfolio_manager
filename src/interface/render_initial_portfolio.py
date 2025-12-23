@@ -352,7 +352,6 @@ def create_historical_portfolio_visualizations():
                     weight_col="Pesos",
                     weights_in_percent=False
                 )
-
         if st.session_state.get("show_alloc_sectors", True):
             with col2:
                 show_portfolio(
@@ -380,7 +379,6 @@ def create_historical_portfolio_visualizations():
 
 def create_historical_results_visualizations():
     if st.session_state.get("show_historical", True):
-
         with st.container(border=True):
             subheader("Resultados históricos de la cartera antes de inversión", font_size="2.0rem")
             dict_pf_returns = st.session_state.get("dict_pf_returns")
@@ -389,7 +387,6 @@ def create_historical_results_visualizations():
                 return
 
             plot_portfolio_values(dict_pf_returns, key="historic_portfolio")
-
     if st.session_state.get("show_historical_stocks", True):
 
         with st.container(border=True):

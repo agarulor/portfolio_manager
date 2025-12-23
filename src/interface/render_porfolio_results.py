@@ -1,9 +1,9 @@
 import streamlit as st
 from interface.main_interface import subheader, header
-from portfolio_management.investor_portfolios import get_sector_exposure_table, create_output_table_portfolios, render_historical_portfolios_results
+from portfolio_management.investor_portfolios import render_historical_portfolios_results
 from interface.render_initial_portfolio import  reset_portfolio_results
 from portfolio_management.portfolio_management import get_sector_weights_at_date, check_portfolio_weights
-from interface.visualizations import show_portfolio, render_results_table, show_markowitz_results, plot_portfolio_values
+from interface.visualizations import show_portfolio, render_results_table, plot_portfolio_values
 PERIODS_PER_YEAR = 255
 
 def render_sidebar_display_results():
@@ -14,7 +14,6 @@ def render_sidebar_display_results():
         st.session_state["route"] = "questionnaire"
         st.rerun()
 
-
     if st.sidebar.button("Volver a cartera inicial", width="stretch"):
         st.session_state["route"] = "portfolio"
         st.rerun()
@@ -23,33 +22,102 @@ def render_sidebar_display_results():
 
     st.sidebar.header("Selecciona visualizaciones")
 
+    st.session_state.setdefault("show_alloc_assets_forecast", True)
+    st.session_state.setdefault("show_alloc_sectors_forecast", True)
     st.session_state.setdefault("show_results_table_forecast", True)
     st.session_state.setdefault("show_portfolio_results", True)
     st.session_state.setdefault("show_stock_results", True)
 
+    st.sidebar.checkbox("Composición por activo", key="show_alloc_assets_forecast")
+    st.sidebar.checkbox("Composición por sector", key="show_alloc_sectors_forecast")
     st.sidebar.checkbox("Tabla de resultados", key="show_results_table_forecast")
     st.sidebar.checkbox("Histórico (valor cartera)", key="show_portfolio_results")
     st.sidebar.checkbox("Histórico (valor acciones)", key="show_stock_results")
 
+
+def show_portfolio_returns():
+
+    initial_amount = st.session_state["investor_constraints_draft"]["amount"]
+    resultados = st.session_state["dict_pf_returns_forecast"]
+    final_amount = resultados["investor"][-1]
+    profit_abs = final_amount - initial_amount
+    profit_pct = (final_amount / initial_amount - 1.0) * 100 if initial_amount else 0.0
+    end_date = resultados["investor"].index[-1]
+
+    #st.write(dict_pf_returns_forecast["investor"][-1])
+    with st.container(border=False):
+        subheader("Rendimiento de la cartera", font_size="2.0rem", margin_bottom="3.0rem")
+        c1, c2, c3, c4, c5, c6, c7, c8 = st.columns(8)
+        with c3:
+            st.metric(
+                "Importe inicial",
+                f"{initial_amount:,.2f} €".replace(",", "X").replace(".", ",").replace("X", ".")
+            )
+        with c4:
+            st.metric(
+                "Importe final",
+                f"{final_amount:,.2f} €".replace(",", "X").replace(".", ",").replace("X", "."),
+                delta=f"{profit_abs:,.2f} €".replace(",", "X").replace(".", ",").replace("X", "."),
+            )
+
+        with c5:
+            st.metric(
+                "Fecha de cálculo de resultados",
+                end_date.strftime("%d/%m/%Y") if hasattr(end_date, "strftime") else str(end_date)
+            )
+
+        with c6:
+            st.metric(
+                "Ganancia total",
+                f"{profit_pct:.2f}%"
+            )
+        st.write("")
+        st.write("")
 
 def create_portfolio_visualizations():
 
     if not st.session_state.get("data_ready", False):
         return
     df_results = st.session_state["dict_pf_results_forecasts"]
+    df_weights = st.session_state.get("forecast_asset_weights")
+    df_sectors = st.session_state.get("forecast_sector_weights")
+
+    with st.container(border=False):
+        col1, col2 = st.columns(2)
+        if st.session_state.get("show_alloc_assets_forecast", True):
+            with col1:
+                show_portfolio(
+                    df_weights=df_weights,
+                    title="Composición por activo",
+                    label_name="Activo",
+                    weight_col="Pesos",
+                    weights_in_percent=False
+                )
+
+        if st.session_state.get("show_alloc_sectors_forecast", True):
+            with col2:
+                show_portfolio(
+                    df_weights=df_sectors,
+                    title="Composición por sector",
+                    label_name="Sector",
+                    weight_col="Pesos",
+                    weights_in_percent=True)
+        st.write("")
+
     # We now render the main table of results and comparable portfolios
-    with st.container(border=True):
+    with st.container(border=False):
         if st.session_state.get("show_results_table_forecast", True):
-            subheader("Resultados de la cartera", font_size="2.0rem")
+            subheader("Resultados de la cartera", font_size="2.0rem", margin_bottom="3.0rem")
             render_results_table(df_results)
+            st.write("")
 
 
 def create_results_visualizations():
 
     if st.session_state.get("show_portfolio_results", True):
 
-        with st.container(border=True):
-            subheader("Resultados de la cartera de inversión", font_size="2.0rem")
+        with st.container(border=False):
+            subheader("Resultados de la cartera de inversión", font_size="2.0rem", margin_bottom="3.0rem")
             dict_pf_returns_forecast = st.session_state.get("dict_pf_returns_forecast")
             if dict_pf_returns_forecast is None:
                 st.info("Pulsa **Generar cartera** para calcular los resultados históricos.")
@@ -59,8 +127,8 @@ def create_results_visualizations():
 
     if st.session_state.get("show_stock_results", True):
 
-        with st.container(border=True):
-            subheader("Resultados de las acciones de la cartera", font_size="2.0rem")
+        with st.container(border=False):
+            subheader("Resultados de las acciones de la cartera", font_size="2.0rem", margin_bottom="3.0rem")
             dict_stock_results_forecast = st.session_state.get("dict_stock_results_forecast")
             if dict_stock_results_forecast is None:
                 st.info("Pulsa **Generar cartera** para calcular los resultados de las acciones.")
@@ -96,10 +164,17 @@ def render_results():
     st.session_state["step2_enabled"] = True
     resultados = st.session_state["initial_data"]
     sectors = resultados["sectors"]
+    st.session_state["forecast_sector_weights"] = get_sector_weights_at_date(dict_stock_results_forecast["investor"],
+                                                                             sectors, "2025-09-30")
+    st.session_state["forecast_asset_weights"] = check_portfolio_weights(dict_stock_results_forecast["investor"],
+                                                                         "2025-09-30")
 
     if st.session_state.get("data_ready"):
         header("EVOLUCIÓN CARTERA")
+        st.write("")
+        show_portfolio_returns()
         create_portfolio_visualizations()
         create_results_visualizations()
-        print(get_sector_weights_at_date(dict_stock_results_forecast["investor"], sectors, "2025-09-30"))
-        print(check_portfolio_weights(dict_stock_results_forecast["investor"], "2025-09-30"))
+
+
+
