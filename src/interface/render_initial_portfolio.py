@@ -8,7 +8,17 @@ from interface.landing_page import add_separation
 from interface.visualizations import show_portfolio, render_results_table, show_markowitz_results, plot_portfolio_values
 from portfolio_management.investor_portfolios import get_sector_exposure_table, create_output_table_portfolios, render_historical_portfolios_results
 import datetime as dt
+from types import MappingProxyType
 PERIODS_PER_YEAR = 255
+
+RISK_PROFILE_DICTIONARY = MappingProxyType({
+    1: "Perfil bajo de riesgo",
+    2: "Perfil medio-bajo de riesgo",
+    3: "Perfil medio de riesgo",
+    4: "Perfil medio-alto de riesgo",
+    5: "Perfil alto de riesgo",
+    6: "Perfil agresivo de riesgo"
+})
 
 import plotly.graph_objects as go
 FILENAME_PATH = "data/input/ibex_eurostoxx.csv"
@@ -21,47 +31,8 @@ FONT_WEIGHT = "700"
 FONT_COLOR = "#000078"
 INITIAL_DATE = dt.date(2020, 10, 1)
 END_DATE = dt.date(2025, 9, 30)
-
-
-
-
-def get_clean_initial_data(filename_path: str = FILENAME_PATH,
-                           ticker_col: str = TICKER_COL,
-                           adjusted: bool = False,
-                           companies_col: str = COMPANIES_COL,
-                           start_date: str = START_DATE,
-                           end_date: str = ENDING_DATE):
-
-    """
-    price_data, sectors = get_stock_prices(file_path=filename_path,
-                                           ticker_col=ticker_col,
-                                           adjusted=adjusted,
-                                           companies_col= companies_col,
-                                           start_date=start_date,
-                                           end_date=end_date,
-                                           )
-    """
-    price_data = read_price_file("data/processed/prices_20251218-234715.csv")
-    sectors = read_price_file("data/processed/sectores_20251218-234715.csv")
-    prices, report, summary = clean_and_align_data(price_data, beginning_data=True)
-    #save_preprocessed_data(prices, file_prefix="prices")
-    #save_preprocessed_data(sectors, file_prefix="sectores")
-
-
-
-    daily_returns = calculate_daily_returns(prices, method="simple")
-
-    train_set, test_set = split_data_markowtiz(returns=daily_returns, test_date_start="2024-10-01", test_date_end="2025-9-30")
-
-    # We return relevant data
-    return {
-        "prices": prices,
-        "daily_returns": daily_returns,
-        "train_set": train_set,
-        "test_set": test_set,
-        "sectors": sectors
-    }
-
+INITIAL_DATE_PORTFOLIO = dt.date(2024, 10, 1)
+END_DATE_PORTFOLIO = dt.date(2025, 9, 30)
 
 def render_slider(text:str,
                   text_slider: str,
@@ -216,7 +187,7 @@ def render_investor_constraints():
               margin_bottom="1.0rem")
 
     add_separation()
-    with st.container(border=True):
+    with st.container(border=False):
         subheader("Pesos de la cartera", font_size="2.0rem")
         c1, c2, c3 = st.columns(3, gap = "large")
 
@@ -245,19 +216,32 @@ def render_investor_constraints():
                                           value=2.5)
 
     with st.container(border=True):
-        subheader("Selección de fechas", font_size="2.0rem")
-        s1, s2= st.columns(2)
+        subheader("Selección de fechas para extracción de datos", font_size="2.0rem")
+        s1, s2 = st.columns(2)
 
         with s1:
             st1, st2 = st.columns(2)
             with st2:
-                data_start_date = render_date("Fecha de inicio de datos", key="date" , reference_date=INITIAL_DATE)
+                data_start_date = render_date("Fecha de inicio de extracción de datos", key="date" , reference_date=INITIAL_DATE)
         with s2:
             stt1, stt2 = st.columns(2)
             with stt1:
-                data_end_date = render_date("Fecha de fin de datos", font_color="#FF0000", key="date2", reference_date=END_DATE)
+                data_end_date = render_date("Fecha de fin de extracción de datos", font_color="#FF0000", key="date2", reference_date=END_DATE)
 
     with st.container(border=True):
+        subheader("Selección de fechas para análisis de cartera", font_size="2.0rem", color = "#006400" )
+        w1, w2  = st.columns(2)
+
+        with w1:
+            wt1, wt2 = st.columns(2)
+            with wt2:
+                date_portfolio_start = render_date("Fecha de inicio de generación de cartera", key="date_portfolio" , reference_date=INITIAL_DATE_PORTFOLIO)
+        with w2:
+            wtt1, wtt2 = st.columns(2)
+            with wtt1:
+                date_portfolio_end = render_date("Fecha de fin de generación de cartera", font_color="#006400", key="date_portfolio2", reference_date=END_DATE_PORTFOLIO)
+
+    with st.container(border=False):
         subheader("Inversión inicial y tipo de interés libre de riesgo", font_size="2.0rem")
         t1, t2 = st.columns(2)
         with t1:
@@ -287,18 +271,65 @@ def render_investor_constraints():
         "min_stock_pct": min_stock_pct,
         "data_start_date": data_start_date,
         "data_end_date": data_end_date,
+        "date_portfolio_start": date_portfolio_start,
+        "date_portfolio_end": date_portfolio_end,
         "amount": amount,
         "risk_free_rate": risk_free_rate/100,
     }
+
+
+
+def get_clean_initial_data(filename_path: str = FILENAME_PATH,
+                           ticker_col: str = TICKER_COL,
+                           adjusted: bool = False,
+                           companies_col: str = COMPANIES_COL,
+                           start_date: str = START_DATE,
+                           end_date: str = ENDING_DATE,
+                           initial_date_portfolio: str = INITIAL_DATE_PORTFOLIO,
+                           end_date_portfolio: str = END_DATE_PORTFOLIO):
+
+    """
+    price_data, sectors = get_stock_prices(file_path=filename_path,
+                                           ticker_col=ticker_col,
+                                           adjusted=adjusted,
+                                           companies_col= companies_col,
+                                           start_date=start_date,
+                                           end_date=end_date,
+
+                                           )
+    """
+    price_data = read_price_file("data/processed/prices_20251218-234715.csv")
+    sectors = read_price_file("data/processed/sectores_20251218-234715.csv")
+    prices, report, summary = clean_and_align_data(price_data, beginning_data=True)
+    #save_preprocessed_data(prices, file_prefix="prices")
+    #save_preprocessed_data(sectors, file_prefix="sectores")
+    daily_returns = calculate_daily_returns(prices, method="simple")
+    train_set, test_set = split_data_markowtiz(returns=daily_returns, test_date_start=initial_date_portfolio, test_date_end=end_date_portfolio)
+
+    # We return relevant data
+    return {
+        "prices": prices,
+        "daily_returns": daily_returns,
+        "train_set": train_set,
+        "test_set": test_set,
+        "sectors": sectors
+    }
+
+
+
 
 def get_initial_data():
 
     constraints = st.session_state["investor_constraints_draft"]
     data_start_date = constraints["data_start_date"]
     data_end_date = constraints["data_end_date"]
+    data_portfolio_start = constraints["date_portfolio_start"]
+    data_portfolio_end = constraints["date_portfolio_end"]
     st.session_state["initial_data"] = get_clean_initial_data(
         start_date=data_start_date.isoformat(),
         end_date=data_end_date.isoformat(),
+        initial_date_portfolio=data_portfolio_start,
+        end_date_portfolio=data_portfolio_end
     )
     st.session_state.data_ready = True
 
@@ -341,7 +372,7 @@ def create_historical_portfolio_visualizations():
     df_results = st.session_state["initial_results"][0]
     df_returns = st.session_state["initial_data"]["train_set"]
 
-    with st.container(border=True):
+    with st.container(border=False):
         col1, col2 = st.columns(2)
         if st.session_state.get("show_alloc_assets", True):
             with col1:
@@ -363,7 +394,7 @@ def create_historical_portfolio_visualizations():
                 )
 
     # We now render the main table of results and comparable portfolios
-    with st.container(border=True):
+    with st.container(border=False):
         c1, c2 = st.columns(2)
         if st.session_state.get("show_results_table", True):
             with c1:
@@ -379,7 +410,7 @@ def create_historical_portfolio_visualizations():
 
 def create_historical_results_visualizations():
     if st.session_state.get("show_historical", True):
-        with st.container(border=True):
+        with st.container(border=False):
             subheader("Resultados históricos de la cartera antes de inversión", font_size="2.0rem")
             dict_pf_returns = st.session_state.get("dict_pf_returns")
             if dict_pf_returns is None:
@@ -389,7 +420,7 @@ def create_historical_results_visualizations():
             plot_portfolio_values(dict_pf_returns, key="historic_portfolio")
     if st.session_state.get("show_historical_stocks", True):
 
-        with st.container(border=True):
+        with st.container(border=False):
             subheader("Resultados históricos de las acciones de la cartera", font_size="2.0rem")
             dict_stock_results = st.session_state.get("dict_stock_results")
             if dict_stock_results is None:
@@ -414,18 +445,21 @@ def reset_portfolio_results():
 
 
 def render_sidebar_display_options():
-
     st.sidebar.header("Navegación")
+
     if st.sidebar.button("Volver a cuestionario", use_container_width=True):
         reset_portfolio_results()
         st.session_state["route"] = "questionnaire"
         st.rerun()
 
-    if st.session_state["step2_enabled"]:
-        if st.sidebar.button("Ver evolución cartera", width="stretch"):
+    if st.session_state.get("step2_enabled", False):
+        if st.sidebar.button("Ver evolución cartera", use_container_width=True, type="primary"):
             st.session_state["route"] = "results"
             st.rerun()
+    else:
+        st.sidebar.button("Ver evolución cartera", use_container_width=True, disabled=True)
 
+    st.sidebar.markdown("---")
     st.sidebar.header("Selecciona visualizaciones")
 
     st.session_state.setdefault("show_alloc_assets", True)
@@ -442,7 +476,41 @@ def render_sidebar_display_options():
     st.sidebar.checkbox("Histórico (valor cartera)", key="show_historical")
     st.sidebar.checkbox("Histórico (valor acciones)", key="show_historical_stocks")
 
+    st.sidebar.markdown("---")
+    st.sidebar.header("Perfil del inversor")
 
+    risk = st.session_state.get("risk_result")
+    if not risk:
+        st.sidebar.info("Completa el cuestionario para ver tu perfil.")
+        if st.sidebar.button("Ir al cuestionario", use_container_width=True):
+            st.session_state["route"] = "questionnaire"
+            st.rerun()
+        return
+
+    perfil = risk.get("RA", "—")
+    sigma_min = risk.get("sigma_min", None)
+    sigma_max = risk.get("sigma_max", None)
+
+    st.sidebar.markdown(
+        f"""
+        <div style="
+            border: 1px solid rgba(0,0,0,0.10);
+            border-radius: 12px;
+            padding: 10px 12px;
+            background: #D6FAFF;
+            opacity: 0.8
+        ">
+            <div style="font-size: 1.2rem; color: #000078; font-weight:900; text-align: center">Perfil</div>
+            <div style="font-size: 2.5rem; color: #000078; font-weight: 900; text-align: center">{perfil}</div>
+            <div style="font-size: 1.2rem; color: #000078; font-weight: 900; text-align: center">{RISK_PROFILE_DICTIONARY[perfil]}</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    # Detalles opcionales
+    if sigma_min is not None and sigma_max is not None:
+        st.sidebar.caption(f"Volatilidad recomendada: {sigma_min:.2f}–{sigma_max:.2f}")
 
 
 def render_constraints_portfolio():
@@ -459,7 +527,7 @@ def render_constraints_portfolio():
 
     render_sidebar_display_options()
 
-    with st.container(border=True):
+    with st.container(border=False):
         render_investor_constraints()
         if "data_ready" not in st.session_state:
             st.session_state.data_ready = False
@@ -497,6 +565,7 @@ def render_constraints_portfolio():
 
 
     if st.session_state.get("data_ready"):
+        st.write("")
         header("RESULTADOS")
         create_historical_portfolio_visualizations()
         create_historical_results_visualizations()

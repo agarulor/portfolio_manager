@@ -39,7 +39,7 @@ def show_portfolio_returns():
 
     initial_amount = st.session_state["investor_constraints_draft"]["amount"]
     resultados = st.session_state["dict_pf_returns_forecast"]
-    final_amount = resultados["investor"][-1]
+    final_amount = resultados["investor"].iloc[-1]
     profit_abs = final_amount - initial_amount
     profit_pct = (final_amount / initial_amount - 1.0) * 100 if initial_amount else 0.0
     end_date = resultados["investor"].index[-1]
@@ -146,6 +146,8 @@ def render_results():
     weights = st.session_state["initial_results"][2]
     rf_annual = st.session_state["investor_constraints_draft"]["risk_free_rate"]
     amount = st.session_state["investor_constraints_draft"]["amount"]
+    resultados = st.session_state["dict_pf_returns_forecast"]
+    end_date = resultados["investor"].index[-1]
 
 
 
@@ -165,9 +167,9 @@ def render_results():
     resultados = st.session_state["initial_data"]
     sectors = resultados["sectors"]
     st.session_state["forecast_sector_weights"] = get_sector_weights_at_date(dict_stock_results_forecast["investor"],
-                                                                             sectors, "2025-09-30")
+                                                                             sectors, end_date)
     st.session_state["forecast_asset_weights"] = check_portfolio_weights(dict_stock_results_forecast["investor"],
-                                                                         "2025-09-30")
+                                                                         end_date)
 
     if st.session_state.get("data_ready"):
         header("EVOLUCIÓN CARTERA")
