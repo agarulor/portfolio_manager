@@ -44,29 +44,30 @@ def create_portfolio_visualizations():
 
 
 def create_results_visualizations():
-    if not st.session_state.get("show_portfolio_results", True):
-        return
-    with st.container(border=True):
-        subheader("Resultados de la cartera de inversión", font_size="2.0rem")
-        dict_pf_returns_forecast = st.session_state.get("dict_pf_returns_forecast")
-        if dict_pf_returns_forecast is None:
-            st.info("Pulsa **Generar cartera** para calcular los resultados históricos.")
-            return
 
-        plot_portfolio_values(dict_pf_returns_forecast, key="forecast_portfolio")
+    if st.session_state.get("show_portfolio_results", True):
 
-    if not st.session_state.get("show_stock_results", True):
-        return
-    with st.container(border=True):
-        subheader("Resultados de las acciones de la cartera", font_size="2.0rem")
-        dict_stock_results_forecast = st.session_state.get("dict_stock_results_forecast")
-        if dict_stock_results_forecast is None:
-            st.info("Pulsa **Generar cartera** para calcular los resultados de las acciones.")
-            return
+        with st.container(border=True):
+            subheader("Resultados de la cartera de inversión", font_size="2.0rem")
+            dict_pf_returns_forecast = st.session_state.get("dict_pf_returns_forecast")
+            if dict_pf_returns_forecast is None:
+                st.info("Pulsa **Generar cartera** para calcular los resultados históricos.")
+                return
+
+            plot_portfolio_values(dict_pf_returns_forecast, key="forecast_portfolio")
+
+    if st.session_state.get("show_stock_results", True):
+
+        with st.container(border=True):
+            subheader("Resultados de las acciones de la cartera", font_size="2.0rem")
+            dict_stock_results_forecast = st.session_state.get("dict_stock_results_forecast")
+            if dict_stock_results_forecast is None:
+                st.info("Pulsa **Generar cartera** para calcular los resultados de las acciones.")
+                return
 
 
-        investor_results = dict_stock_results_forecast["investor"]
-        plot_portfolio_values(investor_results, key="investor_portfolio_forecast", portfolio_type="stock")
+            investor_results = dict_stock_results_forecast["investor"]
+            plot_portfolio_values(investor_results, key="investor_portfolio_forecast", portfolio_type="stock")
 
 
 def render_results():

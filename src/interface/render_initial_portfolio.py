@@ -379,29 +379,28 @@ def create_historical_portfolio_visualizations():
 
 
 def create_historical_results_visualizations():
-    if not st.session_state.get("show_historical", True):
-        return
-    with st.container(border=True):
-        subheader("Resultados históricos de la cartera antes de inversión", font_size="2.0rem")
-        dict_pf_returns = st.session_state.get("dict_pf_returns")
-        if dict_pf_returns is None:
-            st.info("Pulsa **Generar cartera** para calcular los resultados históricos.")
-            return
+    if st.session_state.get("show_historical", True):
 
-        plot_portfolio_values(dict_pf_returns, key="historic_portfolio")
+        with st.container(border=True):
+            subheader("Resultados históricos de la cartera antes de inversión", font_size="2.0rem")
+            dict_pf_returns = st.session_state.get("dict_pf_returns")
+            if dict_pf_returns is None:
+                st.info("Pulsa **Generar cartera** para calcular los resultados históricos.")
+                return
 
-    if not st.session_state.get("show_historical_stocks", True):
-        return
-    with st.container(border=True):
-        subheader("Resultados históricos de las acciones de la cartera", font_size="2.0rem")
-        dict_stock_results = st.session_state.get("dict_stock_results")
-        if dict_stock_results is None:
-            st.info("Pulsa **Generar cartera** para calcular los resultados históricos de las acciones.")
-            return
+            plot_portfolio_values(dict_pf_returns, key="historic_portfolio")
 
+    if st.session_state.get("show_historical_stocks", True):
 
-        investor_results = dict_stock_results["investor"]
-        plot_portfolio_values(investor_results, key="investor_portfolio", portfolio_type="stock")
+        with st.container(border=True):
+            subheader("Resultados históricos de las acciones de la cartera", font_size="2.0rem")
+            dict_stock_results = st.session_state.get("dict_stock_results")
+            if dict_stock_results is None:
+                st.info("Pulsa **Generar cartera** para calcular los resultados históricos de las acciones.")
+                return
+
+            investor_results = dict_stock_results["investor"]
+            plot_portfolio_values(investor_results, key="investor_portfolio", portfolio_type="stock")
 
 def reset_portfolio_results():
     keys_to_reset = [
