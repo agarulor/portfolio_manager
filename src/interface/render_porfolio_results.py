@@ -146,10 +146,9 @@ def render_results():
     weights = st.session_state["initial_results"][2]
     rf_annual = st.session_state["investor_constraints_draft"]["risk_free_rate"]
     amount = st.session_state["investor_constraints_draft"]["amount"]
-    resultados = st.session_state["dict_pf_returns_forecast"]
-    end_date = resultados["investor"].index[-1]
 
 
+    print(df_returns)
 
     dict_pf_returns_forecast, dict_stock_results_forecast, dict_pf_results_forecasts = render_historical_portfolios_results(
         df_returns,
@@ -164,6 +163,8 @@ def render_results():
 
     st.session_state["data_ready"] = True
     st.session_state["step2_enabled"] = True
+    resultados_forecast = st.session_state["dict_pf_returns_forecast"]
+    end_date = resultados_forecast["investor"].index[-1]
     resultados = st.session_state["initial_data"]
     sectors = resultados["sectors"]
     st.session_state["forecast_sector_weights"] = get_sector_weights_at_date(dict_stock_results_forecast["investor"],
