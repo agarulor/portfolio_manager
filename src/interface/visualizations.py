@@ -294,8 +294,6 @@ def plot_portfolio_values(results: dict | pd.DataFrame, key: str, portfolio_type
         print("Please, choose either stock or global")
         return
 
-
-
     fig = go.Figure()
 
     for i, name in enumerate(selected):
