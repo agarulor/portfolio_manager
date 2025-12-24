@@ -4,11 +4,23 @@ from portfolio_management.investor_portfolios import render_historical_portfolio
 from interface.render_initial_portfolio import  reset_portfolio_results
 from portfolio_management.portfolio_management import get_sector_weights_at_date, check_portfolio_weights
 from interface.visualizations import show_portfolio, render_results_table, plot_portfolio_values
+from types import MappingProxyType
 PERIODS_PER_YEAR = 255
+
+
+RISK_PROFILE_DICTIONARY = MappingProxyType({
+    1: "Perfil bajo de riesgo",
+    2: "Perfil medio-bajo de riesgo",
+    3: "Perfil medio de riesgo",
+    4: "Perfil medio-alto de riesgo",
+    5: "Perfil alto de riesgo",
+    6: "Perfil agresivo de riesgo"
+})
 
 def render_sidebar_display_results():
 
     st.sidebar.header("Navegación")
+
     if st.sidebar.button("Volver a cuestionario", width="stretch"):
         reset_portfolio_results()
         st.session_state["route"] = "questionnaire"
@@ -18,7 +30,9 @@ def render_sidebar_display_results():
         st.session_state["route"] = "portfolio"
         st.rerun()
 
-
+    if st.sidebar.button("Ir a análisis de datos", use_container_width=True):
+        st.session_state["route"] = "analysis"
+        st.rerun()
 
     st.sidebar.header("Selecciona visualizaciones")
 
@@ -34,6 +48,40 @@ def render_sidebar_display_results():
     st.sidebar.checkbox("Histórico (valor cartera)", key="show_portfolio_results")
     st.sidebar.checkbox("Histórico (valor acciones)", key="show_stock_results")
 
+    st.sidebar.markdown("---")
+    st.sidebar.header("Perfil del inversor")
+
+    risk = st.session_state.get("risk_result")
+    if not risk:
+        st.sidebar.info("Completa el cuestionario para ver tu perfil.")
+        if st.sidebar.button("Ir al cuestionario", use_container_width=True):
+            st.session_state["route"] = "questionnaire"
+            st.rerun()
+        return
+
+    perfil = risk.get("RA", "—")
+    sigma_min = risk.get("sigma_min", None)
+    sigma_max = risk.get("sigma_max", None)
+
+    st.sidebar.markdown(
+        f"""
+            <div style="
+                border: 1px solid rgba(0,0,0,0.10);
+                border-radius: 12px;
+                padding: 10px 12px;
+                background: #D6FAFF;
+                opacity: 0.8
+            ">
+                <div style="font-size: 1.2rem; color: #000078; font-weight:900; text-align: center">Perfil</div>
+                <div style="font-size: 2.5rem; color: #000078; font-weight: 900; text-align: center">{perfil}</div>
+                <div style="font-size: 1.2rem; color: #000078; font-weight: 900; text-align: center">{RISK_PROFILE_DICTIONARY[perfil]}</div>
+            </div>
+            """,
+        unsafe_allow_html=True,
+    )
+
+    if sigma_min is not None and sigma_max is not None:
+        st.sidebar.caption(f"Volatilidad recomendada: {sigma_min:.2f}–{sigma_max:.2f}")
 
 def show_portfolio_returns():
 

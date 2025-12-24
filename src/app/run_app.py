@@ -8,6 +8,7 @@ from interface.main_interface import apply_global_styles, render_sidebar
 from interface.render_portfolio import render_portfolio
 from interface.landing_page import render as render_landing
 from interface.render_porfolio_results import render_results
+from interface.render_analysis import render_analysis
 
 
 def run_app():
@@ -40,6 +41,11 @@ def run_app():
     elif route == "results":
         page = render_sidebar()
         render_results()
+
+
+    elif route == "analysis":
+        page = render_sidebar()
+        render_analysis()
 
     else:
         st.session_state["route"] = "landing"

@@ -288,7 +288,7 @@ def get_clean_initial_data(filename_path: str = FILENAME_PATH,
                            initial_date_portfolio: str = INITIAL_DATE_PORTFOLIO,
                            end_date_portfolio: str = END_DATE_PORTFOLIO):
 
-    """
+
     price_data, sectors = get_stock_prices(file_path=filename_path,
                                            ticker_col=ticker_col,
                                            adjusted=adjusted,
@@ -297,9 +297,9 @@ def get_clean_initial_data(filename_path: str = FILENAME_PATH,
                                            end_date=end_date,
 
                                            )
-    """
-    price_data = read_price_file("data/processed/prices_20251218-234715.csv")
-    sectors = read_price_file("data/processed/sectores_20251218-234715.csv")
+
+    #price_data = read_price_file("data/processed/prices_20251218-234715.csv")
+    #sectors = read_price_file("data/processed/sectores_20251218-234715.csv")
     prices, report, summary = clean_and_align_data(price_data, beginning_data=True)
     #save_preprocessed_data(prices, file_prefix="prices")
     #save_preprocessed_data(sectors, file_prefix="sectores")
@@ -452,12 +452,20 @@ def render_sidebar_display_options():
         st.session_state["route"] = "questionnaire"
         st.rerun()
 
+
     if st.session_state.get("step2_enabled", False):
         if st.sidebar.button("Ver evolución cartera", use_container_width=True, type="primary"):
             st.session_state["route"] = "results"
             st.rerun()
+
     else:
         st.sidebar.button("Ver evolución cartera", use_container_width=True, disabled=True)
+
+    if st.sidebar.button("Ir a análisis de datos", use_container_width=True):
+        st.session_state["route"] = "analysis"
+        st.rerun()
+
+
 
     st.sidebar.markdown("---")
     st.sidebar.header("Selecciona visualizaciones")
@@ -508,7 +516,6 @@ def render_sidebar_display_options():
         unsafe_allow_html=True,
     )
 
-    # Detalles opcionales
     if sigma_min is not None and sigma_max is not None:
         st.sidebar.caption(f"Volatilidad recomendada: {sigma_min:.2f}–{sigma_max:.2f}")
 
