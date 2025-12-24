@@ -172,12 +172,17 @@ def get_investor_initial_portfolio(returns: pd.DataFrame,
 
 
 def get_cumulative_returns(returns: pd.DataFrame,
-                           weights: np.ndarray,
+                           weights: Optional[np.ndarray] = None,
                            initial_investment: float = 1,
                            rf_annual: float | None = None,
                            periods_per_year: float = 252,
                            portfolio_type: str = "investor",
                            ) -> pd.DataFrame:
+
+    if weights is None:
+        adjust_returns = (1 + returns)
+        adjusted_returns = adjust_returns.cumprod()
+        return adjusted_returns
 
     money_invested = weights * initial_investment
     if rf_annual is not None and portfolio_type == "investor":

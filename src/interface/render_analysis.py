@@ -1,6 +1,8 @@
 import streamlit as st
 from types import MappingProxyType
 PERIODS_PER_YEAR = 255
+from interface.visualizations import show_portfolio, render_results_table, plot_portfolio_values
+from portfolio_management.investor_portfolios import get_cumulative_returns
 
 RISK_PROFILE_DICTIONARY = MappingProxyType({
     1: "Perfil bajo de riesgo",
@@ -70,5 +72,17 @@ def render_sidebar_display():
         st.sidebar.caption(f"Volatilidad recomendada: {sigma_min:.2f}–{sigma_max:.2f}")
 
 
+def render_historic_perfomance():
+    #if st.session_state.get("show_stock_results", True):
+    daily_returns = st.session_state["initial_data"]["daily_returns"]
+    prices = st.session_state["initial_data"]["prices"]
+    cum_returns = get_cumulative_returns(daily_returns)
+    print(cum_returns)
+    plot_portfolio_values(cum_returns, "patata", "stock")
+    plot_portfolio_values(prices, "patatas", "stock")
+
+
+
 def render_analysis():
     render_sidebar_display()
+    render_historic_perfomance()

@@ -306,6 +306,7 @@ def get_clean_initial_data(filename_path: str = FILENAME_PATH,
     daily_returns = calculate_daily_returns(prices, method="simple")
     train_set, test_set = split_data_markowtiz(returns=daily_returns, test_date_start=initial_date_portfolio, test_date_end=end_date_portfolio)
 
+
     # We return relevant data
     return {
         "prices": prices,
@@ -314,9 +315,6 @@ def get_clean_initial_data(filename_path: str = FILENAME_PATH,
         "test_set": test_set,
         "sectors": sectors
     }
-
-
-
 
 def get_initial_data():
 
