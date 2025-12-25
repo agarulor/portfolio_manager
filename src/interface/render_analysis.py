@@ -1,7 +1,7 @@
 import streamlit as st
 from types import MappingProxyType
 PERIODS_PER_YEAR = 255
-from interface.visualizations import show_portfolio, render_results_table, plot_portfolio_values
+from interface.visualizations import show_portfolio, render_results_table, plot_portfolio_values, plot_daily_returns_scatter
 from portfolio_management.investor_portfolios import get_cumulative_returns
 
 RISK_PROFILE_DICTIONARY = MappingProxyType({
@@ -87,6 +87,7 @@ def render_historic_perfomance():
     with c2:
         plot_portfolio_values(cum_returns_recent, "recent_value", "stock")
 
+    plot_daily_returns_scatter(historic_returns, key="returns_color", data_type="stock")
     s1, s2 = st.columns(2)
     with s1:
         plot_portfolio_values(historic_prices, "historic_price", "stock")

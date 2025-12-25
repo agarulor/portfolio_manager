@@ -4,6 +4,7 @@ import plotly.graph_objects as go
 import pandas as pd
 from typing import Optional, Literal
 import streamlit as st
+import numpy as np
 from portfolio_tools.risk_metrics import calculate_covariance, portfolio_returns, portfolio_volatility
 from portfolio_management.investor_portfolios import get_cumulative_returns, get_total_results
 
@@ -174,7 +175,6 @@ def render_results_table(
     if hide_index:
         styler = styler.hide(axis="index")
 
-
     if highlight:
         if "Retorno anualizado" in df.columns:
             styler = styler.background_gradient(subset=["Retorno anualizado"], cmap="Greens", low=0.6, high=0.0)
@@ -194,9 +194,6 @@ def show_markowitz_results(n_returns: Optional[int] = None,
     method: Literal["simple", "log"] = "simple",
     periods_per_year: int = 252,
                            no_ef: bool = False):
-
-
-
 
     if not no_ef:
         ef = compute_efficient_frontier(returns, n_returns, method, periods_per_year)
@@ -261,7 +258,6 @@ def plot_portfolio_value(df_value: pd.DataFrame) -> None:
 
 
 
-
 def plot_portfolio_values(results: dict | pd.DataFrame, key: str, portfolio_type: Literal["stock", "global"] = "global") -> None:
     if portfolio_type == "global":
         if not isinstance(results, dict):
@@ -288,7 +284,6 @@ def plot_portfolio_values(results: dict | pd.DataFrame, key: str, portfolio_type
         df_clean = results.copy()
         df_clean = df_clean.drop(columns=df_clean.columns[(df_clean == 0).all()], errors="ignore")
         df_clean = df_clean.drop(columns=df_clean.columns[df_clean.isna().all()], errors="ignore")
-
 
         names = list(df_clean.columns)
 
@@ -332,6 +327,184 @@ def plot_portfolio_values(results: dict | pd.DataFrame, key: str, portfolio_type
                       yaxis_title="Valor (€)",
                       hovermode="x unified",
                       height=700)
+    fig.update_xaxes(showgrid=False)
+    fig.update_yaxes(showgrid=False)
+
+    st.plotly_chart(fig, width="stretch")
+
+
+def plot_portfolio_values(results: dict | pd.DataFrame, key: str, portfolio_type: Literal["stock", "global"] = "global") -> None:
+    if portfolio_type == "global":
+        if not isinstance(results, dict):
+            st.error("For portfolio_type = global, results must be a dict")
+            return
+        # We first extract the keys
+        names = list(results.keys())
+
+        selected = st.multiselect("Carteras a comparar",
+                                  options=names,
+                                  default=names[:1] if names else names,
+                                  key=key)
+        if not selected:
+            st.info("Por favor, seleccione al menos una cartera")
+            return
+
+
+    elif portfolio_type == "stock":
+
+        if not isinstance(results, pd.DataFrame):
+            st.error("For portfolio_type = stock results must be a Pandas DataFrame.")
+            return
+
+        df_clean = results.copy()
+        df_clean = df_clean.drop(columns=df_clean.columns[(df_clean == 0).all()], errors="ignore")
+        df_clean = df_clean.drop(columns=df_clean.columns[df_clean.isna().all()], errors="ignore")
+
+        names = list(df_clean.columns)
+
+        selected = st.multiselect("Evolución de activos de la cartera",
+                                  options=names,
+                                  default=names[:1] if names else names,
+                                  key=key)
+        if not selected:
+            st.info("Por favor, seleccione al menos un activo")
+            return
+    else:
+        print("Please, choose either stock or global")
+        return
+
+    fig = go.Figure()
+
+    for i, name in enumerate(selected):
+        series = results[name]
+        # series could be Series or DataFrame
+        if isinstance(series, pd.DataFrame):
+            y = series.iloc[:, 0].to_numpy()
+            x = series.index
+        else:
+            # Case of series
+            x = series.index
+            y = series.to_numpy()
+
+        fig.add_trace(
+            go.Scatter(
+                x = x,
+                y = y,
+                mode = "lines",
+                name = name,
+                line=dict(width=4 if i == 0 else 2)
+
+            )
+        )
+
+    fig.update_layout(template="plotly_white",
+                      xaxis_title="Fecha",
+                      yaxis_title="Valor (€)",
+                      hovermode="x unified",
+                      height=700)
+    fig.update_xaxes(showgrid=False)
+    fig.update_yaxes(showgrid=False)
+
+    st.plotly_chart(fig, width="stretch")
+
+
+def plot_daily_returns_scatter(
+    results: dict | pd.DataFrame,
+    key: str,
+    data_type: Literal["global", "stock"] = "global",
+    y_in_percent: bool = True,
+) -> None:
+    """
+    - global: results es dict[name -> pd.Series/pd.DataFrame] (cada uno es una serie de retornos diarios)
+    - stock:  results es pd.DataFrame con columnas=activos, index=fechas (valores=retornos diarios)
+    """
+
+    if data_type == "global":
+        if not isinstance(results, dict):
+            st.error("Para data_type='global', results debe ser un dict.")
+            return
+
+        names = list(results.keys())
+        selected = st.multiselect(
+            "Series a comparar",
+            options=names,
+            default=names[:1] if names else [],
+            key=f"{key}_sel",
+        )
+        if not selected:
+            st.info("Selecciona al menos una serie.")
+            return
+
+    elif data_type == "stock":
+        if not isinstance(results, pd.DataFrame):
+            st.error("For data_type='stock', results must be a DataFrame.")
+            return
+
+        df_clean = results.copy()
+        df_clean = df_clean.drop(columns=df_clean.columns[(df_clean == 0).all()], errors="ignore")
+        df_clean = df_clean.drop(columns=df_clean.columns[df_clean.isna().all()], errors="ignore")
+
+        names = list(df_clean.columns)
+        selected = st.multiselect(
+            "Activos a comparar",
+            options=names,
+            default=names[:1] if names else [],
+            key=f"{key}_sel",
+        )
+        if not selected:
+            st.info("Selecciona al menos un activo.")
+            return
+
+        results = df_clean
+
+    else:
+        st.error("data_type must be 'global' or 'stock'.")
+        return
+
+    # --- Figura ---
+    fig = go.Figure()
+
+    for name in selected:
+        series = results[name]
+
+        if isinstance(series, pd.DataFrame):
+            s = series.iloc[:, 0]
+        else:
+            s = series
+
+        s = s.dropna()
+
+        # si vienen en tanto por uno, opcionalmente convierte a %
+        y = (s.to_numpy() * 100.0) if y_in_percent else s.to_numpy()
+        x = s.index
+
+
+        colors = np.where(y >= 0, "blue", "red")
+
+        fig.add_trace(
+            go.Scatter(
+                x=x,
+                y=y,
+                mode="markers",
+                name=str(name),
+                marker=dict(
+                    color=colors,
+                    size=6,
+                    opacity=0.75,
+                ),
+            )
+        )
+
+    fig.add_hline(y=0, line_width=2, line_color="black")
+
+    fig.update_layout(
+        template="plotly_white",
+        xaxis_title="Fecha",
+        yaxis_title="Retorno diario (%)" if y_in_percent else "Retorno diario",
+        hovermode="x unified",
+        height=600,
+        legend_title_text="",
+    )
     fig.update_xaxes(showgrid=False)
     fig.update_yaxes(showgrid=False)
 
