@@ -519,10 +519,15 @@ def plot_portfolio_values_select(
     selected: list[str] | None = None,
     show_selector: bool = True,
 ) -> None:
+
+    # -----------------------
+    # GLOBAL (dict)
+    # -----------------------
     if portfolio_type == "global":
         if not isinstance(results, dict):
             st.error("For portfolio_type = global, results must be a dict")
             return
+
         names = list(results.keys())
 
         if selected is None and show_selector:
@@ -535,6 +540,13 @@ def plot_portfolio_values_select(
         elif selected is None:
             selected = names[:1] if names else []
 
+        # Validate existence
+        valid = [s for s in selected if s in results]
+        invalid = [s for s in selected if s not in results]
+
+    # -----------------------
+    # STOCK (DataFrame)
+    # -----------------------
     elif portfolio_type == "stock":
         if not isinstance(results, pd.DataFrame):
             st.error("For portfolio_type = stock results must be a Pandas DataFrame.")
@@ -543,6 +555,7 @@ def plot_portfolio_values_select(
         df_clean = results.copy()
         df_clean = df_clean.drop(columns=df_clean.columns[(df_clean == 0).all()], errors="ignore")
         df_clean = df_clean.drop(columns=df_clean.columns[df_clean.isna().all()], errors="ignore")
+
         names = list(df_clean.columns)
 
         if selected is None and show_selector:
@@ -555,20 +568,36 @@ def plot_portfolio_values_select(
         elif selected is None:
             selected = names[:1] if names else []
 
-        results = df_clean  # importante para usar el DF limpio
+        valid = [s for s in selected if s in df_clean.columns]
+        invalid = [s for s in selected if s not in df_clean.columns]
+
+        results = df_clean  # usar DF limpio
 
     else:
         st.error("Please, choose either stock or global")
         return
 
-    if not selected:
-        st.info("Selecciona al menos una serie.")
+    # -----------------------
+    # VALIDATION & WARNINGS
+    # -----------------------
+    if invalid:
+        st.warning(
+            "Las siguientes selecciones no tienen datos disponibles y se han omitido:\n"
+            + ", ".join(invalid)
+        )
+
+    if not valid:
+        st.info("No hay series válidas para mostrar con la selección actual.")
         return
 
+    # -----------------------
+    # PLOT
+    # -----------------------
     fig = go.Figure()
 
-    for i, name in enumerate(selected):
+    for i, name in enumerate(valid):
         series = results[name]
+
         if isinstance(series, pd.DataFrame):
             x = series.index
             y = series.iloc[:, 0].to_numpy()
@@ -576,10 +605,15 @@ def plot_portfolio_values_select(
             x = series.index
             y = series.to_numpy()
 
-        fig.add_trace(go.Scatter(
-            x=x, y=y, mode="lines", name=name,
-            line=dict(width=4 if i == 0 else 2)
-        ))
+        fig.add_trace(
+            go.Scatter(
+                x=x,
+                y=y,
+                mode="lines",
+                name=name,
+                line=dict(width=4 if i == 0 else 2),
+            )
+        )
 
     fig.update_layout(
         template="plotly_white",
