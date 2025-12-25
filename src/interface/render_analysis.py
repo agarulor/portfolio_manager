@@ -2,6 +2,7 @@ import streamlit as st
 from types import MappingProxyType
 from typing import Optional, Literal
 import pandas as pd
+from portfolio_tools.return_metrics import calculate_daily_returns
 
 from portfolio_management.investor_portfolios import get_cumulative_returns
 from interface.visualizations import (
@@ -173,12 +174,14 @@ def _get_analysis_options_from_initial_data() -> list[str]:
     """
     initial_data = st.session_state.get("initial_data")
     if initial_data is None:
-        # Internal message in English
-        # Note: external UI messaging handled by caller
         return []
 
     historic_returns = initial_data.get("train_set")
+    historic_portfolio_values = st.session_state.get("dict_pf_returns")
     if historic_returns is None or not isinstance(historic_returns, pd.DataFrame) or historic_returns.empty:
+        return []
+
+    if historic_portfolio_values is None or not isinstance(historic_portfolio_values, dict):
         return []
 
     df_clean = historic_returns.copy()
@@ -187,7 +190,9 @@ def _get_analysis_options_from_initial_data() -> list[str]:
     df_clean = df_clean.drop(columns=df_clean.columns[(df_clean == 0).all()], errors="ignore")
     df_clean = df_clean.drop(columns=df_clean.columns[df_clean.isna().all()], errors="ignore")
 
-    return list(df_clean.columns)
+    historic_keys = list(historic_portfolio_values.keys())
+
+    return list(df_clean.columns) + historic_keys
 
 
 def render_historic_performance() -> None:
@@ -206,11 +211,16 @@ def render_historic_performance() -> None:
         return
 
     # We get the data
-    recent_portfolio_values = st.session_state["dict_pf_returns_forecast"]
-    print(recent_portfolio_values)
+    initial_amount = st.session_state["investor_constraints_draft"]["amount"]
+    recent_portfolio_values = st.session_state.get("dict_pf_returns_forecast")
+    historic_portfolio_values = st.session_state.get("dict_pf_returns")
+
+    df_recent_portfolio_values = pd.DataFrame(recent_portfolio_values) / initial_amount
+
+    df_historic_portfolio_values = pd.DataFrame(historic_portfolio_values)
+
     historic_returns = initial_data.get("train_set")
     recent_returns = initial_data.get("test_set")
-    print(recent_returns.shape)
 
 
     historic_prices = initial_data.get("train_price")
@@ -220,6 +230,13 @@ def render_historic_performance() -> None:
         st.warning("No hay datos de retornos para mostrar.")
         return
 
+    # Compute cumulative returns
+    cum_returns_historic = get_cumulative_returns(historic_returns)
+    cum_returns_historic = cum_returns_historic.join(df_historic_portfolio_values)
+    cum_returns_recent = get_cumulative_returns(recent_returns)
+    cum_returns_recent = cum_returns_recent.join(df_recent_portfolio_values)
+
+
     # Global selection from sidebar
     base, compare = get_analysis_selection(prefix="analysis_stock")
     selected = [base] + compare if base else []
@@ -227,11 +244,6 @@ def render_historic_performance() -> None:
     if not base:
         st.info("Selecciona un activo base en el lateral para ver las visualizaciones.")
         return
-
-    # Compute cumulative returns
-    cum_returns_historic = get_cumulative_returns(historic_returns)
-    cum_returns_recent = get_cumulative_returns(recent_returns)
-
 
     # Plots: cumulative returns (base + compare)
     c1, c2 = st.columns(2)

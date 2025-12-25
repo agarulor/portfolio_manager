@@ -467,7 +467,6 @@ def render_sidebar_display_options():
         st.rerun()
 
 
-
     st.sidebar.markdown("---")
     st.sidebar.header("Selecciona visualizaciones")
 
