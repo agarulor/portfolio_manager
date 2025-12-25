@@ -1,8 +1,15 @@
 import streamlit as st
 from types import MappingProxyType
-PERIODS_PER_YEAR = 255
-from interface.visualizations import show_portfolio, render_results_table, plot_portfolio_values, plot_daily_returns_scatter
+from typing import Optional, Literal
+import pandas as pd
+
 from portfolio_management.investor_portfolios import get_cumulative_returns
+from interface.visualizations import (
+    plot_portfolio_values_select,
+    plot_daily_returns_scatter_base_only
+)
+
+PERIODS_PER_YEAR = 255
 
 RISK_PROFILE_DICTIONARY = MappingProxyType({
     1: "Perfil bajo de riesgo",
@@ -13,10 +20,87 @@ RISK_PROFILE_DICTIONARY = MappingProxyType({
     6: "Perfil agresivo de riesgo"
 })
 
-def render_sidebar_display():
+
+def render_sidebar_analysis_selection(options: list[str], prefix: str = "analysis_stock") -> None:
+    """
+    Renders a global selector in the sidebar to control the whole analysis page.
+
+    Parameters
+    ----------
+    options: list[str]. Available assets/series names to select from.
+    prefix: str. Prefix used to namespace session_state keys for this page.
+
+    Returns
+    -------
+    None
+    """
+    st.sidebar.markdown("---")
+    st.sidebar.header("Selección de activos")
+
+    if not options:
+        st.sidebar.info("No hay activos disponibles.")
+        st.session_state[f"{prefix}_base"] = None
+        st.session_state[f"{prefix}_compare"] = []
+        return
+
+    st.session_state.setdefault(f"{prefix}_base", options[0])
+    st.session_state.setdefault(f"{prefix}_compare", [])
+
+    # Base selection (single)
+    st.sidebar.selectbox(
+        "Base",
+        options=options,
+        index=options.index(st.session_state[f"{prefix}_base"]) if st.session_state[f"{prefix}_base"] in options else 0,
+        key=f"{prefix}_base",
+    )
+
+    base = st.session_state[f"{prefix}_base"]
+    compare_options = [x for x in options if x != base]
+
+    # Comparison selection (multi)
+    st.sidebar.multiselect(
+        "Comparar con",
+        options=compare_options,
+        default=[x for x in st.session_state[f"{prefix}_compare"] if x in compare_options],
+        key=f"{prefix}_compare",
+    )
+
+
+def get_analysis_selection(prefix: str = "analysis_stock") -> tuple[Optional[str], list[str]]:
+    """
+    Reads the current base and comparison selection for the analysis page.
+
+    Parameters
+    ----------
+    prefix: str. Namespace prefix used for session_state keys.
+
+    Returns
+    -------
+    base: Optional[str]. The base series name.
+    compare: list[str]. A list of comparison series names (base removed if present).
+    """
+    base = st.session_state.get(f"{prefix}_base")
+    compare = st.session_state.get(f"{prefix}_compare", [])
+    compare = [x for x in compare if x != base]
+    return base, compare
+
+
+def render_sidebar_display(options: list[str]) -> None:
+    """
+    Renders the analysis sidebar: navigation, global selectors, and investor profile.
+
+    Parameters
+    ----------
+    options: list[str]. Available asset/series names for the analysis selector.
+
+    Returns
+    -------
+    None
+    """
     st.sidebar.header("Navegación")
 
     if st.sidebar.button("Volver a cuestionario", use_container_width=True):
+        # External messages in Spanish
         reset_portfolio_results()
         st.session_state["route"] = "questionnaire"
         st.rerun()
@@ -29,13 +113,13 @@ def render_sidebar_display():
         if st.sidebar.button("Ver evolución cartera", use_container_width=True, type="primary"):
             st.session_state["route"] = "results"
             st.rerun()
-
-
-
     else:
         st.sidebar.button("Ver evolución cartera", use_container_width=True, disabled=True)
 
+    # Global selection for all analysis charts
+    render_sidebar_analysis_selection(options, prefix="analysis_stock")
 
+    # Investor profile (rendered nicely)
     st.sidebar.markdown("---")
     st.sidebar.header("Perfil del inversor")
 
@@ -51,6 +135,12 @@ def render_sidebar_display():
     sigma_min = risk.get("sigma_min", None)
     sigma_max = risk.get("sigma_max", None)
 
+    # External content in Spanish
+    try:
+        perfil_text = RISK_PROFILE_DICTIONARY.get(perfil, "Perfil no disponible")
+    except Exception:
+        perfil_text = "Perfil no disponible"
+
     st.sidebar.markdown(
         f"""
         <div style="
@@ -58,11 +148,11 @@ def render_sidebar_display():
             border-radius: 12px;
             padding: 10px 12px;
             background: #D6FAFF;
-            opacity: 0.8
+            opacity: 0.9
         ">
             <div style="font-size: 1.2rem; color: #000078; font-weight:900; text-align: center">Perfil</div>
             <div style="font-size: 2.5rem; color: #000078; font-weight: 900; text-align: center">{perfil}</div>
-            <div style="font-size: 1.2rem; color: #000078; font-weight: 900; text-align: center">{RISK_PROFILE_DICTIONARY[perfil]}</div>
+            <div style="font-size: 1.1rem; color: #000078; font-weight: 900; text-align: center">{perfil_text}</div>
         </div>
         """,
         unsafe_allow_html=True,
@@ -72,29 +162,136 @@ def render_sidebar_display():
         st.sidebar.caption(f"Volatilidad recomendada: {sigma_min:.2f}–{sigma_max:.2f}")
 
 
-def render_historic_perfomance():
-    #if st.session_state.get("show_stock_results", True):
-    historic_returns = st.session_state["initial_data"]["train_set"]
-    historic_prices = st.session_state["initial_data"]["train_price"]
-    recent_prices = st.session_state["initial_data"]["test_price"]
-    recent_returns = st.session_state["initial_data"]["test_set"]
+def _get_analysis_options_from_initial_data() -> list[str]:
+    """
+    Builds the list of available assets for the analysis page from session_state['initial_data'].
+
+    Returns
+    -------
+    options: list[str]. Cleaned list of column names (all-zero/all-NaN removed).
+    """
+    initial_data = st.session_state.get("initial_data")
+    if initial_data is None:
+        # Internal message in English
+        # Note: external UI messaging handled by caller
+        return []
+
+    historic_returns = initial_data.get("train_set")
+    if historic_returns is None or not isinstance(historic_returns, pd.DataFrame) or historic_returns.empty:
+        return []
+
+    df_clean = historic_returns.copy()
+
+    # Drop columns that are all zeros or all NaNs
+    df_clean = df_clean.drop(columns=df_clean.columns[(df_clean == 0).all()], errors="ignore")
+    df_clean = df_clean.drop(columns=df_clean.columns[df_clean.isna().all()], errors="ignore")
+
+    return list(df_clean.columns)
+
+
+def render_historic_performance() -> None:
+    """
+    Renders the analysis charts using the global sidebar selection:
+    - Base + comparisons for cumulative returns and prices
+    - Base-only for daily returns scatter (color-coded)
+
+    Returns
+    -------
+    None
+    """
+    initial_data = st.session_state.get("initial_data")
+    if initial_data is None:
+        st.warning("Primero genera la cartera para poder ver el análisis.")
+        return
+
+    # --- Data retrieval (internal: English) ---
+    historic_returns = initial_data.get("train_set")
+    recent_returns = initial_data.get("test_set")
+    historic_prices = initial_data.get("train_price")
+    recent_prices = initial_data.get("test_price")
+
+    if historic_returns is None or recent_returns is None:
+        st.warning("No hay datos de retornos para mostrar.")
+        return
+
+    # --- Global selection from sidebar ---
+    base, compare = get_analysis_selection(prefix="analysis_stock")
+    selected = [base] + compare if base else []
+
+    if not base:
+        st.info("Selecciona un activo base en el lateral para ver las visualizaciones.")
+        return
+
+    # --- Compute cumulative returns ---
     cum_returns_historic = get_cumulative_returns(historic_returns)
     cum_returns_recent = get_cumulative_returns(recent_returns)
 
+    # --- Plots: cumulative returns (base + compare) ---
     c1, c2 = st.columns(2)
     with c1:
-        plot_portfolio_values(cum_returns_historic , "historic_value", "stock")
+        plot_portfolio_values_select(
+            cum_returns_historic,
+            key="historic_cum",
+            portfolio_type="stock",
+            selected=selected,
+            show_selector=False,
+        )
     with c2:
-        plot_portfolio_values(cum_returns_recent, "recent_value", "stock")
+        plot_portfolio_values_select(
+            cum_returns_recent,
+            key="recent_cum",
+            portfolio_type="stock",
+            selected=selected,
+            show_selector=False,
+        )
 
-    plot_daily_returns_scatter(historic_returns, key="returns_color", data_type="stock")
-    s1, s2 = st.columns(2)
-    with s1:
-        plot_portfolio_values(historic_prices, "historic_price", "stock")
-    with s2:
-        plot_portfolio_values(recent_prices, "recent_price", "stock")
+    # --- Plot: daily returns scatter (base only) ---
+    plot_daily_returns_scatter_base_only(
+        historic_returns,
+        key="daily_scatter",
+        data_type="stock",
+        base=base,
+        y_in_percent=True
+    )
+
+    # --- Plots: prices (base + compare) ---
+    if isinstance(historic_prices, pd.DataFrame) and isinstance(recent_prices, pd.DataFrame):
+        s1, s2 = st.columns(2)
+        with s1:
+            plot_portfolio_values_select(
+                historic_prices,
+                key="historic_price",
+                portfolio_type="stock",
+                selected=selected,
+                show_selector=False,
+            )
+        with s2:
+            plot_portfolio_values_select(
+                recent_prices,
+                key="recent_price",
+                portfolio_type="stock",
+                selected=selected,
+                show_selector=False,
+            )
+    else:
+        st.info("No hay datos de precios para mostrar.")
 
 
-def render_analysis():
-    render_sidebar_display()
-    render_historic_perfomance()
+def render_analysis() -> None:
+    """
+    Main entrypoint for the Analysis page.
+
+    It renders:
+    - A sidebar with navigation + investor profile + global selector (base vs compare)
+    - A set of charts driven by that global selection
+
+    External UI messages are shown in Spanish; internal comments/messages remain in English.
+    """
+    # Build available options for sidebar selector
+    options = _get_analysis_options_from_initial_data()
+
+    # Render sidebar (needs options)
+    render_sidebar_display(options)
+
+    # Render page content
+    render_historic_performance()

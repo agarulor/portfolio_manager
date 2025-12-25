@@ -509,3 +509,169 @@ def plot_daily_returns_scatter(
     fig.update_yaxes(showgrid=False)
 
     st.plotly_chart(fig, width="stretch")
+
+
+
+def plot_portfolio_values_select(
+    results: dict | pd.DataFrame,
+    key: str,
+    portfolio_type: Literal["stock", "global"] = "global",
+    selected: list[str] | None = None,
+    show_selector: bool = True,
+) -> None:
+    if portfolio_type == "global":
+        if not isinstance(results, dict):
+            st.error("For portfolio_type = global, results must be a dict")
+            return
+        names = list(results.keys())
+
+        if selected is None and show_selector:
+            selected = st.multiselect(
+                "Carteras a comparar",
+                options=names,
+                default=names[:1] if names else [],
+                key=key,
+            )
+        elif selected is None:
+            selected = names[:1] if names else []
+
+    elif portfolio_type == "stock":
+        if not isinstance(results, pd.DataFrame):
+            st.error("For portfolio_type = stock results must be a Pandas DataFrame.")
+            return
+
+        df_clean = results.copy()
+        df_clean = df_clean.drop(columns=df_clean.columns[(df_clean == 0).all()], errors="ignore")
+        df_clean = df_clean.drop(columns=df_clean.columns[df_clean.isna().all()], errors="ignore")
+        names = list(df_clean.columns)
+
+        if selected is None and show_selector:
+            selected = st.multiselect(
+                "Evolución de activos de la cartera",
+                options=names,
+                default=names[:1] if names else [],
+                key=key,
+            )
+        elif selected is None:
+            selected = names[:1] if names else []
+
+        results = df_clean  # importante para usar el DF limpio
+
+    else:
+        st.error("Please, choose either stock or global")
+        return
+
+    if not selected:
+        st.info("Selecciona al menos una serie.")
+        return
+
+    fig = go.Figure()
+
+    for i, name in enumerate(selected):
+        series = results[name]
+        if isinstance(series, pd.DataFrame):
+            x = series.index
+            y = series.iloc[:, 0].to_numpy()
+        else:
+            x = series.index
+            y = series.to_numpy()
+
+        fig.add_trace(go.Scatter(
+            x=x, y=y, mode="lines", name=name,
+            line=dict(width=4 if i == 0 else 2)
+        ))
+
+    fig.update_layout(
+        template="plotly_white",
+        xaxis_title="Fecha",
+        yaxis_title="Valor (€)",
+        hovermode="x unified",
+        height=700,
+    )
+    fig.update_xaxes(showgrid=False)
+    fig.update_yaxes(showgrid=False)
+
+    st.plotly_chart(fig)
+
+
+
+def plot_daily_returns_scatter_base_only(
+    results: dict | pd.DataFrame,
+    base: str | None,
+    data_type: Literal["global", "stock"] = "global",
+    y_in_percent: bool = True,
+    key: str | None = None,
+):
+    """
+    Plots daily returns as a scatter chart for a single base series.
+
+    Parameters
+    ----------
+    results : dict | pd.DataFrame
+        Dictionary of return series (global) or DataFrame with assets as columns (stock).
+    base : str | None
+        Base portfolio or asset selected in the sidebar.
+    data_type : Literal["global", "stock"]
+        Type of data provided.
+    y_in_percent : bool
+        Whether to display returns in percentage.
+    key : str | None
+        Optional Streamlit key for the chart.
+    """
+
+    if not base:
+        st.info("Selecciona una serie base en el lateral.")
+        return
+
+    # Extract base series
+    if data_type == "global":
+        if not isinstance(results, dict):
+            st.error("Para data_type='global', results debe ser dict.")
+            return
+        series = results.get(base)
+
+    else:  # stock
+        if not isinstance(results, pd.DataFrame):
+            st.error("Para data_type='stock', results debe ser DataFrame.")
+            return
+        series = results[base]
+
+    if series is None:
+        st.warning("No hay datos disponibles para la serie seleccionada.")
+        return
+
+    # Normalize to Series
+    if isinstance(series, pd.DataFrame):
+        s = series.iloc[:, 0]
+    else:
+        s = series
+
+    s = s.dropna()
+    y = (s.to_numpy() * 100.0) if y_in_percent else s.to_numpy()
+    x = s.index
+    colors = np.where(y >= 0, "blue", "red")
+
+    fig = go.Figure()
+    fig.add_trace(
+        go.Scatter(
+            x=x,
+            y=y,
+            mode="markers",
+            name=str(base),
+            marker=dict(color=colors, size=6, opacity=0.75),
+        )
+    )
+
+    fig.add_hline(y=0, line_width=2, line_color="black")
+
+    fig.update_layout(
+        template="plotly_white",
+        xaxis_title="Fecha",
+        yaxis_title="Retorno diario (%)" if y_in_percent else "Retorno diario",
+        hovermode="x unified",
+        height=600,
+    )
+    fig.update_xaxes(showgrid=False)
+    fig.update_yaxes(showgrid=False)
+
+    st.plotly_chart(fig, key=key)
