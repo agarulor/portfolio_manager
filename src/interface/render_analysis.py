@@ -74,13 +74,24 @@ def render_sidebar_display():
 
 def render_historic_perfomance():
     #if st.session_state.get("show_stock_results", True):
-    daily_returns = st.session_state["initial_data"]["daily_returns"]
-    prices = st.session_state["initial_data"]["prices"]
-    cum_returns = get_cumulative_returns(daily_returns)
-    print(cum_returns)
-    plot_portfolio_values(cum_returns, "patata", "stock")
-    plot_portfolio_values(prices, "patatas", "stock")
+    historic_returns = st.session_state["initial_data"]["train_set"]
+    historic_prices = st.session_state["initial_data"]["train_price"]
+    recent_prices = st.session_state["initial_data"]["test_price"]
+    recent_returns = st.session_state["initial_data"]["test_set"]
+    cum_returns_historic = get_cumulative_returns(historic_returns)
+    cum_returns_recent = get_cumulative_returns(recent_returns)
 
+    c1, c2 = st.columns(2)
+    with c1:
+        plot_portfolio_values(cum_returns_historic , "historic_value", "stock")
+    with c2:
+        plot_portfolio_values(cum_returns_recent, "recent_value", "stock")
+
+    s1, s2 = st.columns(2)
+    with s1:
+        plot_portfolio_values(historic_prices, "historic_price", "stock")
+    with s2:
+        plot_portfolio_values(recent_prices, "recent_price", "stock")
 
 
 def render_analysis():

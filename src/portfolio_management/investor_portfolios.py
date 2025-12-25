@@ -323,6 +323,7 @@ def create_output_table_portfolios(returns: pd.DataFrame,
         df_r = df_results.copy()
         # We want the index are our porfolios
         df_r.index = [portfolio_type]
+
         # we add the name of the index
         df_r.index.name = "Tipo de portfolio"
         # We append the df to a list

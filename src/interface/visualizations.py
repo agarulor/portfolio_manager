@@ -188,19 +188,28 @@ def render_results_table(
     html_table = styler.to_html()
     st.markdown(html_table, unsafe_allow_html=True)
 
-def show_markowitz_results(n_returns: int,
-                           returns: pd.DataFrame,
-                           df_results: pd.DataFrame,
+def show_markowitz_results(n_returns: Optional[int] = None,
+                           returns: Optional[pd.DataFrame] = None,
+                           df_results: pd.DataFrame = None,
     method: Literal["simple", "log"] = "simple",
-    periods_per_year: int = 252):
+    periods_per_year: int = 252,
+                           no_ef: bool = False):
 
-    ef = compute_efficient_frontier(returns, n_returns, method, periods_per_year)
 
-    fig = px.line(
+
+
+    if not no_ef:
+        ef = compute_efficient_frontier(returns, n_returns, method, periods_per_year)
+
+        fig = px.line(
         ef,
         x="Volatilidad",
         y="Retorno anualizado"
-    )
+        )
+    else:
+        fig = px.scatter()
+        df_results.index.name = "Tipo de portfolio"
+
     dfp = df_results.reset_index().rename(columns={"Tipo de portfolio": "Tipo de portfolio"})
 
     fig.add_trace(

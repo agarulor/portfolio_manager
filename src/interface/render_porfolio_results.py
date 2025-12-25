@@ -3,7 +3,7 @@ from interface.main_interface import subheader, header
 from portfolio_management.investor_portfolios import render_historical_portfolios_results
 from interface.render_initial_portfolio import  reset_portfolio_results
 from portfolio_management.portfolio_management import get_sector_weights_at_date, check_portfolio_weights
-from interface.visualizations import show_portfolio, render_results_table, plot_portfolio_values
+from interface.visualizations import show_portfolio, render_results_table, plot_portfolio_values, show_markowitz_results
 from types import MappingProxyType
 PERIODS_PER_YEAR = 255
 
@@ -126,7 +126,10 @@ def create_portfolio_visualizations():
 
     if not st.session_state.get("data_ready", False):
         return
+
     df_results = st.session_state["dict_pf_results_forecasts"]
+    if df_results.index.nlevels > 1:
+        df_results.index = df_results.index.droplevel(1)
     df_weights = st.session_state.get("forecast_asset_weights")
     df_sectors = st.session_state.get("forecast_sector_weights")
 
@@ -152,12 +155,23 @@ def create_portfolio_visualizations():
                     weights_in_percent=True)
         st.write("")
 
-    # We now render the main table of results and comparable portfolios
     with st.container(border=False):
-        if st.session_state.get("show_results_table_forecast", True):
-            subheader("Resultados de la cartera", font_size="2.0rem", margin_bottom="3.0rem")
-            render_results_table(df_results)
-            st.write("")
+        u1, u2 = st.columns(2)
+        # We now render the main table of results and comparable portfolios
+
+        with u1:
+            if st.session_state.get("show_results_table_forecast", True):
+                subheader("Resultados de la cartera", font_size="2.0rem", margin_bottom="3.0rem")
+                render_results_table(df_results)
+                st.write("")
+
+    # We now render the efficient frontier and the comparable portfolios
+
+        with u2:
+            #if st.session_state.get("show_frontier", True):
+            subheader("Riesgo / rentabilidad", font_size="2.0rem")
+            show_markowitz_results(df_results=df_results,
+                                   periods_per_year=PERIODS_PER_YEAR, no_ef=True)
 
 
 def create_results_visualizations():
