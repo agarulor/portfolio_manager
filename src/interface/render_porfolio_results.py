@@ -91,6 +91,7 @@ def show_portfolio_returns():
     profit_abs = final_amount - initial_amount
     profit_pct = (final_amount / initial_amount - 1.0) * 100 if initial_amount else 0.0
     end_date = resultados["investor"].index[-1]
+    print(resultados)
 
     #st.write(dict_pf_returns_forecast["investor"][-1])
     with st.container(border=False):
@@ -208,9 +209,6 @@ def render_results():
     weights = st.session_state["initial_results"][2]
     rf_annual = st.session_state["investor_constraints_draft"]["risk_free_rate"]
     amount = st.session_state["investor_constraints_draft"]["amount"]
-
-
-    print(df_returns)
 
     dict_pf_returns_forecast, dict_stock_results_forecast, dict_pf_results_forecasts = render_historical_portfolios_results(
         df_returns,

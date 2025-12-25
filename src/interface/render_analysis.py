@@ -206,8 +206,13 @@ def render_historic_performance() -> None:
         return
 
     # We get the data
+    recent_portfolio_values = st.session_state["dict_pf_returns_forecast"]
+    print(recent_portfolio_values)
     historic_returns = initial_data.get("train_set")
     recent_returns = initial_data.get("test_set")
+    print(recent_returns.shape)
+
+
     historic_prices = initial_data.get("train_price")
     recent_prices = initial_data.get("test_price")
 
@@ -226,6 +231,7 @@ def render_historic_performance() -> None:
     # Compute cumulative returns
     cum_returns_historic = get_cumulative_returns(historic_returns)
     cum_returns_recent = get_cumulative_returns(recent_returns)
+
 
     # Plots: cumulative returns (base + compare)
     c1, c2 = st.columns(2)
@@ -260,7 +266,7 @@ def render_historic_performance() -> None:
     with d2:
         #  Plot: daily recent resutls
         plot_daily_returns_scatter_base_only(
-            recent_prices,
+            recent_returns,
             key="daily_scatter_recent",
             data_type="stock",
             base=base,
@@ -279,7 +285,7 @@ def render_historic_performance() -> None:
 
     with e2:
         plot_daily_returns_distribution(
-            recent_prices,
+            recent_returns,
             base=base,
             data_type="stock",
             y_in_percent=True,
