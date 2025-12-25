@@ -675,3 +675,141 @@ def plot_daily_returns_scatter_base_only(
     fig.update_yaxes(showgrid=False)
 
     st.plotly_chart(fig, key=key)
+
+
+def plot_daily_returns_distribution(
+    results: dict | pd.DataFrame,
+    base: str | None,
+    key: str,
+    data_type: Literal["global", "stock"] = "stock",
+    y_in_percent: bool = True,
+    nbins: int = 60,
+) -> None:
+    """
+    Plots the distribution of daily returns (histogram) and overlays:
+    - Vertical line at 0
+    - Vertical line at mean
+    - Vertical lines at mean +/- 1 std
+
+    Parameters
+    ----------
+    results : dict | pd.DataFrame
+        Daily returns data. For "stock", columns are assets. For "global", dict values are series.
+    base : str | None
+        Base asset/portfolio selected in the sidebar.
+    key : str
+        Streamlit key for the chart.
+    data_type : Literal["global", "stock"]
+        Data type selector.
+    y_in_percent : bool
+        If True, converts returns to % (x100).
+    nbins : int
+        Number of histogram bins.
+
+    Returns
+    -------
+    None
+    """
+
+    if not base:
+        st.info("Selecciona un activo/cartera base en el lateral.")
+        return
+
+    # Extract series
+    if data_type == "global":
+        if not isinstance(results, dict):
+            st.error("Para data_type='global', results debe ser un diccionario.")
+            return
+        series = results.get(base)
+        if series is None:
+            st.warning("No hay datos para la serie seleccionada.")
+            return
+        s = series.iloc[:, 0] if isinstance(series, pd.DataFrame) else series
+
+    else:  # stock
+        if not isinstance(results, pd.DataFrame):
+            st.error("Para data_type='stock', results debe ser un DataFrame.")
+            return
+        if base not in results.columns:
+            st.warning("El activo seleccionado no está disponible en los datos.")
+            return
+        s = results[base]
+
+    s = s.dropna()
+    x = (s.to_numpy() * 100.0) if y_in_percent else s.to_numpy()
+
+    if x.size == 0:
+        st.warning("No hay retornos suficientes para mostrar la distribución.")
+        return
+
+    # Stats
+    mu = float(np.mean(x))
+    sigma = float(np.std(x, ddof=1)) if x.size > 1 else 0.0
+    left = mu - sigma
+    right = mu + sigma
+
+    # Figure
+    fig = go.Figure()
+
+    # Histogram
+    fig.add_trace(
+        go.Histogram(
+            x=x,
+            nbinsx=nbins,
+            name="Distribución",
+            opacity=0.75,
+        )
+    )
+
+    # Vertical reference lines
+    fig.add_vline(
+        x=0,
+        line_width=2,
+        line_dash="dot",
+        line_color="gray",
+        annotation_text="0",
+        annotation_position="top left",
+    )
+
+    mean_color = "orange"
+    fig.add_vline(
+        x=mu,
+        line_width=3,
+        line_dash="solid",
+        line_color=mean_color,
+        annotation_text="media",
+        annotation_position="top right",
+    )
+
+    std_color = "purple"
+    fig.add_vline(
+        x=left,
+        line_width=2,
+        line_dash="dash",
+        line_color=std_color,
+        annotation_text="-1 std",
+        annotation_position="top left",
+    )
+    fig.add_vline(
+        x=right,
+        line_width=2,
+        line_dash="dash",
+        line_color=std_color,
+        annotation_text="+1 std",
+        annotation_position="top left",
+    )
+
+    # Layout
+    fig.update_layout(
+        template="plotly_white",
+        title="Distribución de rendimiento diario (%)" if y_in_percent else "Distribución de rendimiento diario",
+        xaxis_title="Retorno diario (%)" if y_in_percent else "Retorno diario",
+        yaxis_title="Frecuencia",
+        height=520,
+        bargap=0.05,
+        showlegend=False,  # keep it clean; annotations already label the lines
+    )
+    fig.update_xaxes(showgrid=False)
+    fig.update_yaxes(showgrid=False)
+
+    st.plotly_chart(fig, key=key)

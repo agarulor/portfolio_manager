@@ -6,7 +6,8 @@ import pandas as pd
 from portfolio_management.investor_portfolios import get_cumulative_returns
 from interface.visualizations import (
     plot_portfolio_values_select,
-    plot_daily_returns_scatter_base_only
+    plot_daily_returns_scatter_base_only,
+    plot_daily_returns_distribution
 )
 
 PERIODS_PER_YEAR = 255
@@ -204,7 +205,7 @@ def render_historic_performance() -> None:
         st.warning("Primero genera la cartera para poder ver el análisis.")
         return
 
-    # --- Data retrieval (internal: English) ---
+    # We get the data
     historic_returns = initial_data.get("train_set")
     recent_returns = initial_data.get("test_set")
     historic_prices = initial_data.get("train_price")
@@ -214,7 +215,7 @@ def render_historic_performance() -> None:
         st.warning("No hay datos de retornos para mostrar.")
         return
 
-    # --- Global selection from sidebar ---
+    # Global selection from sidebar
     base, compare = get_analysis_selection(prefix="analysis_stock")
     selected = [base] + compare if base else []
 
@@ -222,11 +223,11 @@ def render_historic_performance() -> None:
         st.info("Selecciona un activo base en el lateral para ver las visualizaciones.")
         return
 
-    # --- Compute cumulative returns ---
+    # Compute cumulative returns
     cum_returns_historic = get_cumulative_returns(historic_returns)
     cum_returns_recent = get_cumulative_returns(recent_returns)
 
-    # --- Plots: cumulative returns (base + compare) ---
+    # Plots: cumulative returns (base + compare)
     c1, c2 = st.columns(2)
     with c1:
         plot_portfolio_values_select(
@@ -245,16 +246,47 @@ def render_historic_performance() -> None:
             show_selector=False,
         )
 
-    # --- Plot: daily returns scatter (base only) ---
-    plot_daily_returns_scatter_base_only(
-        historic_returns,
-        key="daily_scatter",
-        data_type="stock",
-        base=base,
-        y_in_percent=True
-    )
+    d1, d2 = st.columns(2)
+    with d1:
+        #  Plot: daily returns scatter
+        plot_daily_returns_scatter_base_only(
+            historic_returns,
+            key="daily_scatter_historic",
+            data_type="stock",
+            base=base,
+            y_in_percent=True
+        )
 
-    # --- Plots: prices (base + compare) ---
+    with d2:
+        #  Plot: daily recent resutls
+        plot_daily_returns_scatter_base_only(
+            recent_prices,
+            key="daily_scatter_recent",
+            data_type="stock",
+            base=base,
+            y_in_percent=True
+        )
+
+    e1, e2 = st.columns(2)
+    with e1:
+        plot_daily_returns_distribution(
+            historic_returns,
+            base=base,
+            data_type="stock",
+            y_in_percent=True,
+            key="dist_daily_returns_historic",
+        )
+
+    with e2:
+        plot_daily_returns_distribution(
+            recent_prices,
+            base=base,
+            data_type="stock",
+            y_in_percent=True,
+            key="dist_daily_returns_recent",
+        )
+
+    # prices (base + compare)
     if isinstance(historic_prices, pd.DataFrame) and isinstance(recent_prices, pd.DataFrame):
         s1, s2 = st.columns(2)
         with s1:
