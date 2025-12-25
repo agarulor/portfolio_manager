@@ -215,9 +215,12 @@ def render_historic_performance() -> None:
     recent_portfolio_values = st.session_state.get("dict_pf_returns_forecast")
     historic_portfolio_values = st.session_state.get("dict_pf_returns")
 
+
     df_recent_portfolio_values = pd.DataFrame(recent_portfolio_values) / initial_amount
+    df_recent_portfolio_returns = calculate_daily_returns(df_recent_portfolio_values)
 
     df_historic_portfolio_values = pd.DataFrame(historic_portfolio_values)
+    df_historic_portfolio_returns = calculate_daily_returns(df_historic_portfolio_values)
 
     historic_returns = initial_data.get("train_set")
     recent_returns = initial_data.get("test_set")
@@ -235,6 +238,8 @@ def render_historic_performance() -> None:
     cum_returns_historic = cum_returns_historic.join(df_historic_portfolio_values)
     cum_returns_recent = get_cumulative_returns(recent_returns)
     cum_returns_recent = cum_returns_recent.join(df_recent_portfolio_values)
+
+
 
 
     # Global selection from sidebar
