@@ -240,7 +240,8 @@ def render_historic_performance() -> None:
     cum_returns_recent = cum_returns_recent.join(df_recent_portfolio_values)
 
 
-
+    historic_returns = historic_returns.join(df_historic_portfolio_returns)
+    recent_returns = recent_returns.join(df_recent_portfolio_returns)
 
     # Global selection from sidebar
     base, compare = get_analysis_selection(prefix="analysis_stock")
