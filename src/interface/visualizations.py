@@ -518,6 +518,7 @@ def plot_portfolio_values_select(
     portfolio_type: Literal["stock", "global"] = "global",
     selected: list[str] | None = None,
     show_selector: bool = True,
+        height: int = 500,
 ) -> None:
 
     # -----------------------
@@ -620,7 +621,7 @@ def plot_portfolio_values_select(
         xaxis_title="Fecha",
         yaxis_title="Valor (€)",
         hovermode="x unified",
-        height=700,
+        height=height,
     )
     fig.update_xaxes(showgrid=False)
     fig.update_yaxes(showgrid=False)
@@ -635,6 +636,7 @@ def plot_daily_returns_scatter_base_only(
     data_type: Literal["global", "stock"] = "global",
     y_in_percent: bool = True,
     key: str | None = None,
+        height: int = 500
 ):
     """
     Plots daily returns as a scatter chart for a single base series.
@@ -703,7 +705,7 @@ def plot_daily_returns_scatter_base_only(
         xaxis_title="Fecha",
         yaxis_title="Retorno diario (%)" if y_in_percent else "Retorno diario",
         hovermode="x unified",
-        height=600,
+        height=height,
     )
     fig.update_xaxes(showgrid=False)
     fig.update_yaxes(showgrid=False)
@@ -718,6 +720,7 @@ def plot_daily_returns_distribution(
     data_type: Literal["global", "stock"] = "stock",
     y_in_percent: bool = True,
     nbins: int = 60,
+        height: int = 500,
 ) -> None:
     """
     Plots the distribution of daily returns (histogram) and overlays:
@@ -839,7 +842,7 @@ def plot_daily_returns_distribution(
         title="Distribución de rendimiento diario (%)" if y_in_percent else "Distribución de rendimiento diario",
         xaxis_title="Retorno diario (%)" if y_in_percent else "Retorno diario",
         yaxis_title="Frecuencia",
-        height=520,
+        height=height,
         bargap=0.05,
         showlegend=False,  # keep it clean; annotations already label the lines
     )
