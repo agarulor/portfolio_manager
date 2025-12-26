@@ -1,33 +1,20 @@
 import pandas as pd
 from typing import Tuple
-def clean_stock_data(prices: pd.DataFrame,
-        beginning_data=True) -> Tuple[pd.DataFrame, pd.DataFrame]:
-    """
-    Clean a dataframe with stock prices. It removes empty columns (when no data available). In
-    addition, if beggining data = True, it also removes columns where the first date is empty
-    (i.e. if not all data is available)
-    It also generates a report on the availability of data, por decision-making purposes
 
-    It removes all tickers (columns) with no valid prices at all
-    It generates a summary report with information about the completeness of each
-    series.
+
+def clean_stock_data(prices: pd.DataFrame,
+                     beginning_data=True) -> Tuple[pd.DataFrame, pd.DataFrame]:
+    """
+    Cleans stock data.
 
     Parameters
     ----------
-    prices : pandas.DataFrame
-        Is a DataFrame with stock prices and dates as index and tickers/company names as columns.
+    prices : pd.DataFrame. Prices of the assets.
+    beginning_data : Any. beginning data.
 
     Returns
     -------
-    df : pandas.DataFrame
-        The cleaned DataFrame
-    report : pandas.DataFrame
-        A summary DataFrame with key availability metrics:
-            - first_valid_index : first date with a valid observation
-            - last_valid_index  : last date with a valid observation
-            - total_valid       : number of valid observations
-            - total_rows        : total number of rows (dates)
-            - coverage          : % valid observations over total_rows
+    Tuple[pd.DataFrame, pd.DataFrame]: clean stock data output.
     """
 
     # We create a copy of the dataset
@@ -56,39 +43,24 @@ def clean_stock_data(prices: pd.DataFrame,
     # We return the df and the report
     return df, report
 
+
 # Next, given that we have assets from several countries, we need to align the dates
 # We create a function that will help with that
 def align_dates(prices: pd.DataFrame,
                 max_ffill_days: int = 5,
                 min_row_coverage: float = 0.0) -> Tuple[pd.DataFrame, pd.DataFrame]:
     """
-    Align trading dates across markets by forward-filling short gaps. It removes days with insufficient coverage.
-
-    This function helps with the issue of different trading calendars, such as different holidays across countries.
-    It does a limited forward-fill on missing price values to solve the issue with non-trading gaps.
-    It also, optionally, drops rows (dates) where too there are many assets with no values on that day.
+    Aligns dates.
 
     Parameters
     ----------
-    prices : pandas.DataFrame
-        Price data frame with stock prices. Where NaN indicate non-trading days or unavailable data.
-    max_ffill_days : int, default 5
-        Maximum number of consecutive days to forward-fill per column.
-        It avoids imputing long suspensions or inactive periods, which could be due to different issues.
-    min_row_coverage : float, default 0.5
-        Minimum % of non-missing columns required to keep a row.
-        Example: 0.5 means at least 50% of tickers must have data on that date.
+    prices : pd.DataFrame. Prices of the assets.
+    max_ffill_days : int. max ffill days.
+    min_row_coverage : float. min row coverage.
 
     Returns
     -------
-    aligned : pandas.DataFrame
-        Price DataFrame with dates aligned.
-    summary : pandas.DataFrame
-        A DataFrame summarizing the operation:
-            - rows_before / rows_after
-            - cols_before / cols_after
-            - rows_dropped
-            - ffilled_cells (number of values filled by forward-fill)
+    Tuple[pd.DataFrame, pd.DataFrame]: align dates output.
     """
 
     # We get the number of projects before alingment for reporting
@@ -134,41 +106,25 @@ def align_dates(prices: pd.DataFrame,
     # We return the df with aligned calendar and the summary
     return aligned, summary
 
+
 def clean_and_align_data(
         prices: pd.DataFrame,
         max_ffill_days: int = 5,
         min_row_coverage: float = 0.0,
-        beginning_data=True)-> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
-
+        beginning_data=True) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     """
-    End-to-end preprocessing pipeline for price data:
-    clean missing columns and align trading calendars.
-
-    This function first removes tickers that contain no data at all
-    (`clean_stock_data`), then harmonizes calendars using limited
-    forward-fill and row filtering (`align_dates`).
+    Cleans and align data.
 
     Parameters
     ----------
-    prices : pandas.DataFrame
-        Price data frame with stock prices. Where NaN indicate non-trading days or unavailable data.
-    max_ffill_days : int, default 5
-        Maximum number of consecutive days to forward-fill per column.
-        It avoids imputing long suspensions or inactive periods, which could be due to different issues.
-    min_row_coverage : float, default 0.5
-        Minimum % of non-missing columns required to keep a row.
-        Example: 0.5 means at least 50% of tickers must have data on that date.
-    beginning_data : bool, default True.
-        If True, means that only keeps columns with data from the beginning
+    prices : pd.DataFrame. Prices of the assets.
+    max_ffill_days : int. max ffill days.
+    min_row_coverage : float. min row coverage.
+    beginning_data : Any. beginning data.
 
     Returns
     -------
-    aligned_df : pandas.DataFrame
-        Cleaned and aligned DataFrame.
-    cleaned_report : pandas.DataFrame
-        Output report from clean_stock_data
-    aligned_summary : pandas.DataFrame
-        Output summary from align_dates
+    Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]: clean and align data output.
     """
 
     # We clean the df

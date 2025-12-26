@@ -4,23 +4,34 @@ import os
 sys.path.append(os.path.join(os.path.dirname(__file__), "src"))
 from app.run_app import run_app
 
-
 import os
 import random
 import numpy as np
 
 SEED = 42
 
-# Para que el hashing de Python no cambie entre ejecuciones
+# To avoid changes in hash
 os.environ["PYTHONHASHSEED"] = str(SEED)
 
-# Semillas de Python, NumPy y TensorFlow
+# Seeds for Python and NumPy
 random.seed(SEED)
 np.random.seed(SEED)
 
 
 def main():
+    """
+    Computes main.
+
+    Parameters
+    ----------
+
+
+    Returns
+    -------
+    Any: main output.
+    """
     run_app()
+
 
 if __name__ == "__main__":
     main()

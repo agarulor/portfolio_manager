@@ -1,22 +1,22 @@
 import pandas as pd
 
+
 def split_data_markowtiz(
         returns: pd.DataFrame,
         test_date_start: str = "2024-01-01",
         test_date_end: str = "2025-09-30") -> tuple[pd.DataFrame, pd.DataFrame]:
     """
-    Splits data into training and test sets
+    Computes split data markowtiz.
 
     Parameters
     ----------
-    returns : pd.DataFrame. Dataset with returns.
-    test_date_start : str. Starting day for test data (YYYY-MM-DD).
-    test_date_end : str. Ending day for test data (YYYY-MM-DD).
+    returns : pd.DataFrame. Returns of the assets.
+    test_date_start : str. test date start.
+    test_date_end : str. test date end.
 
     Returns
-    ----------
-    train_set : pd.DataFrame. Training set with returns.
-    test_set : pd.DataFrame. Test set with returns.
+    -------
+    tuple[pd.DataFrame, pd.DataFrame]: split data markowtiz output.
     """
     # we sort the returns in case they are not shorted
     sorted_returns = returns.sort_index()
@@ -46,6 +46,6 @@ def split_data_markowtiz(
 
     # We now divide data into training and test
     train_set = sorted_returns.loc[:time_start - pd.Timedelta(days=1)]
-    test_set = sorted_returns.loc[time_start : time_end]
+    test_set = sorted_returns.loc[time_start: time_end]
 
     return train_set, test_set
