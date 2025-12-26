@@ -262,3 +262,14 @@ def read_price_file(
 
     # we return the DF
     return df
+
+def exists_asset(ticker: str) -> bool:
+    try:
+        t = yf.Ticker(ticker)
+        data = t.history(period="1d")
+
+
+        return not data.empty
+
+    except:
+        return False

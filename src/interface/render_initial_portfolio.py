@@ -1,6 +1,6 @@
 import streamlit as st
 from interface.main_interface import subheader, header
-from data_management.get_data import get_stock_prices, read_price_file
+from data_management.get_data import get_stock_prices, exists_asset
 from data_management.dataset_preparation import split_data_markowtiz
 from data_management.clean_data import clean_and_align_data
 from portfolio_tools.return_metrics import calculate_daily_returns
@@ -181,6 +181,34 @@ def render_date(text:str,
     return date
 
 
+def add_assets():
+    with st.container(border=True):
+        subheader("Añadir acción manualmente")
+        c1, c2 = st.columns(2)
+        with c1:
+            ticker = st.text_input("Ticker de Yahoo", placeholder="ej: SAN.MC, BBVA.MC, AAPL", key = "ticker")
+
+        c1, c2 = st.columns([3, 1])
+
+        with c2:
+            add = st.button("Añadir activo", type="primary")
+
+        if add:
+            t = ticker.strip().upper()
+            print(exists_asset(t))
+            if not t:
+                st.warning("Introduce un ticker válido.")
+
+            #elif t in st.session_state["custom_tickers"]:
+             #   st.warning(f"El ticker {t} ya está añadido.")
+            elif not exists_asset(t):
+                st.warning(f"El ticker {t} no existe en Yahoo Finance.")
+
+            else:
+               # st.session_state["custom_tickers"].append(t)
+                st.success(f"Ticker {t} añadido.")
+               # st.session_state["ticker_input"] = ""
+
 def render_investor_constraints():
 
     subheader("Defina el grado de diversificación y el importe inicial para la propuesta de cartera",
@@ -263,6 +291,8 @@ def render_investor_constraints():
                                                      font_color="#FF0000",
                                                      key="risk_free_rate",
                                                      unit="%")
+
+    add_assets()
 
     # Save session state
     st.session_state["investor_constraints_draft"] = {
