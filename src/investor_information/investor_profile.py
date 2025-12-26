@@ -1,9 +1,10 @@
-from typing import Tuple
-from types import MappingProxyType # to avoid changes to a dictionary
+# To avoid changes to a dictionary
+from types import MappingProxyType
+
 KNOWLEDGE_WEIGHT = 0.3
 RISK_LEVEL_WEIGHT = 0.4
 DOWNSIDE_REACTION_WEIGHT = 0.3
-VOLATILITY_MAPPING = MappingProxyType( {
+VOLATILITY_MAPPING = MappingProxyType({
     1: (0.00, 0.065),
     2: (0.065, 0.11),
     3: (0.11, 0.155),
@@ -13,31 +14,19 @@ VOLATILITY_MAPPING = MappingProxyType( {
 })
 
 
-def risk_appetite(knowledge:int, risk_level: int, downside_reaction: int) -> int:
+def risk_appetite(knowledge: int, risk_level: int, downside_reaction: int) -> int:
     """
-    This function calculates the risk appetite of an investor
-    The value will be between 1 and 6 depending on the risk appetite,
-    being 1 little risk appetite or 6 very high risk appetite
+    Computes risk appetite.
 
     Parameters
     ----------
-    knowledge : int (1-6)
-        Integer value representing the knowledge of the investor
-        Weight: 0.3
-    risk_level : int (1-6)
-        Integer value representing the risk level of the investor
-        Weight: 0.4
-    downside_reaction : int (1-4)
-        Integer value representing the downside reaction of the investor when
-        market falls. It will be normalized to values 1 to 6
-        (1: sell all, 2: sell part of the asset/s, 3: keep and 4: buy even more).
-        Weight: 0.3
+    knowledge : int. knowledge.
+    risk_level : int. risk level.
+    downside_reaction : int. downside reaction.
 
     Returns
     -------
-    risk_appetite_score : int
-        value will be between 1 and 6 depending on the risk appetite. Each factor will have
-        a different weight
+    int: risk appetite output.
     """
     # We first need to reescalate the downside_reaction
     if downside_reaction == 1:
@@ -63,72 +52,25 @@ def risk_appetite(knowledge:int, risk_level: int, downside_reaction: int) -> int
 
 
 def risk_capacity(
-    liquidity_need: int,
-    annual_income: int,
-    net_worth: int,
-    investment_horizon: int,
-    financial_goal_importance: int) -> float:
+        liquidity_need: int,
+        annual_income: int,
+        net_worth: int,
+        investment_horizon: int,
+        financial_goal_importance: int) -> float:
     """
-    Calculates investor's actual capacity to assume risk (risk capacity),
-    The value will be between 1 and 6 depending on the risk capacity,
-    being 1 little risk appetite or 6 very high risk capacity. Values need to be
-    reescalated to a 1-6 scale
+    Computes risk capacity.
 
     Parameters
     ----------
-    liquidity_need : int (1–5)
-        Level of liquidity needed
-        1 = Immediate
-        2 = High liquidity needed
-        3 = Medium liquidity needed
-        4 = Low liquidity needed
-        5 = Very low liquidity needed
-        Higher values imply greater ability to bear investment risk.
-
-    annual_income : int (1–5)
-        Annual income level.
-        1 = Very low income
-        2 = Low income
-        3 = Medium income
-        4 = High income
-        5 = Very high income
-        Higher values imply greater risk-bearing ability.
-
-    net_worth : int (1–5)
-        Investor's accumulated savings and financial wealth.
-        1 = Very low net worth
-        2 = Low net worth
-        3 = Medium net worth
-        4 = High net worth
-        5 = Very high net worth
-        Higher values imply greater financial resilience and risk capacity.
-
-    investment_horizon : int (1–5)
-        Investment time horizon.
-        1 = Very short term
-        2 = Short term
-        3 = Medium term
-        4 = Long term
-        5 = Very long term
-        Longer horizons implies more capacity to undertake risk
-
-    financial_goal_importance : int (1–3)
-        Criticality of the main financial objective.
-        1 = Critical objective (failure cannot be afforded, e.g., home purchase)
-        2 = Moderately important objective
-        3 = Flexible or long-term wealth accumulation objective
-        Less critical objectives means greater risk capacity.
+    liquidity_need : int. liquidity need.
+    annual_income : int. annual income.
+    net_worth : int. net worth.
+    investment_horizon : int. investment horizon.
+    financial_goal_importance : int. financial goal importance.
 
     Returns
     -------
-    risk_capacity_score : int (1–6)
-        Discrete score representing the investor's real capacity to assume investment risk:
-        1 = Very low risk capacity
-        2 = Low risk capacity
-        3 = Medium risk capacity
-        4 = Medium-high risk capacity
-        5 = High risk capacity
-        6 = Very high risk capacity
+    float: risk capacity output.
     """
     # We first need to reescalate from 1 to 3 to 1 to 5
     if financial_goal_importance == 1:
@@ -142,12 +84,12 @@ def risk_capacity(
 
     # We calculate the average score on a 1–5 scale
     average_score = (
-        liquidity_need +
-        annual_income +
-        net_worth +
-        investment_horizon +
-        goal_score_rescaled
-    ) / 5.0
+                            liquidity_need +
+                            annual_income +
+                            net_worth +
+                            investment_horizon +
+                            goal_score_rescaled
+                    ) / 5.0
 
     # As we need to provide the number in a scale from 1 to 6, we need to map
     # the average score from 1 to 5 to 1 to 6
@@ -159,22 +101,18 @@ def risk_capacity(
     return risk_capacity_score
 
 
-def risk_tolerance(appetite: int, capacity: int)-> float:
-    """"
-    This function calculates the risk tolerance of an investor
-    Following MiFid, the final value will be the min of
-    risk appetite and risk tolerance.
+def risk_tolerance(appetite: int, capacity: int) -> float:
+    """
+    Computes risk tolerance.
 
     Parameters
     ----------
-    appetite : int
-        Value of risk appetite
-    capacity : int
-        value of risk capacity
+    appetite : int. appetite.
+    capacity : int. capacity.
 
     Returns
     -------
-    risk_tolerance : float
+    float: risk tolerance output.
     """
     return min(appetite, capacity)
 
@@ -187,44 +125,27 @@ def investor_target_volatility(knowledge: int,
                                net_worth: int,
                                investment_horizon: int,
                                financial_goal_importance: int
-                               ) :
+                               ):
     """
-    Computes the investor's target volatility range from risk appetite and risk capacity
+    Computes investor target volatility.
 
     Parameters
     ----------
-    knowledge : int (1–6)
-        Financial knowledge and experience level.
-
-    risk_level : int (1–6)
-        Declared willingness to assume investment risk.
-
-    downside_reaction : int (1–4)
-        Behavioral reaction to significant market downturns.
-
-    liquidity_need : int (1–5)
-        Required level of short-term liquidity.
-
-    annual_income : int (1–5)
-        Investor's annual income level.
-
-    net_worth : int (1–5)
-        Investor's accumulated financial wealth.
-
-    investment_horizon : int (1–5)
-        Planned investment time horizon.
-
-    financial_goal_importance : int (1–3)
-        Criticality of the main financial objective.
+    knowledge : int. knowledge.
+    risk_level : int. risk level.
+    downside_reaction : int. downside reaction.
+    liquidity_need : int. liquidity need.
+    annual_income : int. annual income.
+    net_worth : int. net worth.
+    investment_horizon : int. investment horizon.
+    financial_goal_importance : int. financial goal importance.
 
     Returns
     -------
-    target_volatility_range : Tuple[float, float]
-        A tuple (min_volatility, max_volatility) representing the recommended target annualized volatility interval
-        for the investor’s portfolio.
+    Any: investor target volatility output.
     """
     # calculate risk appetite
-    RA =risk_appetite(knowledge, risk_level, downside_reaction)
+    RA = risk_appetite(knowledge, risk_level, downside_reaction)
     # calculate risk capacity
     RC = risk_capacity(liquidity_need, annual_income, net_worth, investment_horizon, financial_goal_importance)
     # calculate total risk_tolerance
