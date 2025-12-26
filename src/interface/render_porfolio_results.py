@@ -102,7 +102,7 @@ def show_portfolio_returns():
     end_date = resultados["investor"].index[-1]
 
     with st.container(border=False):
-        subheader("Rendimiento de la cartera", font_size="2.0rem", margin_bottom="3.0rem")
+        subheader("Rendimiento de la cartera", font_size="1.8rem", margin_bottom="3.0rem")
         c1, c2, c3, c4, c5, c6, c7, c8 = st.columns(8)
         with c3:
             st.metric(
@@ -169,7 +169,7 @@ def create_portfolio_visualizations():
 
         with u1:
             if st.session_state.get("show_results_table_forecast", True):
-                subheader("Resultados de la cartera", font_size="2.0rem", margin_bottom="3.0rem")
+                subheader("Resultados de la cartera", font_size="1.8rem", margin_bottom="3.0rem")
                 render_results_table(df_results)
                 st.write("")
 
@@ -177,7 +177,7 @@ def create_portfolio_visualizations():
 
         with u2:
             if st.session_state.get("show_riesgo_rentabilidad", True):
-                subheader("Riesgo / rentabilidad", font_size="2.0rem")
+                subheader("Riesgo / rentabilidad", font_size="1.8rem")
                 show_markowitz_results(df_results=df_results,
                                        periods_per_year=PERIODS_PER_YEAR, no_ef=True)
 
@@ -187,7 +187,7 @@ def create_results_visualizations():
     if st.session_state.get("show_portfolio_results", True):
 
         with st.container(border=False):
-            subheader("Resultados de la cartera de inversión", font_size="2.0rem", margin_bottom="3.0rem")
+            subheader("Resultados de la cartera de inversión", font_size="1.8rem", margin_bottom="3.0rem")
             dict_pf_returns_forecast = st.session_state.get("dict_pf_returns_forecast")
             if dict_pf_returns_forecast is None:
                 st.info("Pulsa **Generar cartera** para calcular los resultados históricos.")
@@ -198,7 +198,7 @@ def create_results_visualizations():
     if st.session_state.get("show_stock_results", True):
 
         with st.container(border=False):
-            subheader("Resultados de las acciones de la cartera", font_size="2.0rem", margin_bottom="3.0rem")
+            subheader("Resultados de las acciones de la cartera", font_size="1.8rem", margin_bottom="3.0rem")
             dict_stock_results_forecast = st.session_state.get("dict_stock_results_forecast")
             if dict_stock_results_forecast is None:
                 st.info("Pulsa **Generar cartera** para calcular los resultados de las acciones.")
@@ -212,32 +212,6 @@ def create_results_visualizations():
 def render_results():
     render_sidebar_display_results()
 
-    df_returns = st.session_state["initial_data"]["test_set"]
-    weights = st.session_state["initial_results"][2]
-    rf_annual = st.session_state["investor_constraints_draft"]["risk_free_rate"]
-    amount = st.session_state["investor_constraints_draft"]["amount"]
-
-    dict_pf_returns_forecast, dict_stock_results_forecast, dict_pf_results_forecasts = render_historical_portfolios_results(
-        df_returns,
-        amount,
-        weights,
-        periods_per_year=PERIODS_PER_YEAR,
-        rf_annual=rf_annual
-    )
-    st.session_state["dict_pf_returns_forecast"] = dict_pf_returns_forecast
-    st.session_state["dict_stock_results_forecast"] = dict_stock_results_forecast
-    st.session_state["dict_pf_results_forecasts"] = dict_pf_results_forecasts
-
-    st.session_state["data_ready"] = True
-    st.session_state["step2_enabled"] = True
-    resultados_forecast = st.session_state["dict_pf_returns_forecast"]
-    end_date = resultados_forecast["investor"].index[-1]
-    resultados = st.session_state["initial_data"]
-    sectors = resultados["sectors"]
-    st.session_state["forecast_sector_weights"] = get_sector_weights_at_date(dict_stock_results_forecast["investor"],
-                                                                             sectors, end_date)
-    st.session_state["forecast_asset_weights"] = check_portfolio_weights(dict_stock_results_forecast["investor"],
-                                                                         end_date)
 
     if st.session_state.get("data_ready"):
         header("EVOLUCIÓN CARTERA")

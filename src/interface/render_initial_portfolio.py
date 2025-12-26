@@ -195,7 +195,7 @@ def add_assets():
     with st.container(border=True):
         b1, b2 = st.columns(2)
         with b1:
-            subheader("Añadir activo de manera manual a lista inicial", font_size="2.0rem", color="#006400")
+            subheader("Añadir activo de manera manual a lista inicial", font_size="1.8rem", color="#006400")
 
             ticker = st.text_input("Ticker de Yahoo",
                                    placeholder="ej: SAN.MC, BBVA.MC, AAPL",
@@ -228,7 +228,7 @@ def add_assets():
                     st.write(", ".join(st.session_state["custom_tickers"]))
                 with b2:
 
-                    subheader("Eliminar activos añadidos", font_size="2.0rem", color="#FF0000")
+                    subheader("Eliminar activos añadidos", font_size="1.8rem", color="#FF0000")
 
                     to_remove = st.multiselect(
                         "Eliminar acciones añadidas",
@@ -251,7 +251,7 @@ def render_investor_constraints():
 
     add_separation()
     with st.container(border=False):
-        subheader("Pesos de la cartera", font_size="2.0rem")
+        subheader("Pesos de la cartera", font_size="1.8rem")
         c1, c2, c3 = st.columns(3, gap="large")
 
         with c1:
@@ -279,7 +279,7 @@ def render_investor_constraints():
                                           value=2.5)
 
     with st.container(border=True):
-        subheader("Selección de fechas para extracción de datos", font_size="2.0rem")
+        subheader("Selección de fechas para extracción de datos", font_size="1.8rem")
         subheader("(Se recomienda no ir más allá de 5 años atrás en el tiempo)")
         s1, s2 = st.columns(2)
 
@@ -295,7 +295,7 @@ def render_investor_constraints():
                                             reference_date=END_DATE)
 
     with st.container(border=True):
-        subheader("Selección de fechas para análisis de cartera", font_size="2.0rem", color="#006400")
+        subheader("Selección de fechas para análisis de cartera", font_size="1.8rem", color="#006400")
         w1, w2 = st.columns(2)
 
         with w1:
@@ -310,7 +310,7 @@ def render_investor_constraints():
                                                  key="date_portfolio2", reference_date=END_DATE_PORTFOLIO)
 
     with st.container(border=False):
-        subheader("Inversión inicial y tipo de interés libre de riesgo", font_size="2.0rem")
+        subheader("Inversión inicial y tipo de interés libre de riesgo", font_size="1.8rem")
         t1, t2 = st.columns(2)
         with t1:
             tt1, tt2 = st.columns(2)
@@ -468,13 +468,13 @@ def create_historical_portfolio_visualizations():
         c1, c2 = st.columns(2)
         if st.session_state.get("show_results_table", True):
             with c1:
-                subheader("Resultados de la cartera", font_size="2.0rem")
+                subheader("Resultados de la cartera", font_size="1.8rem")
                 render_results_table(df_results)
 
         # We now render the efficient frontier and the comparable portfolios
         if st.session_state.get("show_frontier", True):
             with c2:
-                subheader("Frontera eficiente y portfolios", font_size="2.0rem")
+                subheader("Frontera eficiente y portfolios", font_size="1.8rem")
                 show_markowitz_results(n_returns=100, returns=df_returns, df_results=df_results,
                                        periods_per_year=PERIODS_PER_YEAR)
 
@@ -482,7 +482,7 @@ def create_historical_portfolio_visualizations():
 def create_historical_results_visualizations():
     if st.session_state.get("show_historical", True):
         with st.container(border=False):
-            subheader("Resultados históricos de la cartera antes de inversión", font_size="2.0rem")
+            subheader("Resultados históricos de la cartera antes de inversión", font_size="1.8rem")
             dict_pf_returns = st.session_state.get("dict_pf_returns")
             if dict_pf_returns is None:
                 st.info("Pulsa **Generar cartera** para calcular los resultados históricos.")
@@ -492,7 +492,7 @@ def create_historical_results_visualizations():
     if st.session_state.get("show_historical_stocks", True):
 
         with st.container(border=False):
-            subheader("Resultados históricos de las acciones de la cartera", font_size="2.0rem")
+            subheader("Resultados históricos de las acciones de la cartera", font_size="1.8rem")
             dict_stock_results = st.session_state.get("dict_stock_results")
             if dict_stock_results is None:
                 st.info("Pulsa **Generar cartera** para calcular los resultados históricos de las acciones.")
@@ -536,9 +536,22 @@ def render_sidebar_display_options():
     else:
         st.sidebar.button("Ver evolución cartera", use_container_width=True, disabled=True)
 
-    if st.sidebar.button("Ir a análisis de datos", use_container_width=True):
+    analysis_enabled = (
+            st.session_state.get("data_ready", False)
+            and st.session_state.get("initial_data") is not None
+            and st.session_state.get("initial_results") is not None
+    )
+
+    if st.sidebar.button(
+            "Ir a análisis de datos",
+            use_container_width=True,
+            disabled=not analysis_enabled,
+    ):
         st.session_state["route"] = "analysis"
         st.rerun()
+
+    if not analysis_enabled:
+        st.sidebar.caption("Genera primero la cartera inicial para desbloquear el análisis.")
 
     st.sidebar.markdown("---")
     st.sidebar.header("Selecciona visualizaciones")
@@ -592,7 +605,34 @@ def render_sidebar_display_options():
     if sigma_min is not None and sigma_max is not None:
         st.sidebar.caption(f"Volatilidad recomendada: {sigma_min:.2f}–{sigma_max:.2f}")
 
+def forecast_portfolio():
 
+    df_returns = st.session_state["initial_data"]["test_set"]
+    weights = st.session_state["initial_results"][2]
+    rf_annual = st.session_state["investor_constraints_draft"]["risk_free_rate"]
+    amount = st.session_state["investor_constraints_draft"]["amount"]
+
+    dict_pf_returns_forecast, dict_stock_results_forecast, dict_pf_results_forecasts = render_historical_portfolios_results(
+        df_returns,
+        amount,
+        weights,
+        periods_per_year=PERIODS_PER_YEAR,
+        rf_annual=rf_annual
+    )
+    st.session_state["dict_pf_returns_forecast"] = dict_pf_returns_forecast
+    st.session_state["dict_stock_results_forecast"] = dict_stock_results_forecast
+    st.session_state["dict_pf_results_forecasts"] = dict_pf_results_forecasts
+
+    st.session_state["data_ready"] = True
+    st.session_state["step2_enabled"] = True
+    resultados_forecast = st.session_state["dict_pf_returns_forecast"]
+    end_date = resultados_forecast["investor"].index[-1]
+    resultados = st.session_state["initial_data"]
+    sectors = resultados["sectors"]
+    st.session_state["forecast_sector_weights"] = get_sector_weights_at_date(dict_stock_results_forecast["investor"],
+                                                                             sectors, end_date)
+    st.session_state["forecast_asset_weights"] = check_portfolio_weights(dict_stock_results_forecast["investor"],
+                                                                         end_date)
 def render_constraints_portfolio():
     header("AJUSTES DE LA CARTERA INICIAL")
     st.session_state.setdefault("data_ready", False)
@@ -639,16 +679,19 @@ def render_constraints_portfolio():
             )
             st.session_state["dict_pf_returns"] = dict_pf_returns
             st.session_state["dict_stock_results"] = dict_stock_results
+            forecast_portfolio()
+
 
         st.session_state["data_ready"] = True
         st.session_state["step2_enabled"] = True
 
-    if st.session_state.get("data_ready"):
-        st.write("")
-        header("RESULTADOS")
-        create_historical_portfolio_visualizations()
-        create_historical_results_visualizations()
+    with (st.spinner("Generando visualizaciones...")):
+        if st.session_state.get("data_ready"):
+            st.write("")
+            header("RESULTADOS")
+            create_historical_portfolio_visualizations()
+            create_historical_results_visualizations()
 
-    else:
-        st.info("Configura parámetros y pulsa **Generar cartera**.")
+        else:
+            st.info("Configura parámetros y pulsa **Generar cartera**.")
 

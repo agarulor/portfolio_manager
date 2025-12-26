@@ -296,7 +296,7 @@ def render_historic_performance() -> None:
     c1, c2 = st.columns(2)
     if st.session_state.get("show_resultado_historico", True):
         with c1:
-            subheader(f"Resultados históricos de {base_name} (y comparable)", font_size="2.0rem")
+            subheader(f"Resultados históricos de {base_name} (y comparable)", font_size="1.8rem")
             plot_portfolio_values_select(
                 cum_returns_historic,
                 key="historic_cum",
@@ -306,7 +306,7 @@ def render_historic_performance() -> None:
             )
     if st.session_state.get("show_evolucion_historica_precio", True):
         with c2:
-            subheader(f"Evolución histórica del precio de {base_name} (y comparable)", font_size="2.0rem")
+            subheader(f"Evolución histórica del precio de {base_name} (y comparable)", font_size="1.8rem")
             plot_portfolio_values_select(
                 historic_prices,
                 key="historic_price",
@@ -319,7 +319,7 @@ def render_historic_performance() -> None:
     if st.session_state.get("retorno_diario_historico", True):
         with d1:
             #  Plot: daily returns scatter
-            subheader(f"Retorno diario histórico de {base_name} en %", font_size="2.0rem")
+            subheader(f"Retorno diario histórico de {base_name} en %", font_size="1.8remrem")
             plot_daily_returns_scatter_base_only(
                 historic_returns,
                 key="daily_scatter_historic",
@@ -330,7 +330,7 @@ def render_historic_performance() -> None:
 
     if st.session_state.get("distribucion_historico", True):
         with d2:
-            subheader(f"Distribución del rendimiento diario histórico de {base_name}", font_size="2.0rem")
+            subheader(f"Distribución del rendimiento diario histórico de {base_name}", font_size="1.8rem")
             plot_daily_returns_distribution(
                 historic_returns,
                 base=base,
@@ -343,7 +343,7 @@ def render_historic_performance() -> None:
 
     if st.session_state.get("show_resultado_recientes", True):
         with e1:
-            subheader(f"Resultados recientes de {base_name} (y comparable)", font_size="2.0rem")
+            subheader(f"Resultados recientes de {base_name} (y comparable)", font_size="1.8rem")
             plot_portfolio_values_select(
                 cum_returns_recent,
                 key="recent_cum",
@@ -354,7 +354,7 @@ def render_historic_performance() -> None:
 
     if st.session_state.get("show_evolucion_reciente_precio", True):
         with e2:
-            subheader(f"Evolución reciente del precio de {base_name} (y comparable)", font_size="2.0rem")
+            subheader(f"Evolución reciente del precio de {base_name} (y comparable)", font_size="1.8rem")
             plot_portfolio_values_select(
                 recent_prices,
                 key="recent_price",
@@ -367,7 +367,7 @@ def render_historic_performance() -> None:
     if st.session_state.get("retorno_diario_reciente", True):
         with f1:
             #  Plot: daily recent resutls
-            subheader(f"Retorno diario reciente de {base_name} en %", font_size="2.0rem")
+            subheader(f"Retorno diario reciente de {base_name} en %", font_size="1.8rem")
             plot_daily_returns_scatter_base_only(
                 recent_returns,
                 key="daily_scatter_recent",
@@ -378,7 +378,7 @@ def render_historic_performance() -> None:
 
     if st.session_state.get("distribucion_reciente", True):
         with f2:
-            subheader(f"Distribución del rendimiento diario reciente de {base_name}", font_size="2.0rem")
+            subheader(f"Distribución del rendimiento diario reciente de {base_name}", font_size="1.8rem")
             plot_daily_returns_distribution(
                 recent_returns,
                 base=base,
