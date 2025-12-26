@@ -1,4 +1,5 @@
 import streamlit as st
+import pandas as pd
 from interface.main_interface import subheader, header
 from data_management.get_data import get_stock_prices, exists_asset
 from data_management.dataset_preparation import split_data_markowtiz
@@ -6,9 +7,11 @@ from data_management.clean_data import clean_and_align_data
 from portfolio_tools.return_metrics import calculate_daily_returns
 from interface.landing_page import add_separation
 from interface.visualizations import show_portfolio, render_results_table, show_markowitz_results, plot_portfolio_values
-from portfolio_management.investor_portfolios import get_sector_exposure_table, create_output_table_portfolios, render_historical_portfolios_results
+from portfolio_management.investor_portfolios import get_sector_exposure_table, create_output_table_portfolios, \
+    render_historical_portfolios_results
 import datetime as dt
 from types import MappingProxyType
+
 PERIODS_PER_YEAR = 255
 
 RISK_PROFILE_DICTIONARY = MappingProxyType({
@@ -21,6 +24,7 @@ RISK_PROFILE_DICTIONARY = MappingProxyType({
 })
 
 import plotly.graph_objects as go
+
 FILENAME_PATH = "data/input/ibex_eurostoxx.csv"
 TICKER_COL = "ticker_yahoo"
 COMPANIES_COL = "name"
@@ -34,12 +38,13 @@ END_DATE = dt.date(2025, 9, 30)
 INITIAL_DATE_PORTFOLIO = dt.date(2024, 10, 1)
 END_DATE_PORTFOLIO = dt.date(2025, 9, 30)
 
-def render_slider(text:str,
+
+def render_slider(text: str,
                   text_slider: str,
                   key: str,
                   min_value: float,
                   max_value: float,
-                  value = 25.0,
+                  value=25.0,
                   font_color: str = FONT_COLOR,
                   font_size: str = FONT_SIZE,
                   font_weight: str = FONT_WEIGHT):
@@ -60,7 +65,7 @@ def render_slider(text:str,
         text_slider,
         min_value=min_value, max_value=max_value, value=value, step=0.5,
         label_visibility="collapsed",
-        key= key
+        key=key
     )
 
     st.markdown(
@@ -81,11 +86,11 @@ def render_slider(text:str,
     return max_pct
 
 
-def render_number_input(text:str,
-                        min_value:float,
-                        init_value:float,
-                        step:float,
-                        key:str,
+def render_number_input(text: str,
+                        min_value: float,
+                        init_value: float,
+                        step: float,
+                        key: str,
                         font_color: str = FONT_COLOR,
                         font_size: str = FONT_SIZE,
                         font_weight: str = FONT_WEIGHT,
@@ -138,9 +143,9 @@ def render_number_input(text:str,
     return amount
 
 
-def render_date(text:str,
+def render_date(text: str,
                 reference_date: dt.date,
-                key:str,
+                key: str,
                 font_color: str = FONT_COLOR,
                 font_size: str = FONT_SIZE,
                 font_weight: str = FONT_WEIGHT):
@@ -161,7 +166,7 @@ def render_date(text:str,
         "Fecha de la aportación",
         value=reference_date,
         label_visibility="collapsed",
-        key= key
+        key=key
     )
     st.markdown(
         f"""
@@ -182,42 +187,75 @@ def render_date(text:str,
 
 
 def add_assets():
+    existing_assets = pd.read_csv(FILENAME_PATH)
+    column_with_tickers = list(existing_assets[TICKER_COL])
+    # Initialize session state
+    st.session_state.setdefault("custom_tickers", [])
     with st.container(border=True):
-        subheader("Añadir acción manualmente")
-        c1, c2 = st.columns(2)
-        with c1:
-            ticker = st.text_input("Ticker de Yahoo", placeholder="ej: SAN.MC, BBVA.MC, AAPL", key = "ticker")
+        b1, b2 = st.columns(2)
+        with b1:
+            subheader("Añadir activo de manera manual a lista inicial", font_size="2.0rem", color="#006400")
 
-        c1, c2 = st.columns([3, 1])
+            ticker = st.text_input("Ticker de Yahoo",
+                                   placeholder="ej: SAN.MC, BBVA.MC, AAPL",
+                                   key="ticker")
 
-        with c2:
-            add = st.button("Añadir activo", type="primary")
+            d1, d2, d3 = st.columns(3)
+            with d2:
+                add = st.button("Añadir activo", type="primary")
 
-        if add:
-            t = ticker.strip().upper()
-            print(exists_asset(t))
-            if not t:
-                st.warning("Introduce un ticker válido.")
+            if add:
+                t = ticker.strip().upper()
+                print(exists_asset(t))
+                if not t:
+                    st.warning("Introduce un ticker válido.")
 
-            #elif t in st.session_state["custom_tickers"]:
-             #   st.warning(f"El ticker {t} ya está añadido.")
-            elif not exists_asset(t):
-                st.warning(f"El ticker {t} no existe en Yahoo Finance.")
+                if t in column_with_tickers:
+                    st.warning(f"El ticker {t} ya está en la lista inicial")
+                elif t in st.session_state["custom_tickers"]:
+                    st.warning(f"El ticker {t} ya está añadido.")
+                elif not exists_asset(t):
+                    st.warning(f"El ticker {t} no existe en Yahoo Finance.")
 
-            else:
-               # st.session_state["custom_tickers"].append(t)
-                st.success(f"Ticker {t} añadido.")
-               # st.session_state["ticker_input"] = ""
+                else:
+                    st.session_state["custom_tickers"].append(t)
+                    st.success(f"Ticker {t} añadido.")
+                    st.session_state["ticker_input"] = ""
+            if st.session_state["custom_tickers"]:
+                e1, e2 = st.columns(2)
+                with e1:
+                    st.write("Nuevos activos añadidos hasta el momento")
+                    st.write(", ".join(st.session_state["custom_tickers"]))
+                with b2:
+
+                    subheader("Eliminar activos añadidos", font_size="2.0rem", color="#FF0000")
+
+
+
+
+                    to_remove = st.multiselect(
+                        "Eliminar acciones añadidas",
+                        options=st.session_state["custom_tickers"],
+                        key="remove_custom_tickers",
+                    )
+
+                    g1, g2, g3 = st.columns(3)
+                    with g2:
+                        if st.button("Eliminar seleccionadas"):
+                            st.session_state["custom_tickers"] = [
+                                t for t in st.session_state["custom_tickers"] if t not in to_remove
+                            ]
+                            st.rerun()
+
 
 def render_investor_constraints():
-
     subheader("Defina el grado de diversificación y el importe inicial para la propuesta de cartera",
               margin_bottom="1.0rem")
 
     add_separation()
     with st.container(border=False):
         subheader("Pesos de la cartera", font_size="2.0rem")
-        c1, c2, c3 = st.columns(3, gap = "large")
+        c1, c2, c3 = st.columns(3, gap="large")
 
         with c1:
             max_sector_pct = render_slider(text="Selecciona el peso máximo por sector",
@@ -239,8 +277,8 @@ def render_investor_constraints():
             min_stock_pct = render_slider(text="Selecciona peso mínimo por acción",
                                           text_slider="% mínimo asignado a una acción",
                                           key="min_stock_pct",
-                                          min_value = 0.0,
-                                          max_value = 100.0,
+                                          min_value=0.0,
+                                          max_value=100.0,
                                           value=2.5)
 
     with st.container(border=True):
@@ -250,24 +288,28 @@ def render_investor_constraints():
         with s1:
             st1, st2 = st.columns(2)
             with st2:
-                data_start_date = render_date("Fecha de inicio de extracción de datos", key="date" , reference_date=INITIAL_DATE)
+                data_start_date = render_date("Fecha de inicio de extracción de datos", key="date",
+                                              reference_date=INITIAL_DATE)
         with s2:
             stt1, stt2 = st.columns(2)
             with stt1:
-                data_end_date = render_date("Fecha de fin de extracción de datos", font_color="#FF0000", key="date2", reference_date=END_DATE)
+                data_end_date = render_date("Fecha de fin de extracción de datos", font_color="#FF0000", key="date2",
+                                            reference_date=END_DATE)
 
     with st.container(border=True):
-        subheader("Selección de fechas para análisis de cartera", font_size="2.0rem", color = "#006400" )
-        w1, w2  = st.columns(2)
+        subheader("Selección de fechas para análisis de cartera", font_size="2.0rem", color="#006400")
+        w1, w2 = st.columns(2)
 
         with w1:
             wt1, wt2 = st.columns(2)
             with wt2:
-                date_portfolio_start = render_date("Fecha de inicio de generación de cartera", key="date_portfolio" , reference_date=INITIAL_DATE_PORTFOLIO)
+                date_portfolio_start = render_date("Fecha de inicio de generación de cartera", key="date_portfolio",
+                                                   reference_date=INITIAL_DATE_PORTFOLIO)
         with w2:
             wtt1, wtt2 = st.columns(2)
             with wtt1:
-                date_portfolio_end = render_date("Fecha de fin de generación de cartera", font_color="#006400", key="date_portfolio2", reference_date=END_DATE_PORTFOLIO)
+                date_portfolio_end = render_date("Fecha de fin de generación de cartera", font_color="#006400",
+                                                 key="date_portfolio2", reference_date=END_DATE_PORTFOLIO)
 
     with st.container(border=False):
         subheader("Inversión inicial y tipo de interés libre de riesgo", font_size="2.0rem")
@@ -304,9 +346,8 @@ def render_investor_constraints():
         "date_portfolio_start": date_portfolio_start,
         "date_portfolio_end": date_portfolio_end,
         "amount": amount,
-        "risk_free_rate": risk_free_rate/100,
+        "risk_free_rate": risk_free_rate / 100,
     }
-
 
 
 def get_clean_initial_data(filename_path: str = FILENAME_PATH,
@@ -317,26 +358,25 @@ def get_clean_initial_data(filename_path: str = FILENAME_PATH,
                            end_date: str = ENDING_DATE,
                            initial_date_portfolio: str = INITIAL_DATE_PORTFOLIO,
                            end_date_portfolio: str = END_DATE_PORTFOLIO):
-
-
     price_data, sectors = get_stock_prices(file_path=filename_path,
                                            ticker_col=ticker_col,
                                            adjusted=adjusted,
-                                           companies_col= companies_col,
+                                           companies_col=companies_col,
                                            start_date=start_date,
                                            end_date=end_date,
 
                                            )
 
-    #price_data = read_price_file("data/processed/prices_20251218-234715.csv")
-    #sectors = read_price_file("data/processed/sectores_20251218-234715.csv")
+    # price_data = read_price_file("data/processed/prices_20251218-234715.csv")
+    # sectors = read_price_file("data/processed/sectores_20251218-234715.csv")
     prices, report, summary = clean_and_align_data(price_data, beginning_data=True)
-    #save_preprocessed_data(prices, file_prefix="prices")
-    #save_preprocessed_data(sectors, file_prefix="sectores")
+    # save_preprocessed_data(prices, file_prefix="prices")
+    # save_preprocessed_data(sectors, file_prefix="sectores")
     daily_returns = calculate_daily_returns(prices, method="simple")
-    train_set, test_set = split_data_markowtiz(returns=daily_returns, test_date_start=initial_date_portfolio, test_date_end=end_date_portfolio)
-    train_price, test_price = split_data_markowtiz(returns=prices, test_date_start=initial_date_portfolio, test_date_end=end_date_portfolio)
-
+    train_set, test_set = split_data_markowtiz(returns=daily_returns, test_date_start=initial_date_portfolio,
+                                               test_date_end=end_date_portfolio)
+    train_price, test_price = split_data_markowtiz(returns=prices, test_date_start=initial_date_portfolio,
+                                                   test_date_end=end_date_portfolio)
 
     # We return relevant data
     return {
@@ -349,8 +389,8 @@ def get_clean_initial_data(filename_path: str = FILENAME_PATH,
         "sectors": sectors
     }
 
-def get_initial_data():
 
+def get_initial_data():
     constraints = st.session_state["investor_constraints_draft"]
     data_start_date = constraints["data_start_date"]
     data_end_date = constraints["data_end_date"]
@@ -363,6 +403,7 @@ def get_initial_data():
         end_date_portfolio=data_portfolio_end
     )
     st.session_state.data_ready = True
+
 
 def get_initial_portfolio():
     # We get the relevant information constraints
@@ -392,9 +433,7 @@ def get_initial_portfolio():
                                                                          risk_free_ticker="RISK_FREE")
 
 
-
 def create_historical_portfolio_visualizations():
-
     if not st.session_state.get("data_ready", False):
         return
     df_weights = st.session_state["initial_results"][1]["investor"]
@@ -432,11 +471,12 @@ def create_historical_portfolio_visualizations():
                 subheader("Resultados de la cartera", font_size="2.0rem")
                 render_results_table(df_results)
 
-    # We now render the efficient frontier and the comparable portfolios
+        # We now render the efficient frontier and the comparable portfolios
         if st.session_state.get("show_frontier", True):
             with c2:
                 subheader("Frontera eficiente y portfolios", font_size="2.0rem")
-                show_markowitz_results(n_returns=100, returns= df_returns, df_results=df_results, periods_per_year=PERIODS_PER_YEAR)
+                show_markowitz_results(n_returns=100, returns=df_returns, df_results=df_results,
+                                       periods_per_year=PERIODS_PER_YEAR)
 
 
 def create_historical_results_visualizations():
@@ -461,6 +501,7 @@ def create_historical_results_visualizations():
             investor_results = dict_stock_results["investor"]
             plot_portfolio_values(investor_results, key="investor_portfolio", portfolio_type="stock")
 
+
 def reset_portfolio_results():
     keys_to_reset = [
         "initial_data",
@@ -483,7 +524,6 @@ def render_sidebar_display_options():
         st.session_state["route"] = "questionnaire"
         st.rerun()
 
-
     if st.session_state.get("step2_enabled", False):
         if st.sidebar.button("Ver evolución cartera", use_container_width=True, type="primary"):
             st.session_state["route"] = "results"
@@ -495,7 +535,6 @@ def render_sidebar_display_options():
     if st.sidebar.button("Ir a análisis de datos", use_container_width=True):
         st.session_state["route"] = "analysis"
         st.rerun()
-
 
     st.sidebar.markdown("---")
     st.sidebar.header("Selecciona visualizaciones")
@@ -599,7 +638,6 @@ def render_constraints_portfolio():
 
         st.session_state["data_ready"] = True
         st.session_state["step2_enabled"] = True
-
 
     if st.session_state.get("data_ready"):
         st.write("")
