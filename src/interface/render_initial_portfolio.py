@@ -524,6 +524,10 @@ def render_sidebar_display_options():
         st.session_state["route"] = "questionnaire"
         st.rerun()
 
+    if st.sidebar.button("Volver a cartera inicial", width="stretch"):
+        st.session_state["route"] = "portfolio"
+        st.rerun()
+
     if st.session_state.get("step2_enabled", False):
         if st.sidebar.button("Ver evolución cartera", use_container_width=True, type="primary"):
             st.session_state["route"] = "results"

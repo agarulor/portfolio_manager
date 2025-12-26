@@ -30,6 +30,13 @@ def render_sidebar_display_results():
         st.session_state["route"] = "portfolio"
         st.rerun()
 
+    if st.session_state.get("step2_enabled", False):
+        if st.sidebar.button("Ver evolución cartera", use_container_width=True, type="primary"):
+            st.session_state["route"] = "results"
+            st.rerun()
+    else:
+        st.sidebar.button("Ver evolución cartera", use_container_width=True, disabled=True)
+
     if st.sidebar.button("Ir a análisis de datos", use_container_width=True):
         st.session_state["route"] = "analysis"
         st.rerun()
@@ -39,12 +46,14 @@ def render_sidebar_display_results():
     st.session_state.setdefault("show_alloc_assets_forecast", True)
     st.session_state.setdefault("show_alloc_sectors_forecast", True)
     st.session_state.setdefault("show_results_table_forecast", True)
+    st.session_state.setdefault("show_riesgo_rentabilidad", True)
     st.session_state.setdefault("show_portfolio_results", True)
     st.session_state.setdefault("show_stock_results", True)
 
     st.sidebar.checkbox("Composición por activo", key="show_alloc_assets_forecast")
     st.sidebar.checkbox("Composición por sector", key="show_alloc_sectors_forecast")
     st.sidebar.checkbox("Tabla de resultados", key="show_results_table_forecast")
+    st.sidebar.checkbox("Riesgo / Rentabilidad", key="show_riesgo_rentabilidad")
     st.sidebar.checkbox("Histórico (valor cartera)", key="show_portfolio_results")
     st.sidebar.checkbox("Histórico (valor acciones)", key="show_stock_results")
 
@@ -92,7 +101,6 @@ def show_portfolio_returns():
     profit_pct = (final_amount / initial_amount - 1.0) * 100 if initial_amount else 0.0
     end_date = resultados["investor"].index[-1]
 
-    #st.write(dict_pf_returns_forecast["investor"][-1])
     with st.container(border=False):
         subheader("Rendimiento de la cartera", font_size="2.0rem", margin_bottom="3.0rem")
         c1, c2, c3, c4, c5, c6, c7, c8 = st.columns(8)
@@ -168,10 +176,10 @@ def create_portfolio_visualizations():
     # We now render the efficient frontier and the comparable portfolios
 
         with u2:
-            #if st.session_state.get("show_frontier", True):
-            subheader("Riesgo / rentabilidad", font_size="2.0rem")
-            show_markowitz_results(df_results=df_results,
-                                   periods_per_year=PERIODS_PER_YEAR, no_ef=True)
+            if st.session_state.get("show_riesgo_rentabilidad", True):
+                subheader("Riesgo / rentabilidad", font_size="2.0rem")
+                show_markowitz_results(df_results=df_results,
+                                       periods_per_year=PERIODS_PER_YEAR, no_ef=True)
 
 
 def create_results_visualizations():

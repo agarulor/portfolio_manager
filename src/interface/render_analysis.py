@@ -91,6 +91,36 @@ def get_analysis_selection(prefix: str = "analysis_stock") -> tuple[Optional[str
     return base, compare
 
 
+def siderbar_show_charts():
+    st.sidebar.markdown("---")
+    st.sidebar.header("Selecciona visualizaciones")
+
+    # Selection charts historic
+    st.session_state.setdefault("show_resultado_historico", True)
+    st.session_state.setdefault("show_evolucion_historica_precio", True)
+    st.session_state.setdefault("retorno_diario_historico", True)
+    st.session_state.setdefault("distribucion_historico", True)
+
+    # Selection charts recent
+    st.session_state.setdefault("show_resultado_recientes", True)
+    st.session_state.setdefault("show_evolucion_reciente_precio", True)
+    st.session_state.setdefault("retorno_diario_reciente", True)
+    st.session_state.setdefault("distribucion_reciente", True)
+
+    # Show charts historic
+    st.sidebar.checkbox("Resultados históricos", key="show_resultado_historico")
+    st.sidebar.checkbox("Evolución histórica precio", key="show_evolucion_historica_precio")
+    st.sidebar.checkbox("Retorno diario histórico", key="retorno_diario_historico")
+    st.sidebar.checkbox("Distribución histórica", key="distribucion_historico")
+
+    # Selection charts recent
+    st.sidebar.checkbox("Resultados recientes", key="show_resultado_recientes")
+    st.sidebar.checkbox("Evolución reciente precio", key="show_evolucion_reciente_precio")
+    st.sidebar.checkbox("Retorno diario reciente", key="retorno_diario_reciente")
+    st.sidebar.checkbox("Distribución reciente", key="distribucion_reciente")
+
+
+
 def render_sidebar_display(options: list[str]) -> None:
     """
     Renders the analysis sidebar: navigation, global selectors, and investor profile.
@@ -122,9 +152,15 @@ def render_sidebar_display(options: list[str]) -> None:
     else:
         st.sidebar.button("Ver evolución cartera", use_container_width=True, disabled=True)
 
+    if st.sidebar.button("Ir a análisis de datos", use_container_width=True):
+        st.session_state["route"] = "analysis"
+        st.rerun()
+
     # Global selection for all analysis charts
     render_sidebar_analysis_selection(options, prefix="analysis_stock")
 
+    # Checkbox
+    siderbar_show_charts()
     # Investor profile (rendered nicely)
     st.sidebar.markdown("---")
     st.sidebar.header("Perfil del inversor")
@@ -257,97 +293,99 @@ def render_historic_performance() -> None:
         return
 
     # Plots: cumulative returns (base + compare)
-
-
     c1, c2 = st.columns(2)
-    with c1:
-        subheader(f"Resultados históricos de {base_name} (y comparable)", font_size="2.0rem")
-        plot_portfolio_values_select(
-            cum_returns_historic,
-            key="historic_cum",
-            portfolio_type="stock",
-            selected=selected,
-            show_selector=False,
+    if st.session_state.get("show_resultado_historico", True):
+        with c1:
+            subheader(f"Resultados históricos de {base_name} (y comparable)", font_size="2.0rem")
+            plot_portfolio_values_select(
+                cum_returns_historic,
+                key="historic_cum",
+                portfolio_type="stock",
+                selected=selected,
+                show_selector=False,
+            )
+    if st.session_state.get("show_evolucion_historica_precio", True):
+        with c2:
+            subheader(f"Evolución histórica del precio de {base_name} (y comparable)", font_size="2.0rem")
+            plot_portfolio_values_select(
+                historic_prices,
+                key="historic_price",
+                portfolio_type="stock",
+                selected=selected,
+                show_selector=False,
         )
-
-    with c2:
-        subheader(f"Evolución histórica del precio de {base_name} (y comparable)", font_size="2.0rem")
-        plot_portfolio_values_select(
-            historic_prices,
-            key="historic_price",
-            portfolio_type="stock",
-            selected=selected,
-            show_selector=False,
-        )
-
 
     d1, d2 = st.columns(2)
+    if st.session_state.get("retorno_diario_historico", True):
+        with d1:
+            #  Plot: daily returns scatter
+            subheader(f"Retorno diario histórico de {base_name} en %", font_size="2.0rem")
+            plot_daily_returns_scatter_base_only(
+                historic_returns,
+                key="daily_scatter_historic",
+                data_type="stock",
+                base=base,
+                y_in_percent=True
+            )
 
-    with d1:
-        #  Plot: daily returns scatter
-        subheader(f"Retorno diario histórico de {base_name} en %", font_size="2.0rem")
-        plot_daily_returns_scatter_base_only(
-            historic_returns,
-            key="daily_scatter_historic",
-            data_type="stock",
-            base=base,
-            y_in_percent=True
-        )
-
-    with d2:
-        subheader(f"Distribución del rendimiento diario histórico de {base_name}", font_size="2.0rem")
-        plot_daily_returns_distribution(
-            historic_returns,
-            base=base,
-            data_type="stock",
-            y_in_percent=True,
-            key="dist_daily_returns_historic",
-        )
+    if st.session_state.get("distribucion_historico", True):
+        with d2:
+            subheader(f"Distribución del rendimiento diario histórico de {base_name}", font_size="2.0rem")
+            plot_daily_returns_distribution(
+                historic_returns,
+                base=base,
+                data_type="stock",
+                y_in_percent=True,
+                key="dist_daily_returns_historic",
+            )
 
     e1, e2 = st.columns(2)
 
-    with e1:
-        subheader(f"Resultados recientes de {base_name} (y comparable)", font_size="2.0rem")
-        plot_portfolio_values_select(
-            cum_returns_recent,
-            key="recent_cum",
-            portfolio_type="stock",
-            selected=selected,
-            show_selector=False,
-        )
+    if st.session_state.get("show_resultado_recientes", True):
+        with e1:
+            subheader(f"Resultados recientes de {base_name} (y comparable)", font_size="2.0rem")
+            plot_portfolio_values_select(
+                cum_returns_recent,
+                key="recent_cum",
+                portfolio_type="stock",
+                selected=selected,
+                show_selector=False,
+            )
 
-    with e2:
-        subheader(f"Evolución reciente del precio de {base_name}(y comparable)", font_size="2.0rem")
-        plot_portfolio_values_select(
-            recent_prices,
-            key="recent_price",
-            portfolio_type="stock",
-            selected=selected,
-            show_selector=False,
-        )
-
+    if st.session_state.get("show_evolucion_reciente_precio", True):
+        with e2:
+            subheader(f"Evolución reciente del precio de {base_name}(y comparable)", font_size="2.0rem")
+            plot_portfolio_values_select(
+                recent_prices,
+                key="recent_price",
+                portfolio_type="stock",
+                selected=selected,
+                show_selector=False,
+            )
     f1, f2 = st.columns(2)
 
-    with f1:
-        #  Plot: daily recent resutls
-        subheader(f"Retorno diario reciente de {base_name} en %", font_size="2.0rem")
-        plot_daily_returns_scatter_base_only(
-            recent_returns,
-            key="daily_scatter_recent",
-            data_type="stock",
-            base=base,
-            y_in_percent=True
-        )
+    if st.session_state.get("retorno_diario_reciente", True):
+        with f1:
+            #  Plot: daily recent resutls
+            subheader(f"Retorno diario reciente de {base_name} en %", font_size="2.0rem")
+            plot_daily_returns_scatter_base_only(
+                recent_returns,
+                key="daily_scatter_recent",
+                data_type="stock",
+                base=base,
+                y_in_percent=True
+            )
 
-    with f2:
-        subheader(f"Distribución del rendimiento diario reciente de {base_name}", font_size="2.0rem")
-        plot_daily_returns_distribution(
-            recent_returns,
-            base=base,
-            data_type="stock",
-            y_in_percent=True,
-            key="dist_daily_returns_recent",
-        )
+    if st.session_state.get("distribucion_reciente", True):
+        with f2:
+            subheader(f"Distribución del rendimiento diario reciente de {base_name}", font_size="2.0rem")
+            plot_daily_returns_distribution(
+                recent_returns,
+                base=base,
+                data_type="stock",
+                y_in_percent=True,
+                key="dist_daily_returns_recent",
+            )
 
 
 def render_analysis() -> None:
