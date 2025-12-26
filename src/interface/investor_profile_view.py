@@ -50,6 +50,7 @@ def radio_question(
         """,
         unsafe_allow_html=True
     )
+    st.write("")
 
     # Radio
     return st.radio(
