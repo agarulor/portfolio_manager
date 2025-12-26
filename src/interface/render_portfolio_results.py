@@ -120,21 +120,29 @@ def show_portfolio_returns():
     profit_abs = final_amount - initial_amount
     profit_pct = (final_amount / initial_amount - 1.0) * 100 if initial_amount else 0.0
     end_date = resultados["investor"].index[-1]
+    start_date = resultados["investor"].index[1]
 
     with st.container(border=False):
         subheader("Rendimiento de la cartera", font_size="1.8rem", margin_bottom="3.0rem")
         c1, c2, c3, c4, c5, c6, c7, c8 = st.columns(8)
-        with c3:
+        with c2:
             st.metric(
                 "Importe inicial",
                 f"{initial_amount:,.2f} €".replace(",", "X").replace(".", ",").replace("X", ".")
             )
-        with c4:
+        with c3:
             st.metric(
                 "Importe final",
                 f"{final_amount:,.2f} €".replace(",", "X").replace(".", ",").replace("X", "."),
                 delta=f"{profit_abs:,.2f} €".replace(",", "X").replace(".", ",").replace("X", "."),
             )
+
+        with c4:
+            st.metric(
+                "Fecha de inversión inicial",
+                start_date.strftime("%d/%m/%Y") if hasattr(start_date, "strftime") else str(start_date)
+            )
+
 
         with c5:
             st.metric(
