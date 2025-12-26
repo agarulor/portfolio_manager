@@ -3,9 +3,12 @@ import os
 import streamlit as st
 import base64
 from pathlib import Path
-sys.path.append(os.path.join(os.path.dirname(__file__), "src"))
+current_file_path = Path(__file__).resolve()
 BASE_DIR = Path(__file__).resolve().parent
 ASSETS_PATH = BASE_DIR / "assets"
+PROJECT_ROOT = BASE_DIR.parent.parent
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
 
 
 def _img_to_base64(img_path: Path) -> str:
