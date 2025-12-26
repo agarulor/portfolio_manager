@@ -1,8 +1,5 @@
 import streamlit as st
-from interface.investor_profile_view import (
-    render_investor_questionnaire,
-    show_investor_profile
-)
+from interface.investor_profile_view import render_investor_questionnaire, show_investor_profile
 from interface.main_interface import apply_global_styles, render_sidebar
 from interface.render_initial_portfolio import render_constraints_portfolio
 from interface.landing_page import render as render_landing

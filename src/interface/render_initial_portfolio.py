@@ -678,7 +678,6 @@ def render_sidebar_display_options():
     # Robust init
     st.session_state.setdefault("data_ready", False)
     st.session_state.setdefault("viz_ready", False)
-    st.session_state.setdefault("step2_enabled", False)
     st.session_state.setdefault("initial_data", None)
     st.session_state.setdefault("initial_results", None)
 
@@ -693,7 +692,7 @@ def render_sidebar_display_options():
         st.session_state["route"] = "portfolio"
         st.rerun()
 
-    # Buttons should only be enabled once visualizations were rendered at least once
+    # Buttons are  enabled once visualizations were rendered at least once
     nav_enabled = bool(st.session_state.get("viz_ready", False))
 
     if st.sidebar.button(
@@ -807,7 +806,6 @@ def forecast_portfolio():
     st.session_state["dict_pf_results_forecasts"] = dict_pf_results_forecasts
 
     st.session_state["data_ready"] = True
-    st.session_state["step2_enabled"] = True
     resultados_forecast = st.session_state["dict_pf_returns_forecast"]
     end_date = resultados_forecast["investor"].index[-1]
     resultados = st.session_state["initial_data"]
@@ -847,7 +845,6 @@ def render_constraints_portfolio():
     st.session_state.setdefault("dict_pf_results_forecasts", None)
     st.session_state.setdefault("initial_data", None)
     st.session_state.setdefault("initial_results", None)
-    st.session_state.setdefault("step2_enabled", False)
     st.session_state.setdefault("custom_tickers", [])
 
     # Sidebar must be rendered every run (logo + nav + options)
@@ -890,7 +887,7 @@ def render_constraints_portfolio():
             forecast_portfolio()
 
             st.session_state["data_ready"] = True
-            st.session_state["step2_enabled"] = True
+
 
         # Re-run to render charts in a clean branch
         st.rerun()
