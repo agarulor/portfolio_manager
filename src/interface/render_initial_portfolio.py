@@ -518,6 +518,18 @@ def reset_portfolio_results():
 
 
 def render_sidebar_display_options():
+    """
+    Renders the sidebar for the portfolio page.
+
+    Internal notes in English; external UI text in Spanish.
+    """
+    # --- Robust init (avoid KeyError) ---
+    st.session_state.setdefault("data_ready", False)
+    st.session_state.setdefault("viz_ready", False)
+    st.session_state.setdefault("step2_enabled", False)
+    st.session_state.setdefault("initial_data", None)
+    st.session_state.setdefault("initial_results", None)
+
     st.sidebar.header("Navegación")
 
     if st.sidebar.button("Volver a cuestionario", use_container_width=True):
@@ -529,30 +541,36 @@ def render_sidebar_display_options():
         st.session_state["route"] = "portfolio"
         st.rerun()
 
-    if st.session_state.get("step2_enabled", False):
-        if st.sidebar.button("Ver evolución cartera", use_container_width=True, type="primary"):
-            st.session_state["route"] = "results"
-            st.rerun()
+    # Buttons should only be enabled once visualizations were rendered at least once
+    nav_enabled = bool(st.session_state.get("viz_ready", False))
 
-    else:
-        st.sidebar.button("Ver evolución cartera", use_container_width=True, disabled=True)
+    if st.sidebar.button(
+        "Ver evolución cartera",
+        use_container_width=True,
+        type="primary",
+        disabled=not nav_enabled,
+    ):
+        st.session_state["route"] = "results"
+        st.rerun()
 
     analysis_enabled = (
-            st.session_state.get("data_ready", False)
-            and st.session_state.get("initial_data") is not None
-            and st.session_state.get("initial_results") is not None
+        nav_enabled
+        and st.session_state.get("initial_data") is not None
+        and st.session_state.get("initial_results") is not None
     )
 
     if st.sidebar.button(
-            "Ir a análisis de datos",
-            use_container_width=True,
-            disabled=not analysis_enabled,
+        "Ir a análisis de datos",
+        use_container_width=True,
+        disabled=not analysis_enabled,
     ):
         st.session_state["route"] = "analysis"
         st.rerun()
 
-    if not analysis_enabled:
-        st.sidebar.caption("Genera primero la cartera inicial para desbloquear el análisis.")
+    if not nav_enabled:
+        st.sidebar.caption("Genera la cartera y espera a que se carguen las visualizaciones para desbloquear navegación.")
+    elif not analysis_enabled:
+        st.sidebar.caption("El análisis se desbloquea cuando existen datos y resultados de cartera.")
 
     st.sidebar.markdown("---")
     st.sidebar.header("Selecciona visualizaciones")
@@ -597,7 +615,7 @@ def render_sidebar_display_options():
         ">
             <div style="font-size: 1.2rem; color: #000078; font-weight:900; text-align: center">Perfil</div>
             <div style="font-size: 2.5rem; color: #000078; font-weight: 900; text-align: center">{perfil}</div>
-            <div style="font-size: 1.2rem; color: #000078; font-weight: 900; text-align: center">{RISK_PROFILE_DICTIONARY[perfil]}</div>
+            <div style="font-size: 1.2rem; color: #000078; font-weight: 900; text-align: center">{RISK_PROFILE_DICTIONARY.get(perfil, "Perfil no disponible")}</div>
         </div>
         """,
         unsafe_allow_html=True,
@@ -635,66 +653,92 @@ def forecast_portfolio():
     st.session_state["forecast_asset_weights"] = check_portfolio_weights(dict_stock_results_forecast["investor"],
                                                                          end_date)
 def render_constraints_portfolio():
+    """
+    Renders the initial portfolio configuration page.
+
+    Buttons should be enabled only after all visualizations have been rendered at least once.
+
+    External UI messages are in Spanish; internal comments are in English.
+    """
     header("AJUSTES DE LA CARTERA INICIAL")
+
+    # --- Session state initialization ---
     st.session_state.setdefault("data_ready", False)
+    st.session_state.setdefault("viz_ready", False)  # <- NEW gating flag
     st.session_state.setdefault("data_bundle", None)
     st.session_state.setdefault("investor_constraints_applied", None)
     st.session_state.setdefault("investor_constraints_draft", None)
     st.session_state.setdefault("risk_result", None)
     st.session_state.setdefault("dict_pf_returns", None)
     st.session_state.setdefault("dict_stock_results", None)
+    st.session_state.setdefault("dict_pf_returns_forecast", None)
+    st.session_state.setdefault("dict_stock_results_forecast", None)
+    st.session_state.setdefault("dict_pf_results_forecasts", None)
+    st.session_state.setdefault("initial_data", None)
     st.session_state.setdefault("initial_results", None)
     st.session_state.setdefault("step2_enabled", False)
+    st.session_state.setdefault("custom_tickers", [])
 
+    # Sidebar must be rendered every run (logo + nav + options)
     render_sidebar_display_options()
 
+    # --- Inputs ---
     with st.container(border=False):
         render_investor_constraints()
-        if "data_ready" not in st.session_state:
-            st.session_state.data_ready = False
-        if "data_bundle" not in st.session_state:
-            st.session_state.data_bundle = None
 
+    # --- Main action button ---
     c1, c2, c3 = st.columns(3)
     with c2:
         clicked = st.button("Generar cartera", width="stretch", type="primary")
 
+    # --- Compute block (only when clicked) ---
     if clicked:
-        draft = st.session_state["investor_constraints_draft"]
+        # Disable navigation until charts are drawn
+        st.session_state["viz_ready"] = False
 
-        with (st.spinner("Procesando datos...")):
-            # We store the draft values at that point in applied and we avoid re-runs
+        with st.spinner("Procesando datos..."):
+            # Compute + store
             get_initial_data()
             get_initial_portfolio()
 
-            df_returns = st.session_state["initial_data"]["train_set"]
+            df_returns_train = st.session_state["initial_data"]["train_set"]
             weights = st.session_state["initial_results"][2]
             rf_annual = st.session_state["investor_constraints_draft"]["risk_free_rate"]
 
-            dict_pf_returns, dict_stock_results, dict_pf_results = render_historical_portfolios_results(
-                df_returns,
+            dict_pf_returns, dict_stock_results, _ = render_historical_portfolios_results(
+                df_returns_train,
                 1,
                 weights,
                 periods_per_year=PERIODS_PER_YEAR,
-                rf_annual=rf_annual
+                rf_annual=rf_annual,
             )
             st.session_state["dict_pf_returns"] = dict_pf_returns
             st.session_state["dict_stock_results"] = dict_stock_results
+
+            # Forecast/test calculations (writes dict_pf_returns_forecast, etc.)
             forecast_portfolio()
 
+            st.session_state["data_ready"] = True
+            st.session_state["step2_enabled"] = True
 
-        st.session_state["data_ready"] = True
-        st.session_state["step2_enabled"] = True
-
+        # Re-run to render charts in a clean branch
         st.rerun()
 
-    with (st.spinner("Generando visualizaciones...")):
-        if st.session_state.get("data_ready"):
-            st.write("")
-            header("RESULTADOS")
-            create_historical_portfolio_visualizations()
-            create_historical_results_visualizations()
+    # --- If nothing computed yet ---
+    if not st.session_state.get("data_ready", False):
+        st.info("Configura parámetros y pulsa **Generar cartera**.")
+        return
 
-        else:
-            st.info("Configura parámetros y pulsa **Generar cartera**.")
+    # --- Render results + visualizations ---
+    st.write("")
+    header("RESULTADOS")
 
+    with st.spinner("Generando visualizaciones..."):
+        create_historical_portfolio_visualizations()
+        create_historical_results_visualizations()
+
+    # At this point, all visualizations on this page have been rendered once
+    if not st.session_state.get("viz_ready", False):
+        st.session_state["viz_ready"] = True
+        # Re-run so sidebar buttons become enabled immediately
+        st.rerun()
