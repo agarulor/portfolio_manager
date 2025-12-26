@@ -10,6 +10,15 @@ PROJECT_ROOT = BASE_DIR.parent.parent
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
+st.write("landing_page __file__:", __file__)
+st.write("BASE_DIR:", BASE_DIR)
+st.write("ASSETS_PATH:", ASSETS_PATH)
+st.write("ASSETS exists:", ASSETS_PATH.exists())
+
+if ASSETS_PATH.exists():
+    st.write("ASSETS content:", [p.name for p in ASSETS_PATH.iterdir()])
+else:
+    st.write("BASE_DIR content:", [p.name for p in BASE_DIR.iterdir()])
 
 def _img_to_base64(img_path: Path) -> str:
     data = img_path.read_bytes()
