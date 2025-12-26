@@ -1,0 +1,82 @@
+Date,ticker,sector,industry
+0,ACS.MC,Industrials,Engineering & Construction
+1,ACX.MC,Basic Materials,Steel
+2,AENA.MC,Industrials,Airports & Air Services
+3,AMS.MC,Technology,Information Technology Services
+4,ANA.MC,Industrials,Engineering & Construction
+5,ANE.MC,Utilities,Utilities - Renewable
+6,BBVA.MC,Financial Services,Banks - Diversified
+7,BKT.MC,Financial Services,Banks - Regional
+8,CABK.MC,Financial Services,Banks - Regional
+9,CLNX.MC,Real Estate,Real Estate Services
+10,COL.MC,Real Estate,REIT - Office
+11,ELE.MC,Utilities,Utilities - Regulated Electric
+12,ENG.MC,Utilities,Utilities - Regulated Gas
+13,FDR.MC,Industrials,Specialty Industrial Machinery
+14,FER.MC,Industrials,Engineering & Construction
+15,GRF.MC,Healthcare,Drug Manufacturers - General
+16,IAG.MC,Industrials,Airlines
+17,IBE.MC,Utilities,Utilities - Diversified
+18,IDR.MC,Technology,Information Technology Services
+19,ITX.MC,Consumer Cyclical,Apparel Retail
+20,LOG.MC,Industrials,Integrated Freight & Logistics
+21,MAP.MC,Financial Services,Insurance - Diversified
+22,MRL.MC,Real Estate,REIT - Office
+23,MTS.MC,Basic Materials,Steel
+24,NTGY.MC,Utilities,Utilities - Regulated Gas
+25,PUIG.MC,,
+26,RED.MC,Utilities,Utilities - Regulated Electric
+27,REP.MC,Energy,Oil & Gas Integrated
+28,ROVI.MC,Healthcare,Drug Manufacturers - Specialty & Generic
+29,SAB.MC,Financial Services,Banks - Diversified
+30,SAN.MC,Financial Services,Banks - Diversified
+31,SCYR.MC,Industrials,Engineering & Construction
+32,SLR.MC,Utilities,Utilities - Renewable
+33,TEF.MC,Communication Services,Telecom Services
+34,UNI.MC,Financial Services,Banks - Regional
+35,SAP.DE,Technology,Software - Application
+36,ASML.AS,Technology,Semiconductor Equipment & Materials
+37,SIE.DE,Industrials,Specialty Industrial Machinery
+38,ALV.DE,Financial Services,Insurance - Diversified
+39,TTE.PA,Energy,Oil & Gas Integrated
+40,SU.PA,Industrials,Specialty Industrial Machinery
+41,MC.PA,Consumer Cyclical,Luxury Goods
+42,DTE.DE,Communication Services,Telecom Services
+43,AI.PA,Basic Materials,Specialty Chemicals
+44,AIR.PA,Industrials,Aerospace & Defense
+45,SAN.PA,Healthcare,Drug Manufacturers - General
+46,SAF.PA,Industrials,Aerospace & Defense
+47,OR.PA,Consumer Defensive,Household & Personal Products
+48,UCG.MI,Financial Services,Banks - Regional
+49,BNP.PA,Financial Services,Banks - Regional
+50,RMS.PA,Consumer Cyclical,Luxury Goods
+51,CS.PA,Financial Services,Insurance - Diversified
+52,MUV2.DE,Financial Services,Insurance - Reinsurance
+53,EL.PA,Healthcare,Medical Instruments & Supplies
+54,DG.PA,Industrials,Engineering & Construction
+55,ISP.MI,Financial Services,Banks - Regional
+56,ABI.BR,Consumer Defensive,Beverages - Brewers
+57,ENEL.MI,Utilities,Utilities - Diversified
+58,PRX.AS,Consumer Cyclical,Internet Retail
+59,INGA.AS,Financial Services,Banks - Diversified
+60,DB1.DE,Financial Services,Financial Data & Stock Exchanges
+61,SGO.PA,Industrials,Building Products & Equipment
+62,BN.PA,Consumer Defensive,Packaged Foods
+63,RACE.MI,Consumer Cyclical,Auto Manufacturers
+64,ADYEN.AS,Technology,Software - Infrastructure
+65,IFX.DE,Technology,Semiconductors
+66,NDA-FI.HE,Financial Services,Banks - Regional
+67,DHL.DE,Industrials,Integrated Freight & Logistics
+68,BAS.DE,Basic Materials,Chemicals
+69,ADS.DE,Consumer Cyclical,Footwear & Accessories
+70,MBG.DE,Consumer Cyclical,Auto Manufacturers
+71,WKL.AS,Industrials,Specialty Business Services
+72,AD.AS,Consumer Defensive,Grocery Stores
+73,ENI.MI,Energy,Oil & Gas Integrated
+74,BAYN.DE,Healthcare,Drug Manufacturers - General
+75,NOKIA.HE,Technology,Communication Equipment
+76,BMW.DE,Consumer Cyclical,Auto Manufacturers
+77,VOW3.DE,Consumer Cyclical,Auto Manufacturers
+78,RI.PA,Consumer Defensive,Beverages - Wineries & Distilleries
+79,STLAM.MI,Consumer Cyclical,Auto Manufacturers
+80,KER.PA,Consumer Cyclical,Luxury Goods

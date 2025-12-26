@@ -1,0 +1,84 @@
+ticker_yahoo,name
+ACS.MC,ACS CONST.
+ACX.MC,ACERINOX
+AENA.MC,AENA
+AMS.MC,AMADEUS IT
+ANA.MC,ACCIONA
+ANE.MC,ACCIONA ENER
+BBVA.MC,BBVA
+BKT.MC,BANKINTER
+CABK.MC,CAIXABANK
+CLNX.MC,CELLNEX
+COL.MC,INM.COLONIAL
+ELE.MC,ENDESA
+ENG.MC,ENAGAS
+FDR.MC,FLUIDRA
+FER.MC,FERROVIAL SE
+GRF.MC,GRIFOLS
+IAG.MC,INT.AIRL.GRP
+IBE.MC,IBERDROLA
+IDR.MC,INDRA A
+ITX.MC,INDITEX
+LOG.MC,LOGISTA
+MAP.MC,MAPFRE
+MRL.MC,MERLIN PROP.
+MTS.MC,ARCEL.MITTAL
+NTGY.MC,NATURGY
+PUIG.MC,PUIG BRANDS
+RED.MC,REDEIA CORPO
+REP.MC,REPSOL
+ROVI.MC,LABORAT.ROVI
+SAB.MC,B. SABADELL
+SAN.MC,SANTANDER
+SCYR.MC,SACYR
+SLR.MC,SOLARIA
+TEF.MC,TELEFONICA
+UNI.MC,UNICAJA
+SAP.DE,SAP SE
+ASML.AS,ASML Holding N.V.
+SIE.DE,Siemens AG
+ALV.DE,Allianz SE
+TTE.PA,TotalEnergies SE
+SU.PA,Schneider Electric SE
+MC.PA,LVMH Moët Hennessy Louis Vuitton SE
+DTE.DE,Deutsche Telekom AG
+AI.PA,Air Liquide S.A.
+AIR.PA,Airbus SE
+SAN.PA,Sanofi
+SAF.PA,Safran SA
+OR.PA,L'Oreal S.A.
+UCG.MI,UniCredit S.p.A.
+BNP.PA,BNP Paribas SA
+RMS.PA,Hermès International SCA
+CS.PA,AXA SA
+MUV2.DE,Münchener Rückversicherungs-Gesellschaft AG (Munich Re)
+EL.PA,EssilorLuxottica SA
+DG.PA,Vinci SA
+ISP.MI,Intesa Sanpaolo S.p.A.
+ABI.BR,Anheuser-Busch InBev SA/NV
+ENEL.MI,Enel S.p.A.
+PRX.AS,Prosus N.V.
+INGA.AS,ING Groep N.V.
+DB1.DE,Deutsche Börse AG
+SGO.PA,Compagnie de Saint-Gobain SA
+BN.PA,Danone SA
+RACE.MI,Ferrari N.V.
+ADYEN.AS,Adyen N.V.
+IFX.DE,Infineon Technologies AG
+NDA-FI.HE,Nordea Bank Abp
+DHL.DE,Deutsche Post AG (DHL Group)
+BAS.DE,BASF SE
+ADS.DE,adidas AG
+MBG.DE,Mercedes-Benz Group AG
+WKL.AS,Wolters Kluwer N.V.
+AD.AS,Ahold Delhaize N.V.
+ENI.MI,Eni S.p.A.
+BAYN.DE,Bayer AG
+NOKIA.HE,Nokia Oyj
+BMW.DE,Bayerische Motoren Werke AG (BMW)
+VOW3.DE,Volkswagen AG Pref
+RI.PA,Pernod Ricard SA
+STLAM.MI,Stellantis N.V.
+KER.PA,Kering SA
+^IBEX,IBEX 35
+^STOXX50E,EURO STOXX 50
