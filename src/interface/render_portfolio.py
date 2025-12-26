@@ -1,5 +1,6 @@
 import sys
 import os
+
 FILENAME_PATH = "data/input/ibex_eurostoxx.csv"
 TICKER_COL = "ticker_yahoo"
 COMPANIES_COL = "name"
@@ -18,6 +19,7 @@ from types import MappingProxyType
 import os
 import random
 import numpy as np
+
 RISK_PROFILE_DICTIONARY = MappingProxyType({
     1: "Perfil bajo de riesgo",
     2: "Perfil medio-bajo de riesgo",
@@ -29,8 +31,17 @@ RISK_PROFILE_DICTIONARY = MappingProxyType({
 
 
 def render_portfolio():
+    """
+    Renders portfolio.
+
+    Parameters
+    ----------
 
 
+    Returns
+    -------
+    Any: render portfolio output.
+    """
     render_constraints_portfolio()
     if not st.session_state.get("data_ready", False):
         return

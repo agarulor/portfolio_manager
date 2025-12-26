@@ -6,7 +6,6 @@ from interface.main_interface import subheader, header
 from interface.render_portfolio_results import show_portfolio_returns
 from portfolio_tools.return_metrics import calculate_daily_returns
 
-
 from portfolio_management.investor_portfolios import get_cumulative_returns
 from interface.visualizations import (
     plot_portfolio_values_select,
@@ -28,16 +27,16 @@ RISK_PROFILE_DICTIONARY = MappingProxyType({
 
 def render_sidebar_analysis_selection(options: list[str], prefix: str = "analysis_stock") -> None:
     """
-    Renders a global selector in the sidebar to control the whole analysis page.
+    Renders sidebar analysis selection.
 
     Parameters
     ----------
-    options: list[str]. Available assets/series names to select from.
-    prefix: str. Prefix used to namespace session_state keys for this page.
+    options : list[str]. options.
+    prefix : str. prefix.
 
     Returns
     -------
-    None
+    None: None.
     """
     st.sidebar.markdown("---")
     st.sidebar.header("Selección de activos")
@@ -80,16 +79,15 @@ def render_sidebar_analysis_selection(options: list[str], prefix: str = "analysi
 
 def get_analysis_selection(prefix: str = "analysis_stock") -> tuple[Optional[str], list[str]]:
     """
-    Reads the current base and comparison selection for the analysis page.
+    Gets analysis selection.
 
     Parameters
     ----------
-    prefix: str. Namespace prefix used for session_state keys.
+    prefix : str. prefix.
 
     Returns
     -------
-    base: Optional[str]. The base series name.
-    compare: list[str]. A list of comparison series names (base removed if present).
+    tuple[Optional[str], list[str]]: get analysis selection output.
     """
     base = st.session_state.get(f"{prefix}_base")
     compare = st.session_state.get(f"{prefix}_compare", [])
@@ -98,6 +96,17 @@ def get_analysis_selection(prefix: str = "analysis_stock") -> tuple[Optional[str
 
 
 def siderbar_show_charts():
+    """
+    Computes siderbar show charts.
+
+    Parameters
+    ----------
+
+
+    Returns
+    -------
+    Any: siderbar show charts output.
+    """
     st.sidebar.markdown("---")
     st.sidebar.header("Selecciona visualizaciones")
 
@@ -126,18 +135,17 @@ def siderbar_show_charts():
     st.sidebar.checkbox("Distribución reciente", key="distribucion_reciente")
 
 
-
 def render_sidebar_display(options: list[str]) -> None:
     """
-    Renders the analysis sidebar: navigation, global selectors, and investor profile.
+    Renders sidebar display.
 
     Parameters
     ----------
-    options: list[str]. Available asset/series names for the analysis selector.
+    options : list[str]. options.
 
     Returns
     -------
-    None
+    None: None.
     """
     st.sidebar.header("Navegación")
 
@@ -212,11 +220,15 @@ def render_sidebar_display(options: list[str]) -> None:
 
 def _get_analysis_options_from_initial_data() -> list[str]:
     """
-    Builds the list of available assets for the analysis page from session_state['initial_data'].
+    Computes  get analysis options from initial data.
+
+    Parameters
+    ----------
+
 
     Returns
     -------
-    options: list[str]. Cleaned list of column names (all-zero/all-NaN removed).
+    list[str]:  get analysis options from initial data output.
     """
     initial_data = st.session_state.get("initial_data")
     if initial_data is None:
@@ -243,13 +255,15 @@ def _get_analysis_options_from_initial_data() -> list[str]:
 
 def render_historic_performance() -> None:
     """
-    Renders the analysis charts using the global sidebar selection:
-    - Base + comparisons for cumulative returns and prices
-    - Base-only for daily returns scatter (color-coded)
+    Renders historic perisk-freeormance.
+
+    Parameters
+    ----------
+
 
     Returns
     -------
-    None
+    None: None.
     """
     initial_data = st.session_state.get("initial_data")
     if initial_data is None:
@@ -261,7 +275,6 @@ def render_historic_performance() -> None:
     recent_portfolio_values = st.session_state.get("dict_pf_returns_forecast")
     historic_portfolio_values = st.session_state.get("dict_pf_returns")
 
-
     df_recent_portfolio_values = pd.DataFrame(recent_portfolio_values) / initial_amount
     df_recent_portfolio_returns = calculate_daily_returns(df_recent_portfolio_values)
 
@@ -270,7 +283,6 @@ def render_historic_performance() -> None:
 
     historic_returns = initial_data.get("train_set")
     recent_returns = initial_data.get("test_set")
-
 
     historic_prices = initial_data.get("train_price")
     recent_prices = initial_data.get("test_price")
@@ -285,7 +297,6 @@ def render_historic_performance() -> None:
     cum_returns_historic = cum_returns_historic.join(df_historic_portfolio_values)
     cum_returns_recent = get_cumulative_returns(recent_returns)
     cum_returns_recent = cum_returns_recent.join(df_recent_portfolio_values)
-
 
     historic_returns = historic_returns.join(df_historic_portfolio_returns)
     recent_returns = recent_returns.join(df_recent_portfolio_returns)
@@ -319,7 +330,7 @@ def render_historic_performance() -> None:
                 portfolio_type="stock",
                 selected=selected,
                 show_selector=False,
-        )
+            )
 
     d1, d2 = st.columns(2)
     if st.session_state.get("retorno_diario_historico", True):
@@ -396,13 +407,15 @@ def render_historic_performance() -> None:
 
 def render_analysis() -> None:
     """
-    Main entrypoint for the Analysis page.
+    Renders analysis.
 
-    It renders:
-    - A sidebar with navigation + investor profile + global selector (base vs compare)
-    - A set of charts driven by that global selection
+    Parameters
+    ----------
 
-    External UI messages are shown in Spanish; internal comments/messages remain in English.
+
+    Returns
+    -------
+    None: None.
     """
     header("ANÁLISIS DE CARTERA Y OTROS ACTIVOS")
     st.write("")

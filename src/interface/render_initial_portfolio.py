@@ -50,6 +50,25 @@ def render_slider(text: str,
                   font_color: str = FONT_COLOR,
                   font_size: str = FONT_SIZE,
                   font_weight: str = FONT_WEIGHT):
+    """
+    Renders slider.
+
+    Parameters
+    ----------
+    text : str. text.
+    text_slider : str. text slider.
+    key : str. key.
+    min_value : float. min value.
+    max_value : float. max value.
+    value : Any. value.
+    font_color : str. font color.
+    font_size : str. font size.
+    font_weight : str. font weight.
+
+    Returns
+    -------
+    Any: render slider output.
+    """
     st.markdown(
         f"""
          <div style="
@@ -97,6 +116,25 @@ def render_number_input(text: str,
                         font_size: str = FONT_SIZE,
                         font_weight: str = FONT_WEIGHT,
                         unit: str = "EUR"):
+    """
+    Renders number input.
+
+    Parameters
+    ----------
+    text : str. text.
+    min_value : float. min value.
+    init_value : float. init value.
+    step : float. step.
+    key : str. key.
+    font_color : str. font color.
+    font_size : str. font size.
+    font_weight : str. font weight.
+    unit : str. unit.
+
+    Returns
+    -------
+    Any: render number input output.
+    """
     st.markdown(f"""
     <div style="
         font-size: {font_size};
@@ -151,6 +189,22 @@ def render_date(text: str,
                 font_color: str = FONT_COLOR,
                 font_size: str = FONT_SIZE,
                 font_weight: str = FONT_WEIGHT):
+    """
+    Renders date.
+
+    Parameters
+    ----------
+    text : str. text.
+    reference_date : dt.date. reference date.
+    key : str. key.
+    font_color : str. font color.
+    font_size : str. font size.
+    font_weight : str. font weight.
+
+    Returns
+    -------
+    Any: render date output.
+    """
     st.markdown(f"""
     <div style="
         font-size: {font_size};
@@ -189,6 +243,17 @@ def render_date(text: str,
 
 
 def add_assets():
+    """
+    Adds assets.
+
+    Parameters
+    ----------
+
+
+    Returns
+    -------
+    Any: add assets output.
+    """
     existing_assets = pd.read_csv(FILENAME_PATH)
     column_with_tickers = list(existing_assets[TICKER_COL])
     # Initialize session state
@@ -247,6 +312,17 @@ def add_assets():
 
 
 def render_investor_constraints():
+    """
+    Renders investor constraints.
+
+    Parameters
+    ----------
+
+
+    Returns
+    -------
+    Any: render investor constraints output.
+    """
     subheader("Defina el grado de diversificación y el importe inicial para la propuesta de cartera",
               margin_bottom="1.0rem")
 
@@ -357,6 +433,24 @@ def get_clean_initial_data(filename_path: str = FILENAME_PATH,
                            end_date: str = ENDING_DATE,
                            initial_date_portfolio: str = INITIAL_DATE_PORTFOLIO,
                            end_date_portfolio: str = END_DATE_PORTFOLIO):
+    """
+    Gets clean initial data.
+
+    Parameters
+    ----------
+    filename_path : str. filename path.
+    ticker_col : str. ticker col.
+    additional_tickers : Optional[list]. additional tickers.
+    adjusted : bool. adjusted.
+    start_date : str. start date.
+    end_date : str. end date.
+    initial_date_portfolio : str. initial date portfolio.
+    end_date_portfolio : str. end date portfolio.
+
+    Returns
+    -------
+    Any: get clean initial data output.
+    """
     price_data, sectors = get_stock_prices(file_path=filename_path,
                                            ticker_col=ticker_col,
                                            additional_tickers=additional_tickers,
@@ -389,6 +483,17 @@ def get_clean_initial_data(filename_path: str = FILENAME_PATH,
 
 
 def get_initial_data():
+    """
+    Gets initial data.
+
+    Parameters
+    ----------
+
+
+    Returns
+    -------
+    Any: get initial data output.
+    """
     constraints = st.session_state["investor_constraints_draft"]
     data_start_date = constraints["data_start_date"]
     data_end_date = constraints["data_end_date"]
@@ -408,6 +513,17 @@ def get_initial_data():
 
 def get_initial_portfolio():
     # We get the relevant information constraints
+    """
+    Gets initial portfolio.
+
+    Parameters
+    ----------
+
+
+    Returns
+    -------
+    Any: get initial portfolio output.
+    """
     constraints = st.session_state["investor_constraints_draft"]
     max_stock_pct = constraints["max_stock_pct"] / 100
     min_stock_pct = constraints["min_stock_pct"] / 100
@@ -435,6 +551,17 @@ def get_initial_portfolio():
 
 
 def create_historical_portfolio_visualizations():
+    """
+    Creates historical portfolio visualizations.
+
+    Parameters
+    ----------
+
+
+    Returns
+    -------
+    Any: create historical portfolio visualizations output.
+    """
     if not st.session_state.get("data_ready", False):
         return
     df_weights = st.session_state["initial_results"][1]["investor"]
@@ -481,6 +608,17 @@ def create_historical_portfolio_visualizations():
 
 
 def create_historical_results_visualizations():
+    """
+    Creates historical results visualizations.
+
+    Parameters
+    ----------
+
+
+    Returns
+    -------
+    Any: create historical results visualizations output.
+    """
     if st.session_state.get("show_historical", True):
         with st.container(border=False):
             subheader("Resultados históricos de la cartera antes de inversión", font_size="1.8rem")
@@ -504,6 +642,17 @@ def create_historical_results_visualizations():
 
 
 def reset_portfolio_results():
+    """
+    Computes reset portfolio results.
+
+    Parameters
+    ----------
+
+
+    Returns
+    -------
+    Any: reset portfolio results output.
+    """
     keys_to_reset = [
         "initial_data",
         "initial_results",
@@ -519,9 +668,15 @@ def reset_portfolio_results():
 
 def render_sidebar_display_options():
     """
-    Renders the sidebar for the portfolio page.
+    Renders sidebar display options.
 
-    Internal notes in English; external UI text in Spanish.
+    Parameters
+    ----------
+
+
+    Returns
+    -------
+    Any: render sidebar display options output.
     """
     # --- Robust init (avoid KeyError) ---
     st.session_state.setdefault("data_ready", False)
@@ -545,30 +700,31 @@ def render_sidebar_display_options():
     nav_enabled = bool(st.session_state.get("viz_ready", False))
 
     if st.sidebar.button(
-        "Ver evolución cartera",
-        use_container_width=True,
-        type="primary",
-        disabled=not nav_enabled,
+            "Ver evolución cartera",
+            use_container_width=True,
+            type="primary",
+            disabled=not nav_enabled,
     ):
         st.session_state["route"] = "results"
         st.rerun()
 
     analysis_enabled = (
-        nav_enabled
-        and st.session_state.get("initial_data") is not None
-        and st.session_state.get("initial_results") is not None
+            nav_enabled
+            and st.session_state.get("initial_data") is not None
+            and st.session_state.get("initial_results") is not None
     )
 
     if st.sidebar.button(
-        "Ir a análisis de datos",
-        use_container_width=True,
-        disabled=not analysis_enabled,
+            "Ir a análisis de datos",
+            use_container_width=True,
+            disabled=not analysis_enabled,
     ):
         st.session_state["route"] = "analysis"
         st.rerun()
 
     if not nav_enabled:
-        st.sidebar.caption("Genera la cartera y espera a que se carguen las visualizaciones para desbloquear navegación.")
+        st.sidebar.caption(
+            "Genera la cartera y espera a que se carguen las visualizaciones para desbloquear navegación.")
     elif not analysis_enabled:
         st.sidebar.caption("El análisis se desbloquea cuando existen datos y resultados de cartera.")
 
@@ -624,8 +780,19 @@ def render_sidebar_display_options():
     if sigma_min is not None and sigma_max is not None:
         st.sidebar.caption(f"Volatilidad recomendada: {sigma_min:.2f}–{sigma_max:.2f}")
 
-def forecast_portfolio():
 
+def forecast_portfolio():
+    """
+    Computes forecast portfolio.
+
+    Parameters
+    ----------
+
+
+    Returns
+    -------
+    Any: forecast portfolio output.
+    """
     df_returns = st.session_state["initial_data"]["test_set"]
     weights = st.session_state["initial_results"][2]
     rf_annual = st.session_state["investor_constraints_draft"]["risk_free_rate"]
@@ -652,19 +819,26 @@ def forecast_portfolio():
                                                                              sectors, end_date)
     st.session_state["forecast_asset_weights"] = check_portfolio_weights(dict_stock_results_forecast["investor"],
                                                                          end_date)
+
+
 def render_constraints_portfolio():
     """
-    Renders the initial portfolio configuration page.
+    Renders constraints portfolio.
 
-    Buttons should be enabled only after all visualizations have been rendered at least once.
+    Parameters
+    ----------
 
-    External UI messages are in Spanish; internal comments are in English.
+
+    Returns
+    -------
+    Any: render constraints portfolio output.
     """
     header("AJUSTES DE LA CARTERA INICIAL")
 
     # --- Session state initialization ---
     st.session_state.setdefault("data_ready", False)
-    st.session_state.setdefault("viz_ready", False)  # <- NEW gating flag
+    # <- NEW gating flag
+    st.session_state.setdefault("viz_ready", False)
     st.session_state.setdefault("data_bundle", None)
     st.session_state.setdefault("investor_constraints_applied", None)
     st.session_state.setdefault("investor_constraints_draft", None)

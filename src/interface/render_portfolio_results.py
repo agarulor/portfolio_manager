@@ -1,12 +1,10 @@
 import streamlit as st
 from interface.main_interface import subheader, header
-from portfolio_management.investor_portfolios import render_historical_portfolios_results
-from interface.render_initial_portfolio import  reset_portfolio_results
-from portfolio_management.portfolio_management import get_sector_weights_at_date, check_portfolio_weights
+from interface.render_initial_portfolio import reset_portfolio_results
 from interface.visualizations import show_portfolio, render_results_table, plot_portfolio_values, show_markowitz_results
 from types import MappingProxyType
-PERIODS_PER_YEAR = 255
 
+PERIODS_PER_YEAR = 255
 
 RISK_PROFILE_DICTIONARY = MappingProxyType({
     1: "Perfil bajo de riesgo",
@@ -17,8 +15,19 @@ RISK_PROFILE_DICTIONARY = MappingProxyType({
     6: "Perfil agresivo de riesgo"
 })
 
-def render_sidebar_display_results():
 
+def render_sidebar_display_results():
+    """
+    Renders sidebar display results.
+
+    Parameters
+    ----------
+
+
+    Returns
+    -------
+    Any: render sidebar display results output.
+    """
     st.sidebar.header("Navegación")
 
     if st.sidebar.button("Volver a cuestionario", width="stretch"):
@@ -92,8 +101,19 @@ def render_sidebar_display_results():
     if sigma_min is not None and sigma_max is not None:
         st.sidebar.caption(f"Volatilidad recomendada: {sigma_min:.2f}–{sigma_max:.2f}")
 
-def show_portfolio_returns():
 
+def show_portfolio_returns():
+    """
+    Shows portfolio returns.
+
+    Parameters
+    ----------
+
+
+    Returns
+    -------
+    Any: show portfolio returns output.
+    """
     initial_amount = st.session_state["investor_constraints_draft"]["amount"]
     resultados = st.session_state["dict_pf_returns_forecast"]
     final_amount = resultados["investor"].iloc[-1]
@@ -130,8 +150,19 @@ def show_portfolio_returns():
         st.write("")
         st.write("")
 
-def create_portfolio_visualizations():
 
+def create_portfolio_visualizations():
+    """
+    Creates portfolio visualizations.
+
+    Parameters
+    ----------
+
+
+    Returns
+    -------
+    Any: create portfolio visualizations output.
+    """
     if not st.session_state.get("data_ready", False):
         return
 
@@ -173,7 +204,7 @@ def create_portfolio_visualizations():
                 render_results_table(df_results)
                 st.write("")
 
-    # We now render the efficient frontier and the comparable portfolios
+        # We now render the efficient frontier and the comparable portfolios
 
         with u2:
             if st.session_state.get("show_riesgo_rentabilidad", True):
@@ -183,7 +214,17 @@ def create_portfolio_visualizations():
 
 
 def create_results_visualizations():
+    """
+    Creates results visualizations.
 
+    Parameters
+    ----------
+
+
+    Returns
+    -------
+    Any: create results visualizations output.
+    """
     if st.session_state.get("show_portfolio_results", True):
 
         with st.container(border=False):
@@ -204,14 +245,23 @@ def create_results_visualizations():
                 st.info("Pulsa **Generar cartera** para calcular los resultados de las acciones.")
                 return
 
-
             investor_results = dict_stock_results_forecast["investor"]
             plot_portfolio_values(investor_results, key="investor_portfolio_forecast", portfolio_type="stock")
 
 
 def render_results():
-    render_sidebar_display_results()
+    """
+    Renders results.
 
+    Parameters
+    ----------
+
+
+    Returns
+    -------
+    Any: render results output.
+    """
+    render_sidebar_display_results()
 
     if st.session_state.get("data_ready"):
         header("EVOLUCIÓN CARTERA")
