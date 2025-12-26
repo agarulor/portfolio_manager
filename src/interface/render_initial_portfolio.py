@@ -676,7 +676,7 @@ def render_sidebar_display_options():
     -------
     Any: render sidebar display options output.
     """
-    # --- Robust init (avoid KeyError) ---
+    # Robust init
     st.session_state.setdefault("data_ready", False)
     st.session_state.setdefault("viz_ready", False)
     st.session_state.setdefault("step2_enabled", False)
@@ -699,7 +699,7 @@ def render_sidebar_display_options():
 
     if st.sidebar.button(
             "Ver evolución cartera",
-            use_container_width=True,
+            width="stretch",
             type="primary",
             disabled=not nav_enabled,
     ):
@@ -714,7 +714,7 @@ def render_sidebar_display_options():
 
     if st.sidebar.button(
             "Ir a análisis de datos",
-            use_container_width=True,
+            width="stretch",
             disabled=not analysis_enabled,
     ):
         st.session_state["route"] = "analysis"
@@ -833,9 +833,9 @@ def render_constraints_portfolio():
     """
     header("AJUSTES DE LA CARTERA INICIAL")
 
-    # --- Session state initialization ---
+    # Session state initialization
     st.session_state.setdefault("data_ready", False)
-    # <- NEW gating flag
+
     st.session_state.setdefault("viz_ready", False)
     st.session_state.setdefault("data_bundle", None)
     st.session_state.setdefault("investor_constraints_applied", None)
@@ -854,16 +854,16 @@ def render_constraints_portfolio():
     # Sidebar must be rendered every run (logo + nav + options)
     render_sidebar_display_options()
 
-    # --- Inputs ---
+    # Inputs
     with st.container(border=False):
         render_investor_constraints()
 
-    # --- Main action button ---
+    # Main action button
     c1, c2, c3 = st.columns(3)
     with c2:
         clicked = st.button("Generar cartera", width="stretch", type="primary")
 
-    # --- Compute block (only when clicked) ---
+    # Compute block (only when clicked)
     if clicked:
         # Disable navigation until charts are drawn
         st.session_state["viz_ready"] = False
@@ -896,12 +896,12 @@ def render_constraints_portfolio():
         # Re-run to render charts in a clean branch
         st.rerun()
 
-    # --- If nothing computed yet ---
+    # If nothing computed yet
     if not st.session_state.get("data_ready", False):
         st.info("Configura parámetros y pulsa **Generar cartera**.")
         return
 
-    # --- Render results + visualizations ---
+    # Render results + visualizations
     st.write("")
     header("RESULTADOS")
 

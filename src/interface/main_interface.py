@@ -68,7 +68,6 @@ def apply_global_styles():
         height: 100%;
     }
 
-    }
     .progress-sticky {
         position: sticky;
         top: 0;
