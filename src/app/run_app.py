@@ -7,11 +7,22 @@ from interface.investor_profile_view import (
 from interface.main_interface import apply_global_styles, render_sidebar
 from interface.render_portfolio import render_portfolio
 from interface.landing_page import render as render_landing
-from interface.render_porfolio_results import render_results
+from interface.render_portfolio_results import render_results
 from interface.render_analysis import render_analysis
 
 
 def run_app():
+    """
+    Computes run app.
+
+    Parameters
+    ----------
+
+
+    Returns
+    -------
+    Any: run app output.
+    """
     st.set_page_config(page_title="UOC - Robo Advisor", page_icon="📈", layout="wide")
     apply_global_styles()
 

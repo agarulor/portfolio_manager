@@ -3,7 +3,7 @@ from types import MappingProxyType
 from typing import Optional, Literal
 import pandas as pd
 from interface.main_interface import subheader, header
-from interface.render_porfolio_results import show_portfolio_returns
+from interface.render_portfolio_results import show_portfolio_returns
 from portfolio_tools.return_metrics import calculate_daily_returns
 
 
