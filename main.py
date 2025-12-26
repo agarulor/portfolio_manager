@@ -2,7 +2,7 @@ import sys
 import os
 
 sys.path.append(os.path.join(os.path.dirname(__file__), "src"))
-from app.run_app import run_app
+from interface.run_app import run_app
 
 import os
 import random

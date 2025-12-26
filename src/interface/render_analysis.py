@@ -1,12 +1,12 @@
 import streamlit as st
 from types import MappingProxyType
-from typing import Optional, Literal
+from typing import Optional
 import pandas as pd
 from interface.main_interface import subheader, header
 from interface.render_portfolio_results import show_portfolio_returns
 from portfolio_tools.return_metrics import calculate_daily_returns
 
-from portfolio_management.investor_portfolios import get_cumulative_returns
+from portfolio_tools.investor_portfolios import get_cumulative_returns
 from interface.visualizations import (
     plot_portfolio_values_select,
     plot_daily_returns_scatter_base_only,
