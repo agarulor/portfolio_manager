@@ -354,7 +354,7 @@ def render_historic_performance() -> None:
 
     if st.session_state.get("show_evolucion_reciente_precio", True):
         with e2:
-            subheader(f"Evolución reciente del precio de {base_name}(y comparable)", font_size="2.0rem")
+            subheader(f"Evolución reciente del precio de {base_name} (y comparable)", font_size="2.0rem")
             plot_portfolio_values_select(
                 recent_prices,
                 key="recent_price",
