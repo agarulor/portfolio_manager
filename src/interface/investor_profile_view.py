@@ -1,12 +1,13 @@
 import streamlit as st
-from types import MappingProxyType # to avoid changes to a dictionary
+# To avoid changes to a dictionary
+from types import MappingProxyType
 from investor_information.investor_profile import investor_target_volatility
 from interface.main_interface import header, subheader
 from interface.landing_page import add_separation
 
 from interface.main_interface import render_sidebar_profile_summary
 
-RISK_COLOR = MappingProxyType({ 1: "#2ecc71", 2: "#6bdc8b", 3: "#f1c40f", 4: "#f39c12", 5: "#e67e22", 6: "#e74c3c"})
+RISK_COLOR = MappingProxyType({1: "#2ecc71", 2: "#6bdc8b", 3: "#f1c40f", 4: "#f39c12", 5: "#e67e22", 6: "#e74c3c"})
 RISK_PROFILE_DICTIONARY = MappingProxyType({
     1: "Perfil bajo de riesgo",
     2: "Perfil medio-bajo de riesgo",
@@ -28,14 +29,29 @@ QUESTION_KEYS = [
     "financial_goal",
 ]
 
-def radio_question(
-    number,
-    text,
-    options_dict,
-    key,
-    default_index=None,
-):
 
+def radio_question(
+        number,
+        text,
+        options_dict,
+        key,
+        default_index=None,
+):
+    """
+    Computes radio question.
+
+    Parameters
+    ----------
+    number : Any. number.
+    text : Any. text.
+    options_dict : Any. options dict.
+    key : Any. key.
+    default_index : Any. default index.
+
+    Returns
+    -------
+    Any: radio question output.
+    """
     st.markdown(
         f"""
         <div style="
@@ -61,7 +77,19 @@ def radio_question(
         key=key,
     )
 
+
 def questionnaire_progress(keys):
+    """
+    Computes questionnaire progress.
+
+    Parameters
+    ----------
+    keys : Any. keys.
+
+    Returns
+    -------
+    Any: questionnaire progress output.
+    """
     answered = sum(
         1 for k in keys
         if k in st.session_state and st.session_state[k] is not None
@@ -70,16 +98,35 @@ def questionnaire_progress(keys):
 
     return progress
 
+
 def render_risk_scale(
-    rt_value: int,
-    text: str,
-    block_height_active: str = "52px",
-    block_height_inactive: str = "38px",
-    block_font_size: str = "1.2rem",
-    label_font_size: str = "0.85rem",
-    title_font_size: str = "1.5rem",
-    max_width: str = "700px",
+        rt_value: int,
+        text: str,
+        block_height_active: str = "52px",
+        block_height_inactive: str = "38px",
+        block_font_size: str = "1.2rem",
+        label_font_size: str = "0.85rem",
+        title_font_size: str = "1.5rem",
+        max_width: str = "700px",
 ):
+    """
+    Renders risk scale.
+
+    Parameters
+    ----------
+    rt_value : int. rt value.
+    text : str. text.
+    block_height_active : str. block height active.
+    block_height_inactive : str. block height inactive.
+    block_font_size : str. block font size.
+    label_font_size : str. label font size.
+    title_font_size : str. title font size.
+    max_width : str. max width.
+
+    Returns
+    -------
+    Any: render risk scale output.
+    """
     blocks_html = ""
     labels_html = ""
 
@@ -154,7 +201,19 @@ def render_risk_scale(
         unsafe_allow_html=True
     )
 
+
 def render_sub_section(text: str):
+    """
+    Renders sub section.
+
+    Parameters
+    ----------
+    text : str. text.
+
+    Returns
+    -------
+    Any: render sub section output.
+    """
     add_separation()
     st.markdown(F"""
                 <div style="text-align: center; margin-top: -2.0rem; margin-bottom: -2.0rem;">
@@ -163,6 +222,17 @@ def render_sub_section(text: str):
 
 
 def render_investor_questionnaire():
+    """
+    Renders investor questionnaire.
+
+    Parameters
+    ----------
+
+
+    Returns
+    -------
+    Any: render investor questionnaire output.
+    """
     progress = questionnaire_progress(QUESTION_KEYS)
 
     with st.sidebar:
@@ -257,9 +327,9 @@ def render_investor_questionnaire():
         key="downside_reaction",
         default_index=None,
     )
-    #----------------------------------------------------------
+    # ----------------------------------------------------------
     # RISK CAPACITY
-    #----------------------------------------------------------
+    # ----------------------------------------------------------
     render_sub_section("Cuestionario sobre capacidad de asumir riesgo")
 
     liquidity_options = {
@@ -366,7 +436,23 @@ def render_investor_questionnaire():
 
     return answers
 
+
 def render_investor_profile_view(RA, RC, RT, sigma_min, sigma_max):
+    """
+    Renders investor profile view.
+
+    Parameters
+    ----------
+    RA : Any. RA.
+    RC : Any. RC.
+    RT : Any. RT.
+    sigma_min : Any. sigma min.
+    sigma_max : Any. sigma max.
+
+    Returns
+    -------
+    Any: render investor profile view output.
+    """
     c1, c2 = st.columns(2)
 
     with c1:
@@ -420,6 +506,17 @@ def render_investor_profile_view(RA, RC, RT, sigma_min, sigma_max):
 
 
 def show_investor_profile(answers):
+    """
+    Shows investor profile.
+
+    Parameters
+    ----------
+    answers : Any. answers.
+
+    Returns
+    -------
+    Any: show investor profile output.
+    """
     if answers is not None:
         (sigma_min, sigma_max), RA, RC, RT = investor_target_volatility(**answers)
 

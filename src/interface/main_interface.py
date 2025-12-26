@@ -3,10 +3,11 @@ from types import MappingProxyType
 from pathlib import Path
 import sys
 import os
+
 sys.path.append(os.path.join(os.path.dirname(__file__), "src"))
 BASE_DIR = Path(__file__).resolve().parent
 ASSETS_PATH = BASE_DIR / "assets"
-RISK_COLOR = MappingProxyType({ 1: "#2ecc71", 2: "#6bdc8b", 3: "#f1c40f", 4: "#f39c12", 5: "#e67e22", 6: "#e74c3c"})
+RISK_COLOR = MappingProxyType({1: "#2ecc71", 2: "#6bdc8b", 3: "#f1c40f", 4: "#f39c12", 5: "#e67e22", 6: "#e74c3c"})
 RISK_PROFILE_DICTIONARY = MappingProxyType({
     1: "Perfil bajo de riesgo",
     2: "Perfil medio-bajo de riesgo",
@@ -16,7 +17,19 @@ RISK_PROFILE_DICTIONARY = MappingProxyType({
     6: "Perfil agresivo de riesgo"
 })
 
+
 def apply_global_styles():
+    """
+    Computes apply global styles.
+
+    Parameters
+    ----------
+
+
+    Returns
+    -------
+    Any: apply global styles output.
+    """
     st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap');
@@ -54,7 +67,7 @@ def apply_global_styles():
         box-shadow: 0 10px 25px rgba(0,0,0,0.05);
         height: 100%;
     }
-    
+
     }
     .progress-sticky {
         position: sticky;
@@ -62,18 +75,27 @@ def apply_global_styles():
         z-index: 9999;        
         background: #F8FAFC;
         }
-        
+
         .stApp {
         overflow: visible;
         }
-    
+
     </style>
     """, unsafe_allow_html=True)
 
 
-
-
 def render_sidebar_header():
+    """
+    Renders sidebar header.
+
+    Parameters
+    ----------
+
+
+    Returns
+    -------
+    Any: render sidebar header output.
+    """
     with st.sidebar:
         st.image(str(ASSETS_PATH / "202-nova-marca-uoc.jpg"), width="stretch")
 
@@ -92,6 +114,17 @@ def render_sidebar_header():
 
 
 def render_sidebar_profile_summary():
+    """
+    Renders sidebar profile summary.
+
+    Parameters
+    ----------
+
+
+    Returns
+    -------
+    Any: render sidebar profile summary output.
+    """
     if "risk_result" not in st.session_state:
         return
 
@@ -117,6 +150,17 @@ def render_sidebar_profile_summary():
 
 
 def render_sidebar():
+    """
+    Renders sidebar.
+
+    Parameters
+    ----------
+
+
+    Returns
+    -------
+    Any: render sidebar output.
+    """
     render_sidebar_header()
     """
     st.sidebar.title("Menú")
@@ -131,7 +175,17 @@ def render_sidebar():
 
 
 def render_portfolio():
-    """Contenido de la pestaña 'Cartera de inversión'."""
+    """
+    Renders portfolio.
+
+    Parameters
+    ----------
+
+
+    Returns
+    -------
+    Any: render portfolio output.
+    """
     if "risk_result" not in st.session_state:
         st.warning("Primero completa el cuestionario de perfil de riesgo.")
         return
@@ -147,14 +201,25 @@ def render_portfolio():
         f"Perfil de riesgo final: **{RT} – {RISK_PROFILE_DICTIONARY[RT]}**"
     )
     st.write(
-        f"Volatilidad objetivo: **{sigma_min*100:.1f}% – {sigma_max*100:.1f}%**"
+        f"Volatilidad objetivo: **{sigma_min * 100:.1f}% – {sigma_max * 100:.1f}%**"
     )
 
-    # aquí luego puedes meter tu optimización y mostrar pesos
+    # Here you can later add your optimization and display the weights
     st.info("Aquí iría la construcción de la cartera (pesos por activo, gráficos, etc.).")
 
 
 def header(text: str):
+    """
+    Computes header.
+
+    Parameters
+    ----------
+    text : str. text.
+
+    Returns
+    -------
+    Any: header output.
+    """
     st.markdown(f"""
                 <div style="display:flex; justify-content:center; margin-bottom:1.5rem;">
                 <div style="
@@ -179,7 +244,24 @@ def header(text: str):
                 </div>    
                 </div>""", unsafe_allow_html=True)
 
-def subheader(text: str, font_size: str = "1.1rem", margin_bottom: str = "-1.0rem", font_weight: str = "600", color: str = "#000078"):
+
+def subheader(text: str, font_size: str = "1.1rem", margin_bottom: str = "-1.0rem", font_weight: str = "600",
+              color: str = "#000078"):
+    """
+    Computes subheader.
+
+    Parameters
+    ----------
+    text : str. text.
+    font_size : str. font size.
+    margin_bottom : str. margin bottom.
+    font_weight : str. font weight.
+    color : str. color.
+
+    Returns
+    -------
+    Any: subheader output.
+    """
     st.markdown(f"""
             <div style="
             font-size: {font_size};

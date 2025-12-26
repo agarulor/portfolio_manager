@@ -1,8 +1,8 @@
 import sys
-import os
 import streamlit as st
 import base64
 from pathlib import Path
+
 current_file_path = Path(__file__).resolve()
 BASE_DIR = Path(__file__).resolve().parent
 ASSETS_PATH = BASE_DIR / "assets"
@@ -10,11 +10,36 @@ PROJECT_ROOT = BASE_DIR.parent.parent
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
+
 def _img_to_base64(img_path: Path) -> str:
+    """
+    Computes  img to base64.
+
+    Parameters
+    ----------
+    img_path : Path. img path.
+
+    Returns
+    -------
+    str:  img to base64 output.
+    """
     data = img_path.read_bytes()
     return base64.b64encode(data).decode("utf-8")
 
+
 def add_separation(margin_top: str = "1rem", margin_bottom: str = "1rem"):
+    """
+    Adds separation.
+
+    Parameters
+    ----------
+    margin_top : str. margin top.
+    margin_bottom : str. margin bottom.
+
+    Returns
+    -------
+    Any: add separation output.
+    """
     st.markdown(f"""
     <hr style="
         border: none;
@@ -31,8 +56,19 @@ def add_separation(margin_top: str = "1rem", margin_bottom: str = "1rem"):
     ">
     """, unsafe_allow_html=True)
 
-def render():
 
+def render():
+    """
+    Renders .
+
+    Parameters
+    ----------
+
+
+    Returns
+    -------
+    Any: render output.
+    """
     portada_path = ASSETS_PATH / "portada.png"
     portada_b64 = _img_to_base64(portada_path)
     logo_path = ASSETS_PATH / "202-nova-marca-uoc.jpg"
@@ -47,7 +83,7 @@ def render():
     border-radius: 18px;
     margin-bottom: -9rem
     ">
-    
+
     <img src="data:image/jpeg;base64,{logo_b64}" style="
     position: absolute;
     top: 1.2rem;
@@ -62,7 +98,7 @@ def render():
     Proyecto para la creación de una cartera de inversión diversificada mediante un asesor automatizado
     </h3>
     </div>
-    
+
     <div style="display:flex; justify-content:center; margin-bottom:1.5rem;">
     <div style="
     background: linear-gradient(135deg, rgba(115,237,255,0.15), rgba(115,237,255,0.05));
@@ -107,7 +143,6 @@ def render():
                 st.session_state["route"] = "questionnaire"
                 st.rerun()
 
-
     add_separation()
 
     st.markdown("""
@@ -147,7 +182,6 @@ def render():
             </p>
         </div>
         """, unsafe_allow_html=True)
-
 
     add_separation()
 
@@ -190,7 +224,7 @@ def render():
 
     add_separation()
 
-    #--------------- DISCLAIMER ---------------
+    # --------------- DISCLAIMER ---------------
     st.markdown("""
     <div style="
         display:flex;
