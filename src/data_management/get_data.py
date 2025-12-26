@@ -67,7 +67,7 @@ def read_stock_ticker(file_path: str) -> Optional[pd.DataFrame]:
 
 def get_stock_prices(file_path: str,
                      ticker_col: str,
-                     companies_col: str,
+                     additional_tickers: Optional[list] = None,
                      adjusted: bool = False,
                      start_date: str = "2005-01-01",
                      end_date: str = "2025-09-30") -> Tuple[pd.DataFrame, pd.DataFrame]:
@@ -119,8 +119,10 @@ def get_stock_prices(file_path: str,
         return None
 
     # We build the ticker list
+
     tickers = list(df_tickers[ticker_col])
-    list(df_tickers[companies_col])
+    if additional_tickers is not None:
+        tickers = tickers + additional_tickers
 
     # In case there are no tickers in the column
     if not tickers:

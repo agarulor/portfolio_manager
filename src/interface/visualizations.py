@@ -209,28 +209,60 @@ def show_markowitz_results(n_returns: Optional[int] = None,
 
     dfp = df_results.reset_index().rename(columns={"Tipo de portfolio": "Tipo de portfolio"})
 
-    fig.add_trace(
-                go.Scatter(
-                    x=dfp["Volatilidad"] / 100,
-                    y=dfp["Retorno anualizado"] / 100,
-                    mode="markers+text",
-                    text=dfp["Tipo de portfolio"],
-                    textposition="top center",
-                    name="Portfolios",
-                    marker=dict(
-                        color="red",
-                        size=14,
-                    )
-                )
+    df_investor = dfp[dfp["Tipo de portfolio"].str.lower() == "investor"]
+    if not df_investor.empty:
+        fig.add_trace(
+            go.Scatter(
+                x=df_investor["Volatilidad"] / 100,
+                y=df_investor["Retorno anualizado"] / 100,
+                mode="markers+text",
+                text=df_investor["Tipo de portfolio"],
+                textposition="top center",
+                name="Investor",
+                marker=dict(
+                    color="darkgreen",
+                    size=20,
+                    symbol="circle",
+                ),
             )
+        )
+
+    # Other portfolios
+    df_others = dfp[dfp["Tipo de portfolio"].str.lower() != "investor"]
+    if not df_others.empty:
+        fig.add_trace(
+            go.Scatter(
+                x=df_others["Volatilidad"] / 100,
+                y=df_others["Retorno anualizado"] / 100,
+                mode="markers+text",
+                text=df_others["Tipo de portfolio"],
+                textposition="top center",
+                name="Otros portfolios",
+                marker=dict(
+                    color="red",
+                    size=14,
+                ),
+            )
+        )
+
+    # Layout & axes
     fig.update_layout(
+        template="plotly_white",
         xaxis_title="Volatilidad (anualizada)",
         yaxis_title="Retorno anualizado",
         legend_title_text="",
-        height=500
+        height=500,
     )
-    fig.update_xaxes(rangemode="tozero", showgrid=False)
-    fig.update_yaxes(showgrid=False)
+
+    fig.update_xaxes(
+        rangemode="tozero",
+        showgrid=True
+    )
+
+    fig.update_yaxes(
+        showgrid=True
+    )
+
     st.plotly_chart(fig, width="stretch")
 
 
@@ -247,7 +279,7 @@ def plot_portfolio_value(df_value: pd.DataFrame) -> None:
 
     fig.update_layout(template="plotly_white",
                       xaxis_title="Fecha",
-                      yaxis_title="Valor (€)",
+                      yaxis_title="Valor",
                       hovermode="x unified",
                       height=700,
                       )
@@ -324,7 +356,7 @@ def plot_portfolio_values(results: dict | pd.DataFrame, key: str, portfolio_type
 
     fig.update_layout(template="plotly_white",
                       xaxis_title="Fecha",
-                      yaxis_title="Valor (€)",
+                      yaxis_title="Valor",
                       hovermode="x unified",
                       height=700)
     fig.update_xaxes(showgrid=False)
@@ -399,7 +431,7 @@ def plot_portfolio_values(results: dict | pd.DataFrame, key: str, portfolio_type
 
     fig.update_layout(template="plotly_white",
                       xaxis_title="Fecha",
-                      yaxis_title="Valor (€)",
+                      yaxis_title="Valor",
                       hovermode="x unified",
                       height=700)
     fig.update_xaxes(showgrid=False)
@@ -619,7 +651,7 @@ def plot_portfolio_values_select(
     fig.update_layout(
         template="plotly_white",
         xaxis_title="Fecha",
-        yaxis_title="Valor (€)",
+        yaxis_title="Valor",
         hovermode="x unified",
         height=height,
     )
@@ -839,7 +871,6 @@ def plot_daily_returns_distribution(
     # Layout
     fig.update_layout(
         template="plotly_white",
-        title="Distribución de rendimiento diario (%)" if y_in_percent else "Distribución de rendimiento diario",
         xaxis_title="Retorno diario (%)" if y_in_percent else "Retorno diario",
         yaxis_title="Frecuencia",
         height=height,

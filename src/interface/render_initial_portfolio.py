@@ -1,4 +1,5 @@
 import streamlit as st
+from typing import Optional
 import pandas as pd
 from interface.main_interface import subheader, header
 from data_management.get_data import get_stock_prices, exists_asset
@@ -206,7 +207,6 @@ def add_assets():
 
             if add:
                 t = ticker.strip().upper()
-                print(exists_asset(t))
                 if not t:
                     st.warning("Introduce un ticker válido.")
 
@@ -229,9 +229,6 @@ def add_assets():
                 with b2:
 
                     subheader("Eliminar activos añadidos", font_size="2.0rem", color="#FF0000")
-
-
-
 
                     to_remove = st.multiselect(
                         "Eliminar acciones añadidas",
@@ -283,6 +280,7 @@ def render_investor_constraints():
 
     with st.container(border=True):
         subheader("Selección de fechas para extracción de datos", font_size="2.0rem")
+        subheader("(Se recomienda no ir más allá de 5 años atrás en el tiempo)")
         s1, s2 = st.columns(2)
 
         with s1:
@@ -352,19 +350,18 @@ def render_investor_constraints():
 
 def get_clean_initial_data(filename_path: str = FILENAME_PATH,
                            ticker_col: str = TICKER_COL,
+                           additional_tickers: Optional[list] = None,
                            adjusted: bool = False,
-                           companies_col: str = COMPANIES_COL,
                            start_date: str = START_DATE,
                            end_date: str = ENDING_DATE,
                            initial_date_portfolio: str = INITIAL_DATE_PORTFOLIO,
                            end_date_portfolio: str = END_DATE_PORTFOLIO):
     price_data, sectors = get_stock_prices(file_path=filename_path,
                                            ticker_col=ticker_col,
+                                           additional_tickers=additional_tickers,
                                            adjusted=adjusted,
-                                           companies_col=companies_col,
                                            start_date=start_date,
                                            end_date=end_date,
-
                                            )
 
     # price_data = read_price_file("data/processed/prices_20251218-234715.csv")
@@ -396,7 +393,10 @@ def get_initial_data():
     data_end_date = constraints["data_end_date"]
     data_portfolio_start = constraints["date_portfolio_start"]
     data_portfolio_end = constraints["date_portfolio_end"]
+    additional_tickers = st.session_state["custom_tickers"]
+    print(type(additional_tickers))
     st.session_state["initial_data"] = get_clean_initial_data(
+        additional_tickers=additional_tickers,
         start_date=data_start_date.isoformat(),
         end_date=data_end_date.isoformat(),
         initial_date_portfolio=data_portfolio_start,

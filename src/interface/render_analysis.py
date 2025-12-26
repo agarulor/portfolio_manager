@@ -2,7 +2,10 @@ import streamlit as st
 from types import MappingProxyType
 from typing import Optional, Literal
 import pandas as pd
+from interface.main_interface import subheader, header
+from interface.render_porfolio_results import show_portfolio_returns
 from portfolio_tools.return_metrics import calculate_daily_returns
+
 
 from portfolio_management.investor_portfolios import get_cumulative_returns
 from interface.visualizations import (
@@ -46,6 +49,7 @@ def render_sidebar_analysis_selection(options: list[str], prefix: str = "analysi
         return
 
     st.session_state.setdefault(f"{prefix}_base", options[0])
+
     st.session_state.setdefault(f"{prefix}_compare", [])
 
     # Base selection (single)
@@ -228,6 +232,7 @@ def render_historic_performance() -> None:
 
     historic_prices = initial_data.get("train_price")
     recent_prices = initial_data.get("test_price")
+    base_name = st.session_state.get("analysis_stock_base")
 
     if historic_returns is None or recent_returns is None:
         st.warning("No hay datos de retornos para mostrar.")
@@ -256,6 +261,7 @@ def render_historic_performance() -> None:
 
     c1, c2 = st.columns(2)
     with c1:
+        subheader(f"Resultados históricos de {base_name} (y comparable)", font_size="2.0rem")
         plot_portfolio_values_select(
             cum_returns_historic,
             key="historic_cum",
@@ -265,6 +271,7 @@ def render_historic_performance() -> None:
         )
 
     with c2:
+        subheader(f"Evolución histórica del precio de {base_name} (y comparable)", font_size="2.0rem")
         plot_portfolio_values_select(
             historic_prices,
             key="historic_price",
@@ -277,16 +284,18 @@ def render_historic_performance() -> None:
     d1, d2 = st.columns(2)
 
     with d1:
-        #  Plot: daily recent resutls
+        #  Plot: daily returns scatter
+        subheader(f"Retorno diario histórico de {base_name} en %", font_size="2.0rem")
         plot_daily_returns_scatter_base_only(
-            recent_returns,
-            key="daily_scatter_recent",
+            historic_returns,
+            key="daily_scatter_historic",
             data_type="stock",
             base=base,
             y_in_percent=True
         )
 
     with d2:
+        subheader(f"Distribución del rendimiento diario histórico de {base_name}", font_size="2.0rem")
         plot_daily_returns_distribution(
             historic_returns,
             base=base,
@@ -298,6 +307,7 @@ def render_historic_performance() -> None:
     e1, e2 = st.columns(2)
 
     with e1:
+        subheader(f"Resultados recientes de {base_name} (y comparable)", font_size="2.0rem")
         plot_portfolio_values_select(
             cum_returns_recent,
             key="recent_cum",
@@ -307,6 +317,7 @@ def render_historic_performance() -> None:
         )
 
     with e2:
+        subheader(f"Evolución reciente del precio de {base_name}(y comparable)", font_size="2.0rem")
         plot_portfolio_values_select(
             recent_prices,
             key="recent_price",
@@ -318,16 +329,18 @@ def render_historic_performance() -> None:
     f1, f2 = st.columns(2)
 
     with f1:
-        #  Plot: daily returns scatter
+        #  Plot: daily recent resutls
+        subheader(f"Retorno diario reciente de {base_name} en %", font_size="2.0rem")
         plot_daily_returns_scatter_base_only(
-            historic_returns,
-            key="daily_scatter_historic",
+            recent_returns,
+            key="daily_scatter_recent",
             data_type="stock",
             base=base,
             y_in_percent=True
         )
 
     with f2:
+        subheader(f"Distribución del rendimiento diario reciente de {base_name}", font_size="2.0rem")
         plot_daily_returns_distribution(
             recent_returns,
             base=base,
@@ -347,6 +360,11 @@ def render_analysis() -> None:
 
     External UI messages are shown in Spanish; internal comments/messages remain in English.
     """
+    header("ANÁLISIS DE CARTERA Y OTROS ACTIVOS")
+    st.write("")
+    st.write("")
+
+    show_portfolio_returns()
     # Build available options for sidebar selector
     options = _get_analysis_options_from_initial_data()
 
