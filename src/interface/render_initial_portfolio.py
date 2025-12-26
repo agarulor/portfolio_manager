@@ -686,6 +686,8 @@ def render_constraints_portfolio():
         st.session_state["data_ready"] = True
         st.session_state["step2_enabled"] = True
 
+        st.rerun()
+
     with (st.spinner("Generando visualizaciones...")):
         if st.session_state.get("data_ready"):
             st.write("")

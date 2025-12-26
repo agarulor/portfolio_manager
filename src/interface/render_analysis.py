@@ -42,33 +42,39 @@ def render_sidebar_analysis_selection(options: list[str], prefix: str = "analysi
     st.sidebar.markdown("---")
     st.sidebar.header("Selección de activos")
 
+    base_key = f"{prefix}_base"
+    compare_key = f"{prefix}_compare"
+
     if not options:
         st.sidebar.info("No hay activos disponibles.")
-        st.session_state[f"{prefix}_base"] = None
-        st.session_state[f"{prefix}_compare"] = []
+        st.session_state[base_key] = None
+        st.session_state[compare_key] = []
         return
 
-    st.session_state.setdefault(f"{prefix}_base", options[0])
+    # Initialize base if missing or invalid
+    if base_key not in st.session_state or st.session_state[base_key] not in options:
+        st.session_state[base_key] = options[0]
 
-    st.session_state.setdefault(f"{prefix}_compare", [])
-
-    # Base selection (single)
-    st.sidebar.selectbox(
+    base = st.sidebar.selectbox(
         "Base",
         options=options,
-        index=options.index(st.session_state[f"{prefix}_base"]) if st.session_state[f"{prefix}_base"] in options else 0,
-        key=f"{prefix}_base",
+        index=options.index(st.session_state[base_key]),
+        key=base_key,
     )
 
-    base = st.session_state[f"{prefix}_base"]
     compare_options = [x for x in options if x != base]
 
-    # Comparison selection (multi)
+    # Initialize compare if missing (and keep only valid values)
+    if compare_key not in st.session_state:
+        st.session_state[compare_key] = []
+    else:
+        st.session_state[compare_key] = [x for x in st.session_state[compare_key] if x in compare_options]
+
+    # IMPORTANT: no default=... when using key
     st.sidebar.multiselect(
         "Comparar con",
         options=compare_options,
-        default=[x for x in st.session_state[f"{prefix}_compare"] if x in compare_options],
-        key=f"{prefix}_compare",
+        key=compare_key,
     )
 
 
