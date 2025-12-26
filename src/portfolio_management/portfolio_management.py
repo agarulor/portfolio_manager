@@ -2,17 +2,21 @@ import pandas as pd
 from typing import Union
 from datetime import datetime
 
+
 def check_portfolio_weights(df_values: pd.DataFrame,
                             date: Union[str, datetime, pd.Timestamp]) -> pd.Series:
     """
-    Helps to track the current weights of the assets of the portfolio
-    It takes the weights of the assets of the portfolio at a given date
+    Checks portfolio weights.
 
-    :return:
+    Parameters
+    ----------
+    df_values : pd.DataFrame. df values.
+    date : Union[str, datetime, pd.Timestamp]. date.
 
-    The weights of the assets of the portfolio
+    Returns
+    -------
+    pd.Series: check portfolio weights output.
     """
-
 
     # We convert the date to datetime
     date = pd.to_datetime(date)
@@ -46,19 +50,31 @@ def check_portfolio_weights(df_values: pd.DataFrame,
 
 
 def get_sector_weights_at_date(
-    df_values: pd.DataFrame,
-    sectors: pd.DataFrame,
-    date: Union[str, datetime, pd.Timestamp],
-    as_percent: bool = True,
-    ticker_col: str = "ticker",
-    sector_col: str = "sector",
+        df_values: pd.DataFrame,
+        sectors: pd.DataFrame,
+        date: Union[str, datetime, pd.Timestamp],
+        as_percent: bool = True,
+        ticker_col: str = "ticker",
+        sector_col: str = "sector",
 ) -> pd.Series:
     """
-    Devuelve pesos por sector en una fecha, a partir de df_values (valores monetarios).
-    - ajusta la fecha a la inmediatamente anterior disponible si no existe
-    - ignora tickers sin sector (ej. RISK_FREE)
+    Gets sector weights at date.
+
+    Parameters
+    ----------
+    df_values : pd.DataFrame. df values.
+    sectors : pd.DataFrame. sectors.
+    date : Union[str, datetime, pd.Timestamp]. date.
+    as_percent : bool. as percent.
+    ticker_col : str. ticker col.
+    sector_col : str. sector col.
+
+    Returns
+    -------
+    pd.Series: get sector weights at date output.
     """
-    w = check_portfolio_weights(df_values, date)  # Series index=ticker
+    # Series index=ticker
+    w = check_portfolio_weights(df_values, date)
 
     # map ticker -> sector
     m = sectors.set_index(ticker_col)[sector_col]
