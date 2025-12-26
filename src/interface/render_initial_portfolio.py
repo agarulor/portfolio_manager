@@ -7,6 +7,7 @@ from data_management.dataset_preparation import split_data_markowtiz
 from data_management.clean_data import clean_and_align_data
 from portfolio_tools.return_metrics import calculate_daily_returns
 from interface.landing_page import add_separation
+from portfolio_management.portfolio_management import get_sector_weights_at_date, check_portfolio_weights
 from interface.visualizations import show_portfolio, render_results_table, show_markowitz_results, plot_portfolio_values
 from portfolio_management.investor_portfolios import get_sector_exposure_table, create_output_table_portfolios, \
     render_historical_portfolios_results
