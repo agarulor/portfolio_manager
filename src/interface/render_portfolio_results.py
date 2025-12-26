@@ -277,6 +277,3 @@ def render_results():
         show_portfolio_returns()
         create_portfolio_visualizations()
         create_results_visualizations()
-
-
-

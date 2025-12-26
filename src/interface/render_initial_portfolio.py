@@ -527,7 +527,6 @@ def get_initial_portfolio():
     min_stock_pct = constraints["min_stock_pct"] / 100
     max_sector_pct = constraints["max_sector_pct"] / 100
     risk_free_rate = constraints["risk_free_rate"]
-    investment_amount = constraints["amount"]
 
     # Investor profile
     profile = st.session_state["risk_result"]
