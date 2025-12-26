@@ -39,14 +39,12 @@ def render_sidebar_display_results():
         st.session_state["route"] = "portfolio"
         st.rerun()
 
-    if st.session_state.get("step2_enabled", False):
-        if st.sidebar.button("Ver evolución cartera", use_container_width=True, type="primary"):
-            st.session_state["route"] = "results"
-            st.rerun()
-    else:
-        st.sidebar.button("Ver evolución cartera", use_container_width=True, disabled=True)
 
-    if st.sidebar.button("Ir a análisis de datos", use_container_width=True):
+    if st.sidebar.button("Ver evolución cartera", width="stretch", type="primary"):
+        st.session_state["route"] = "results"
+        st.rerun()
+
+    if st.sidebar.button("Ir a análisis de datos", width="stretch"):
         st.session_state["route"] = "analysis"
         st.rerun()
 
