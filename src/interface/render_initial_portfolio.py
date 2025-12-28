@@ -342,7 +342,7 @@ def render_investor_constraints():
                                           key="max_stock_pct",
                                           min_value=0.0,
                                           max_value=100.0,
-                                          value=15.0,
+                                          value=12.5,
                                           font_color="#FF0000")
 
         with c3:
@@ -401,7 +401,7 @@ def render_investor_constraints():
             with tt3:
                 risk_free_rate = render_number_input("Tipo de interés libre de riesgo",
                                                      min_value=0.0,
-                                                     init_value=3.0,
+                                                     init_value=3.2,
                                                      step=0.01,
                                                      font_color="#FF0000",
                                                      key="risk_free_rate",
