@@ -497,6 +497,7 @@ def render_historical_portfolios_results(returns: pd.DataFrame,
     dict_pf_returns = {}
     dict_stock_results = {}
     dict_pf_results = {}
+    df_pf_results = pd.DataFrame()
     for pf_type in list_portfolio_types:
         pf_weights = weights[pf_type]
         df_returns_portfolio, money, stock_returns = get_total_results(returns=returns,

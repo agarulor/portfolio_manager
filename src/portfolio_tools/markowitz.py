@@ -1,11 +1,10 @@
 import pandas as pd
 import numpy as np
 import streamlit as st
-from typing import Literal, Tuple, Optional
+from typing import Literal, Optional
 from portfolio_tools.return_metrics import portfolio_returns, annualize_returns
 from portfolio_tools.risk_metrics import portfolio_volatility, neg_sharpe_ratio, calculate_covariance
 from scipy.optimize import minimize
-import matplotlib.pyplot as plt
 
 
 def min_max_percentage_renormalize(w: np.ndarray,

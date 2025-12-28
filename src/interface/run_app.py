@@ -36,22 +36,22 @@ def run_app():
         render_landing()
 
     elif route == "questionnaire":
-        page = render_sidebar()
+        render_sidebar()
         answers = render_investor_questionnaire()
         show_investor_profile(answers)
 
     elif route == "portfolio":
-        page = render_sidebar()
+        render_sidebar()
         render_constraints_portfolio()
         if not st.session_state.get("data_ready", False):
             return
 
     elif route == "results":
-        page = render_sidebar()
+        render_sidebar()
         render_results()
 
     elif route == "analysis":
-        page = render_sidebar()
+        render_sidebar()
         render_analysis()
 
     else:

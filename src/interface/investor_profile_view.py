@@ -1,11 +1,8 @@
-import streamlit as st
-# To avoid changes to a dictionary
 from types import MappingProxyType
-from investor_information.investor_profile import investor_target_volatility
-from interface.main_interface import header, subheader
+import streamlit as st
 from interface.landing_page import add_separation
-
-from interface.main_interface import render_sidebar_profile_summary
+from interface.main_interface import header, subheader
+from investor_information.investor_profile import investor_target_volatility
 
 RISK_COLOR = MappingProxyType({1: "#2ecc71", 2: "#6bdc8b", 3: "#f1c40f", 4: "#f39c12", 5: "#e67e22", 6: "#e74c3c"})
 RISK_PROFILE_DICTIONARY = MappingProxyType({
