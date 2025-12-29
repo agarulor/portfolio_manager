@@ -62,7 +62,7 @@ def render_sidebar_display_results():
     st.sidebar.checkbox("Tabla de resultados", key="show_results_table_forecast")
     st.sidebar.checkbox("Riesgo / Rentabilidad", key="show_riesgo_rentabilidad")
     st.sidebar.checkbox("Histórico (valor cartera)", key="show_portfolio_results")
-    st.sidebar.checkbox("Histórico (valor acciones)", key="show_stock_results")
+    st.sidebar.checkbox("Histórico (valor activos)", key="show_stock_results")
 
     st.sidebar.markdown("---")
     st.sidebar.header("Perfil del inversor")
@@ -248,7 +248,7 @@ def create_results_visualizations():
             subheader("Resultados de los activos de la cartera", font_size="1.8rem", margin_bottom="3.0rem")
             dict_stock_results_forecast = st.session_state.get("dict_stock_results_forecast")
             if dict_stock_results_forecast is None:
-                st.info("Pulsa **Generar cartera** para calcular los resultados de las acciones.")
+                st.info("Pulsa **Generar cartera** para calcular los resultados de los activos.")
                 return
 
             investor_results = dict_stock_results_forecast["investor"]

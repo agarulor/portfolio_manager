@@ -297,7 +297,7 @@ def add_assets():
                     subheader("Eliminar activos añadidos", font_size="1.8rem", color="#FF0000")
 
                     to_remove = st.multiselect(
-                        "Eliminar acciones añadidas",
+                        "Eliminar activos añadidos",
                         options=st.session_state["custom_tickers"],
                         key="remove_custom_tickers",
                     )
@@ -635,7 +635,7 @@ def create_historical_results_visualizations():
             subheader("Resultados históricos de los activos de la cartera", font_size="1.8rem")
             dict_stock_results = st.session_state.get("dict_stock_results")
             if dict_stock_results is None:
-                st.info("Pulsa **Generar cartera** para calcular los resultados históricos de las acciones.")
+                st.info("Pulsa **Generar cartera** para calcular los resultados históricos de los activos.")
                 return
 
             investor_results = dict_stock_results["investor"]
@@ -744,7 +744,7 @@ def render_sidebar_display_options():
     st.sidebar.checkbox("Tabla de resultados", key="show_results_table")
     st.sidebar.checkbox("Frontera eficiente", key="show_frontier")
     st.sidebar.checkbox("Histórico (valor cartera)", key="show_historical")
-    st.sidebar.checkbox("Histórico (valor acciones)", key="show_historical_stocks")
+    st.sidebar.checkbox("Histórico (valor activos)", key="show_historical_stocks")
 
     st.sidebar.markdown("---")
     st.sidebar.header("Perfil del inversor")
