@@ -236,9 +236,6 @@ def create_results_visualizations():
         with st.container(border=False):
             subheader("Resultados de la cartera de inversión", font_size="1.8rem", margin_bottom="3.0rem")
             dict_pf_returns_forecast = st.session_state.get("dict_pf_returns_forecast")
-            if dict_pf_returns_forecast is None:
-                st.info("Pulsa **Generar cartera** para calcular los resultados históricos.")
-                return
 
             plot_portfolio_values(dict_pf_returns_forecast, key="forecast_portfolio")
 
@@ -247,9 +244,6 @@ def create_results_visualizations():
         with st.container(border=False):
             subheader("Resultados de los activos de la cartera", font_size="1.8rem", margin_bottom="3.0rem")
             dict_stock_results_forecast = st.session_state.get("dict_stock_results_forecast")
-            if dict_stock_results_forecast is None:
-                st.info("Pulsa **Generar cartera** para calcular los resultados de los activos.")
-                return
 
             investor_results = dict_stock_results_forecast["investor"]
             plot_portfolio_values(investor_results, key="investor_portfolio_forecast", portfolio_type="stock")
