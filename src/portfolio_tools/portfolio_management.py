@@ -39,7 +39,7 @@ def check_portfolio_weights(df_values: pd.DataFrame,
 
     if total == 0 or pd.isna(total):
         weights = pd.DataFrame({"Pesos": 0.0}, index=df_values.columns)
-        print(type(weights))
+
     else:
         weights = (row / total).fillna(0.0).to_frame(name="Pesos")
 

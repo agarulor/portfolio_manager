@@ -113,7 +113,8 @@ def render_number_input(text: str,
                         font_color: str = FONT_COLOR,
                         font_size: str = FONT_SIZE,
                         font_weight: str = FONT_WEIGHT,
-                        unit: str = "EUR"):
+                        unit: str = "EUR",
+                        number_format: str = ".2f",):
     """
     Renders number input.
 
@@ -128,6 +129,7 @@ def render_number_input(text: str,
     font_size : str. font size.
     font_weight : str. font weight.
     unit : str. unit.
+    number_format : str. format.
 
     Returns
     -------
@@ -151,13 +153,13 @@ def render_number_input(text: str,
         min_value=min_value,
         value=init_value,
         step=step,
-        format="%.2f",
+        format="%"+number_format,
         label_visibility="collapsed",
         key=key
     )
 
     formatted_amount = (
-        f"{amount:,.2f}"
+        format(amount, number_format)
         .replace(",", "X")
         .replace(".", ",")
         .replace("X", ".")
@@ -385,27 +387,35 @@ def render_investor_constraints():
                                                  key="date_portfolio2", reference_date=END_DATE_PORTFOLIO)
 
     with st.container(border=False):
-        subheader("Inversión inicial y tipo de interés libre de riesgo", font_size="1.8rem")
-        t1, t2 = st.columns(2)
+        subheader("Inversión inicial, tipo de interés libre de riesgo y volatilidad escogida", font_size="1.8rem")
+        t1, t2, t3 = st.columns(3)
         with t1:
-            tt1, tt2 = st.columns(2)
-            with tt1, tt2:
-                amount = render_number_input("Inversión inicial",
-                                             min_value=0.0,
-                                             init_value=10000.0,
-                                             step=100.0,
-                                             key="cash_contribution")
-
+            amount = render_number_input("Inversión inicial",
+                                         min_value=0.0,
+                                         init_value=10000.0,
+                                         step=100.0,
+                                         key="cash_contribution")
         with t2:
-            tt3, tt4 = st.columns(2)
-            with tt3:
-                risk_free_rate = render_number_input("Tipo de interés libre de riesgo",
-                                                     min_value=0.0,
-                                                     init_value=3.2,
-                                                     step=0.01,
-                                                     font_color="#FF0000",
-                                                     key="risk_free_rate",
-                                                     unit="%")
+            risk_free_rate = render_number_input("Tipo de interés libre de riesgo",
+                                                 min_value=0.0,
+                                                 init_value=3.2,
+                                                 step=0.01,
+                                                 font_color="#006400",
+                                                 key="risk_free_rate",
+                                                 unit="%")
+
+        # Investor profile
+        profile = st.session_state["risk_result"]
+        volatility = (profile["sigma_min"] + profile["sigma_max"]) / 2
+        with t3:
+            volatility_selected = render_number_input("Volatilidad escogida",
+                                                      min_value=0.0,
+                                                      init_value=volatility,
+                                                      step=0.0005,
+                                                      font_color="#FF0000",
+                                                      key="selected_volatility",
+                                                      unit="",
+                                                      number_format=".4f")
 
     add_assets()
 
@@ -420,6 +430,7 @@ def render_investor_constraints():
         "date_portfolio_end": date_portfolio_end,
         "amount": amount,
         "risk_free_rate": risk_free_rate / 100,
+        "volatility": volatility_selected
     }
 
 
@@ -457,11 +468,7 @@ def get_clean_initial_data(filename_path: str = FILENAME_PATH,
                                            end_date=end_date,
                                            )
 
-    # price_data = read_price_file("data/processed/prices_20251218-234715.csv")
-    # sectors = read_price_file("data/processed/sectores_20251218-234715.csv")
     prices, report, summary = clean_and_align_data(price_data, beginning_data=True)
-    # save_preprocessed_data(prices, file_prefix="prices")
-    # save_preprocessed_data(sectors, file_prefix="sectores")
     daily_returns = calculate_daily_returns(prices, method="simple")
     train_set, test_set = split_data_markowtiz(returns=daily_returns, test_date_start=initial_date_portfolio,
                                                test_date_end=end_date_portfolio)
@@ -498,7 +505,6 @@ def get_initial_data():
     data_portfolio_start = constraints["date_portfolio_start"]
     data_portfolio_end = constraints["date_portfolio_end"]
     additional_tickers = st.session_state["custom_tickers"]
-    print(type(additional_tickers))
     st.session_state["initial_data"] = get_clean_initial_data(
         additional_tickers=additional_tickers,
         start_date=data_start_date.isoformat(),
@@ -527,10 +533,8 @@ def get_initial_portfolio():
     min_stock_pct = constraints["min_stock_pct"] / 100
     max_sector_pct = constraints["max_sector_pct"] / 100
     risk_free_rate = constraints["risk_free_rate"]
+    volatility = constraints["volatility"]
 
-    # Investor profile
-    profile = st.session_state["risk_result"]
-    volatility = (profile["sigma_min"] + profile["sigma_max"]) / 2
 
     # portfolio data
     resultados = st.session_state["initial_data"]
