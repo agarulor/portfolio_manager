@@ -245,7 +245,7 @@ def create_results_visualizations():
     if st.session_state.get("show_stock_results", True):
 
         with st.container(border=False):
-            subheader("Resultados de las acciones de la cartera", font_size="1.8rem", margin_bottom="3.0rem")
+            subheader("Resultados de los activos de la cartera", font_size="1.8rem", margin_bottom="3.0rem")
             dict_stock_results_forecast = st.session_state.get("dict_stock_results_forecast")
             if dict_stock_results_forecast is None:
                 st.info("Pulsa **Generar cartera** para calcular los resultados de las acciones.")

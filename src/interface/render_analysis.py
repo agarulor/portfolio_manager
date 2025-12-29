@@ -335,7 +335,7 @@ def render_historic_performance() -> None:
     if st.session_state.get("retorno_diario_historico", True):
         with d1:
             #  Plot: daily returns scatter
-            subheader(f"Retorno diario histórico de {base_name} en %", font_size="1.8remrem")
+            subheader(f"Retorno diario histórico de {base_name} en %", font_size="1.8rem")
             plot_daily_returns_scatter_base_only(
                 historic_returns,
                 key="daily_scatter_historic",

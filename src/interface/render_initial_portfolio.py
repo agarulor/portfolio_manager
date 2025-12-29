@@ -632,7 +632,7 @@ def create_historical_results_visualizations():
     if st.session_state.get("show_historical_stocks", True):
 
         with st.container(border=False):
-            subheader("Resultados históricos de las acciones de la cartera", font_size="1.8rem")
+            subheader("Resultados históricos de los activos de la cartera", font_size="1.8rem")
             dict_stock_results = st.session_state.get("dict_stock_results")
             if dict_stock_results is None:
                 st.info("Pulsa **Generar cartera** para calcular los resultados históricos de las acciones.")
