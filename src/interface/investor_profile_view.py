@@ -6,8 +6,6 @@ from investor_information.investor_profile import investor_target_volatility
 from interface.constants import  RISK_PROFILE_DICTIONARY, QUESTION_KEYS, RISK_COLOR
 
 
-
-
 def radio_question(
         number,
         text,

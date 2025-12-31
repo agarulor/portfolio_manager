@@ -2,10 +2,7 @@ import streamlit as st
 from interface.main_interface import subheader, header
 from interface.render_initial_portfolio import reset_portfolio_results
 from interface.visualizations import show_portfolio, render_results_table, plot_portfolio_values, show_markowitz_results
-from interface.constants import  RISK_PROFILE_DICTIONARY
-
-PERIODS_PER_YEAR = 255
-
+from interface.constants import  RISK_PROFILE_DICTIONARY, PERIODS_PER_YEAR
 
 
 def render_sidebar_display_results():

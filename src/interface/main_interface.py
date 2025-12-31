@@ -1,21 +1,10 @@
 import streamlit as st
-from types import MappingProxyType
-from pathlib import Path
+
 import sys
 import os
+from interface.constants import RISK_PROFILE_DICTIONARY, RISK_COLOR, ASSETS_PATH, BASE_DIR
 
 sys.path.append(os.path.join(os.path.dirname(__file__), "src"))
-BASE_DIR = Path(__file__).resolve().parent
-ASSETS_PATH = BASE_DIR / "assets"
-RISK_COLOR = MappingProxyType({1: "#2ecc71", 2: "#6bdc8b", 3: "#f1c40f", 4: "#f39c12", 5: "#e67e22", 6: "#e74c3c"})
-RISK_PROFILE_DICTIONARY = MappingProxyType({
-    1: "Perfil bajo de riesgo",
-    2: "Perfil medio-bajo de riesgo",
-    3: "Perfil medio de riesgo",
-    4: "Perfil medio-alto de riesgo",
-    5: "Perfil alto de riesgo",
-    6: "Perfil agresivo de riesgo"
-})
 
 
 def apply_global_styles():

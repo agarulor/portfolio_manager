@@ -2,11 +2,9 @@ import sys
 import streamlit as st
 import base64
 from pathlib import Path
+from interface.constants import ASSETS_PATH, PROJECT_ROOT
 
 current_file_path = Path(__file__).resolve()
-BASE_DIR = Path(__file__).resolve().parent
-ASSETS_PATH = BASE_DIR / "assets"
-PROJECT_ROOT = BASE_DIR.parent.parent
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 

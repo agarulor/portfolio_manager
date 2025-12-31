@@ -1,5 +1,4 @@
 import streamlit as st
-from types import MappingProxyType
 from typing import Optional
 import pandas as pd
 from interface.main_interface import subheader, header
@@ -13,17 +12,7 @@ from interface.visualizations import (
     plot_daily_returns_scatter_base_only,
     plot_daily_returns_distribution
 )
-
-PERIODS_PER_YEAR = 255
-
-RISK_PROFILE_DICTIONARY = MappingProxyType({
-    1: "Perfil bajo de riesgo",
-    2: "Perfil medio-bajo de riesgo",
-    3: "Perfil medio de riesgo",
-    4: "Perfil medio-alto de riesgo",
-    5: "Perfil alto de riesgo",
-    6: "Perfil agresivo de riesgo"
-})
+from interface.constants import  RISK_PROFILE_DICTIONARY
 
 
 def render_sidebar_analysis_selection(options: list[str], prefix: str = "analysis_stock") -> None:

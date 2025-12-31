@@ -1,6 +1,7 @@
 import streamlit as st
 from typing import Optional
 import pandas as pd
+import datetime as dt
 from interface.main_interface import subheader, header
 from data_management.get_data import get_stock_prices, exists_asset
 from data_management.dataset_preparation import split_data_markowtiz
@@ -11,32 +12,25 @@ from portfolio_tools.portfolio_management import get_sector_weights_at_date, che
 from interface.visualizations import show_portfolio, render_results_table, show_markowitz_results, plot_portfolio_values
 from portfolio_tools.investor_portfolios import get_sector_exposure_table, create_output_table_portfolios, \
     render_historical_portfolios_results
-import datetime as dt
-from types import MappingProxyType
 
-PERIODS_PER_YEAR = 255
+from interface.constants import (RISK_PROFILE_DICTIONARY,
+                                 PERIODS_PER_YEAR,
+                                 FILENAME_PATH,
+                                 TICKER_COL,
+                                 START_DATE,
+                                 ENDING_DATE,
+                                 FONT_SIZE,
+                                 FONT_COLOR,
+                                 FONT_WEIGHT,
+                                 INITIAL_DATE,
+                                 END_DATE,
+                                 INITIAL_DATE_PORTFOLIO,
+                                 END_DATE_PORTFOLIO)
 
-RISK_PROFILE_DICTIONARY = MappingProxyType({
-    1: "Perfil bajo de riesgo",
-    2: "Perfil medio-bajo de riesgo",
-    3: "Perfil medio de riesgo",
-    4: "Perfil medio-alto de riesgo",
-    5: "Perfil alto de riesgo",
-    6: "Perfil agresivo de riesgo"
-})
 
-FILENAME_PATH = "data/input/ibex_eurostoxx.csv"
-TICKER_COL = "ticker_yahoo"
-COMPANIES_COL = "name"
-START_DATE = "2005-01-01"
-ENDING_DATE = "2025-09-30"
-FONT_SIZE = "0.9rem"
-FONT_WEIGHT = "700"
-FONT_COLOR = "#000078"
-INITIAL_DATE = dt.date(2020, 10, 1)
-END_DATE = dt.date(2025, 9, 30)
-INITIAL_DATE_PORTFOLIO = dt.date(2024, 10, 1)
-END_DATE_PORTFOLIO = dt.date(2025, 9, 30)
+
+
+
 
 
 def render_slider(text: str,
