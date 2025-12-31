@@ -3,28 +3,9 @@ import streamlit as st
 from interface.landing_page import add_separation
 from interface.main_interface import header, subheader
 from investor_information.investor_profile import investor_target_volatility
+from interface.constants import  RISK_PROFILE_DICTIONARY, QUESTION_KEYS, RISK_COLOR
 
-RISK_COLOR = MappingProxyType({1: "#2ecc71", 2: "#6bdc8b", 3: "#f1c40f", 4: "#f39c12", 5: "#e67e22", 6: "#e74c3c"})
-RISK_PROFILE_DICTIONARY = MappingProxyType({
-    1: "Perfil bajo de riesgo",
-    2: "Perfil medio-bajo de riesgo",
-    3: "Perfil medio de riesgo",
-    4: "Perfil medio-alto de riesgo",
-    5: "Perfil alto de riesgo",
-    6: "Perfil agresivo de riesgo"
-})
-TOTAL_QUESTIONS = 8
 
-QUESTION_KEYS = [
-    "knowledge",
-    "risk_level",
-    "downside_reaction",
-    "liquidity_need",
-    "annual_income",
-    "net_worth",
-    "investment_horizon",
-    "financial_goal",
-]
 
 
 def radio_question(

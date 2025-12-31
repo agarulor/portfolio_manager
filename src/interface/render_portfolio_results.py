@@ -2,18 +2,10 @@ import streamlit as st
 from interface.main_interface import subheader, header
 from interface.render_initial_portfolio import reset_portfolio_results
 from interface.visualizations import show_portfolio, render_results_table, plot_portfolio_values, show_markowitz_results
-from types import MappingProxyType
+from interface.constants import  RISK_PROFILE_DICTIONARY
 
 PERIODS_PER_YEAR = 255
 
-RISK_PROFILE_DICTIONARY = MappingProxyType({
-    1: "Perfil bajo de riesgo",
-    2: "Perfil medio-bajo de riesgo",
-    3: "Perfil medio de riesgo",
-    4: "Perfil medio-alto de riesgo",
-    5: "Perfil alto de riesgo",
-    6: "Perfil agresivo de riesgo"
-})
 
 
 def render_sidebar_display_results():
