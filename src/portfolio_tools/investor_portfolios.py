@@ -194,10 +194,12 @@ def get_investor_initial_portfolio(returns: pd.DataFrame,
 
     covmat = calculate_covariance(returns)
 
+    # In case portfolio type is investor and rf_annual has a value
     if portfolio_type == "investor":
         if rf_annual is not None:
             returns, covmat = add_risk_free_asset(returns, covmat, rf_annual, periods_per_year)
 
+        # we get the weights
         weights = get_investor_weights(returns,
                                        covmat,
                                        method,
@@ -262,21 +264,28 @@ def get_cumulative_returns(returns: pd.DataFrame,
     -------
     pd.DataFrame: get cumulative returns output.
     """
+    # if weights are none, we adjust
     if weights is None:
         adjust_returns = (1 + returns)
         adjusted_returns = adjust_returns.cumprod()
         return adjusted_returns
 
+    # We get the money / value nivested
     money_invested = weights * initial_investment
+    # if rf_annual exists, then we add the risk free column
     if rf_annual is not None and portfolio_type == "investor":
         returns = add_risk_free_column(returns, rf_annual, periods_per_year)
 
+    # We ajust returns
     adjust_returns = (1 + returns)
 
+    # calculate cumproduct
     adjusted_returns = adjust_returns.cumprod()
 
+   # Get value
     adjusted_value = adjusted_returns * money_invested
 
+    # sum total value
     adjusted_total_value = adjusted_value.sum(axis=1)
 
     return adjusted_total_value, adjusted_value
@@ -306,13 +315,17 @@ def get_total_results(returns: pd.DataFrame,
     -------
     Any: get total results output.
     """
+    # we get the covariance matrix
     covmat = calculate_covariance(returns)
 
+    # get returns, etc.
     df_returns, df_stock_returns = get_cumulative_returns(returns, weights, initial_investment, rf_annual,
                                                           periods_per_year, portfolio_type)
 
+   # calculate absolute returns
     absolute_return = df_returns.iloc[-1] / initial_investment
 
+    # we get the value for t
     t = df_returns.shape[0]
 
     annualized_return = absolute_return ** (periods_per_year / t) - 1
@@ -364,17 +377,17 @@ def get_sector_exposure_table(
     # We move the index (Ticker) into a column
     df = df_weights.reset_index().rename(columns={"Ticker": "ticker"})
 
-    # Unimos con sectores
+    # we join by sectors
     df = df.merge(
         sectors[["ticker", "sector"]],
         on="ticker",
         how="left"
     )
 
-    # Excluimos activos sin sector (ej. RISK_FREE)
+    # We exluce assets with no sector (ej. RISK_FREE)
     df = df.dropna(subset=["sector"])
 
-    # Agregamos por sector
+    # We add by sector
     sector_table = (
         df.groupby("sector", as_index=False)[weight_col]
         .sum()
@@ -383,7 +396,7 @@ def get_sector_exposure_table(
     if as_percent:
         sector_table[weight_col] *= 100
 
-    # Ordenamos de mayor a menor peso
+    # We order by weight
     sector_table = sector_table.sort_values(
         by=weight_col, ascending=False
     ).reset_index(drop=True)
@@ -427,13 +440,16 @@ def create_output_table_portfolios(returns: pd.DataFrame,
     -------
     pd.DataFrame: create output table portfolios output.
     """
+    # If there are no portfolio_types passed as arguments, we use some defaults ones
     if list_portfolio_types is None:
         list_portfolio_types = ["investor", "msr", "gmv", "ew", "random"]
 
+    # We initiate lists and dicts
     results = []
     dict_weights = {}
     dict_df_weights = {}
 
+    # We iterate over portfolio types
     for portfolio_type in list_portfolio_types:
         df_results, df_weights, weights = get_investor_initial_portfolio(returns,
                                                                          method=method,
@@ -491,21 +507,28 @@ def render_historical_portfolios_results(returns: pd.DataFrame,
     -------
     Any: render historical portfolios results output.
     """
+    # If there are no portfolio_types passed as arguments, we use some defaults ones
     if list_portfolio_types is None:
         list_portfolio_types = ["investor", "msr", "gmv", "ew", "random"]
 
+    # We initialize dicts and DFs
     dict_pf_returns = {}
     dict_stock_results = {}
     dict_pf_results = {}
     df_pf_results = pd.DataFrame()
+
+    # Iterate over portfolio types
     for pf_type in list_portfolio_types:
+        # we get weights
         pf_weights = weights[pf_type]
+        # we get returns, etc.
         df_returns_portfolio, money, stock_returns = get_total_results(returns=returns,
                                                                        weights=pf_weights,
                                                                        initial_investment=initial_investment,
                                                                        periods_per_year=periods_per_year,
                                                                        rf_annual=rf_annual,
                                                                        portfolio_type=pf_type)
+        # we complete respective dicts and DFs
         dict_pf_returns[pf_type] = money
         dict_stock_results[pf_type] = stock_returns
         dict_pf_results[pf_type] = df_returns_portfolio
