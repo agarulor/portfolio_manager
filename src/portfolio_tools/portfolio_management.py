@@ -26,8 +26,8 @@ def check_portfolio_weights(df_values: pd.DataFrame,
         df_values = df_values.copy()
         df_values.index = pd.to_datetime(df_values.index)
 
-    # - If the date exists it uses it
-    # - if it doesn't exist it use the previous one
+    # If the date exists it uses it
+    # if it doesn't exist it use the previous one
     if date in df_values.index:
         row = df_values.loc[date]
 

@@ -61,6 +61,7 @@ def render_slider(text: str,
     -------
     Any: render slider output.
     """
+    # Title / label above the slider (so the user knows what they're doing)
     st.markdown(
         f"""
          <div style="
@@ -74,6 +75,8 @@ def render_slider(text: str,
          {text} 
          </div>
          """, unsafe_allow_html=True)
+
+    # The actual slider (we hide Streamlit's default label because we already show our own)
     max_pct = st.slider(
         text_slider,
         min_value=min_value, max_value=max_value, value=value, step=0.5,
@@ -81,6 +84,7 @@ def render_slider(text: str,
         key=key
     )
 
+    # Show the selected % below the slider in a nicer way
     st.markdown(
         f"""
          <div style="
@@ -129,6 +133,7 @@ def render_number_input(text: str,
     -------
     Any: render number input output.
     """
+    # Nice centered label above the number input
     st.markdown(f"""
     <div style="
         font-size: {font_size};
@@ -142,6 +147,7 @@ def render_number_input(text: str,
     </div>
     """, unsafe_allow_html=True)
 
+    # The input itself (collapsed label again because we draw our own)
     amount = st.number_input(
         text,
         min_value=min_value,
@@ -152,6 +158,7 @@ def render_number_input(text: str,
         key=key
     )
 
+    # Format number like Spanish style: 10.000,00 instead of 10,000.00
     formatted_amount = (
         format(amount, number_format)
         .replace(",", "X")
@@ -159,6 +166,7 @@ def render_number_input(text: str,
         .replace("X", ".")
     )
 
+    # Show the formatted amount under the input, with the unit
     st.markdown(
         f"""
          <div style="
@@ -199,6 +207,7 @@ def render_date(text: str,
     -------
     Any: render date output.
     """
+    # Label above the date picker
     st.markdown(f"""
     <div style="
         font-size: {font_size};
@@ -212,12 +221,15 @@ def render_date(text: str,
     </div>
     """, unsafe_allow_html=True)
 
+    # Date picker itself
     date = st.date_input(
         "Fecha de la aportación",
         value=reference_date,
         label_visibility="collapsed",
         key=key
     )
+
+    # Show the chosen date underneath (just to make it extra clear)
     st.markdown(
         f"""
          <div style="
@@ -248,12 +260,18 @@ def add_assets():
     -------
     Any: add assets output.
     """
+    # Load the "official" tickers from the CSV so we can avoid duplicates
     existing_assets = pd.read_csv(FILENAME_PATH)
     column_with_tickers = list(existing_assets[TICKER_COL])
-    # Initialize session state
+
+    # Make sure custom tickers list exists in session state
     st.session_state.setdefault("custom_tickers", [])
+
+    # Everything related to add/remove tickers lives inside this container
     with st.container(border=True):
         b1, b2 = st.columns(2)
+
+        # Left side: add ticker
         with b1:
             subheader("Añadir activo de manera manual a lista inicial", font_size="1.8rem", color="#006400")
 
@@ -261,12 +279,16 @@ def add_assets():
                                    placeholder="ej: SAN.MC, BBVA.MC, AAPL",
                                    key="ticker")
 
+            # Center the button using 3 columns
             d1, d2, d3 = st.columns(3)
             with d2:
                 add = st.button("Añadir activo", type="primary")
 
+            # If user clicked add, validate and store
             if add:
                 t = ticker.strip().upper()
+
+                # Basic checks so we don't save junk
                 if not t:
                     st.warning("Introduce un ticker válido.")
 
@@ -276,18 +298,20 @@ def add_assets():
                     st.warning(f"El ticker {t} ya está añadido.")
                 elif not exists_asset(t):
                     st.warning(f"El ticker {t} no existe en Yahoo Finance.")
-
                 else:
                     st.session_state["custom_tickers"].append(t)
                     st.success(f"Ticker {t} añadido.")
                     st.session_state["ticker_input"] = ""
+
+            # If we already have custom tickers, show them and allow removing
             if st.session_state["custom_tickers"]:
                 e1, e2 = st.columns(2)
                 with e1:
                     st.write("Nuevos activos añadidos hasta el momento")
                     st.write(", ".join(st.session_state["custom_tickers"]))
-                with b2:
 
+                # Right side: remove ticker
+                with b2:
                     subheader("Eliminar activos añadidos", font_size="1.8rem", color="#FF0000")
 
                     to_remove = st.multiselect(
@@ -296,6 +320,7 @@ def add_assets():
                         key="remove_custom_tickers",
                     )
 
+                    # Remove button, centered
                     g1, g2, g3 = st.columns(3)
                     with g2:
                         if st.button("Eliminar seleccionadas"):
@@ -317,15 +342,19 @@ def render_investor_constraints():
     -------
     Any: render investor constraints output.
     """
+    # Quick intro for the user: what they’re setting up here
     subheader("Defina el grado de diversificación y el importe inicial para la propuesta de cartera",
               margin_bottom="1.0rem")
 
     add_separation()
+
+    # 1) Portfolio weight constraints
     with st.container(border=False):
         subheader("Pesos de la cartera", font_size="1.8rem")
         c1, c2, c3 = st.columns(3, gap="large")
 
         with c1:
+            # Max sector weight slider
             max_sector_pct = render_slider(text="Selecciona el peso máximo por sector",
                                            text_slider="% máximo asignado a un sector",
                                            key="max_sector_pct",
@@ -333,6 +362,7 @@ def render_investor_constraints():
                                            max_value=100.0)
 
         with c2:
+            # Max single stock weight slider
             max_stock_pct = render_slider(text="Selecciona peso máximo por acción",
                                           text_slider="% máximo asignado a una acción",
                                           key="max_stock_pct",
@@ -342,6 +372,7 @@ def render_investor_constraints():
                                           font_color="#FF0000")
 
         with c3:
+            # Min single stock weight slider
             min_stock_pct = render_slider(text="Selecciona peso mínimo por acción",
                                           text_slider="% mínimo asignado a una acción",
                                           key="min_stock_pct",
@@ -349,6 +380,7 @@ def render_investor_constraints():
                                           max_value=100.0,
                                           value=2.5)
 
+    # 2) Dates for data extraction (pulling prices/returns)
     with st.container(border=True):
         subheader("Selección de fechas para extracción de datos", font_size="1.8rem")
         subheader("(Se recomienda no ir más allá de 5 años atrás en el tiempo)")
@@ -359,12 +391,14 @@ def render_investor_constraints():
             with st2:
                 data_start_date = render_date("Fecha de inicio de extracción de datos", key="date",
                                               reference_date=INITIAL_DATE)
+
         with s2:
             stt1, stt2 = st.columns(2)
             with stt1:
                 data_end_date = render_date("Fecha de fin de extracción de datos", font_color="#FF0000", key="date2",
                                             reference_date=END_DATE)
 
+    # 3) Dates for portfolio analysis (train/test split)
     with st.container(border=True):
         subheader("Selección de fechas para análisis de cartera", font_size="1.8rem", color="#006400")
         w1, w2 = st.columns(2)
@@ -374,22 +408,28 @@ def render_investor_constraints():
             with wt2:
                 date_portfolio_start = render_date("Fecha de inicio de generación de cartera", key="date_portfolio",
                                                    reference_date=INITIAL_DATE_PORTFOLIO)
+
         with w2:
             wtt1, wtt2 = st.columns(2)
             with wtt1:
                 date_portfolio_end = render_date("Fecha de fin de generación de cartera", font_color="#006400",
                                                  key="date_portfolio2", reference_date=END_DATE_PORTFOLIO)
 
+    # 4) Amount, risk-free rate, and chosen volatility
     with st.container(border=False):
         subheader("Inversión inicial, tipo de interés libre de riesgo y volatilidad escogida", font_size="1.8rem")
         t1, t2, t3 = st.columns(3)
+
         with t1:
+            # Initial investment amount
             amount = render_number_input("Inversión inicial",
                                          min_value=0.0,
                                          init_value=10000.0,
                                          step=100.0,
                                          key="cash_contribution")
+
         with t2:
+            # Risk-free rate (as % input, later stored as decimal)
             risk_free_rate = render_number_input("Tipo de interés libre de riesgo",
                                                  min_value=0.0,
                                                  init_value=3.2,
@@ -398,10 +438,12 @@ def render_investor_constraints():
                                                  key="risk_free_rate",
                                                  unit="%")
 
-        # Investor profile
+        # Default volatility is the midpoint of the profile range
         profile = st.session_state["risk_result"]
         volatility = (profile["sigma_min"] + profile["sigma_max"]) / 2
+
         with t3:
+            # User can override / fine tune volatility if they want
             volatility_selected = render_number_input("Volatilidad escogida",
                                                       min_value=0.0,
                                                       init_value=volatility,
@@ -411,9 +453,10 @@ def render_investor_constraints():
                                                       unit="",
                                                       number_format=".4f")
 
+    # Optional: allow user to add extra tickers beyond the default universe
     add_assets()
 
-    # Save session state
+    # Save everything so the rest of the app can use it
     st.session_state["investor_constraints_draft"] = {
         "max_sector_pct": max_sector_pct,
         "max_stock_pct": max_stock_pct,
@@ -454,6 +497,7 @@ def get_clean_initial_data(filename_path: str = FILENAME_PATH,
     -------
     Any: get clean initial data output.
     """
+    # Pull prices (and sector info) from the data layer
     price_data, sectors = get_stock_prices(file_path=filename_path,
                                            ticker_col=ticker_col,
                                            additional_tickers=additional_tickers,
@@ -462,14 +506,21 @@ def get_clean_initial_data(filename_path: str = FILENAME_PATH,
                                            end_date=end_date,
                                            )
 
+    # Clean + align prices so everything matches on the same calendar
     prices, report, summary = clean_and_align_data(price_data, beginning_data=True)
+
+    # Convert prices into daily returns
     daily_returns = calculate_daily_returns(prices, method="simple")
+
+    # Split into train/test for the portfolio workflow
     train_set, test_set = split_data_markowtiz(returns=daily_returns, test_date_start=initial_date_portfolio,
                                                test_date_end=end_date_portfolio)
+
+    # Also split prices the same way (for price charts later)
     train_price, test_price = split_data_markowtiz(returns=prices, test_date_start=initial_date_portfolio,
                                                    test_date_end=end_date_portfolio)
 
-    # We return relevant data
+    # Bundle everything up so it's easy to pass around
     return {
         "prices": prices,
         "daily_returns": daily_returns,
@@ -493,12 +544,17 @@ def get_initial_data():
     -------
     Any: get initial data output.
     """
+    # Read dates + settings from the UI constraints
     constraints = st.session_state["investor_constraints_draft"]
     data_start_date = constraints["data_start_date"]
     data_end_date = constraints["data_end_date"]
     data_portfolio_start = constraints["date_portfolio_start"]
     data_portfolio_end = constraints["date_portfolio_end"]
+
+    # Custom tickers the user added
     additional_tickers = st.session_state["custom_tickers"]
+
+    # Pull, clean and store the dataset in session_state
     st.session_state["initial_data"] = get_clean_initial_data(
         additional_tickers=additional_tickers,
         start_date=data_start_date.isoformat(),
@@ -522,6 +578,7 @@ def get_initial_portfolio():
     -------
     Any: get initial portfolio output.
     """
+    # Grab constraints and convert % inputs into decimals
     constraints = st.session_state["investor_constraints_draft"]
     max_stock_pct = constraints["max_stock_pct"] / 100
     min_stock_pct = constraints["min_stock_pct"] / 100
@@ -529,11 +586,12 @@ def get_initial_portfolio():
     risk_free_rate = constraints["risk_free_rate"]
     volatility = constraints["volatility"]
 
-
-    # portfolio data
+    # Pull training returns + sector map from the dataset
     resultados = st.session_state["initial_data"]
     train_set = resultados["train_set"]
     sectors = resultados["sectors"]
+
+    # Run the portfolio engine and store the results
     st.session_state["initial_results"] = create_output_table_portfolios(train_set,
                                                                          min_w=min_stock_pct,
                                                                          max_w=max_stock_pct,
@@ -557,16 +615,23 @@ def create_historical_portfolio_visualizations():
     -------
     Any: create historical portfolio visualizations output.
     """
+    # If we don't have data yet, no charts for now
     if not st.session_state.get("data_ready", False):
         return
+
+    # Pull the investor weights and compute sector exposure
     df_weights = st.session_state["initial_results"][1]["investor"]
     sectors = st.session_state["initial_data"]["sectors"]
     sectores = get_sector_exposure_table(df_weights, sectors)
+
+    # Results table + returns for frontier plot
     df_results = st.session_state["initial_results"][0]
     df_returns = st.session_state["initial_data"]["train_set"]
 
+    # Allocation charts (assets + sectors)
     with st.container(border=False):
         col1, col2 = st.columns(2)
+
         if st.session_state.get("show_alloc_assets", True):
             with col1:
                 show_portfolio(
@@ -576,6 +641,7 @@ def create_historical_portfolio_visualizations():
                     weight_col="Pesos",
                     weights_in_percent=False
                 )
+
         if st.session_state.get("show_alloc_sectors", True):
             with col2:
                 show_portfolio(
@@ -586,15 +652,15 @@ def create_historical_portfolio_visualizations():
                     weights_in_percent=True
                 )
 
-    # We now render the main table of results and comparable portfolios
+    # Main results table + efficient frontier
     with st.container(border=False):
         c1, c2 = st.columns(2)
+
         if st.session_state.get("show_results_table", True):
             with c1:
                 subheader("Resultados de la cartera", font_size="1.8rem")
                 render_results_table(df_results)
 
-        # We now render the efficient frontier and the comparable portfolios
         if st.session_state.get("show_frontier", True):
             with c2:
                 subheader("Frontera eficiente y portfolios", font_size="1.8rem")
@@ -614,20 +680,24 @@ def create_historical_results_visualizations():
     -------
     Any: create historical results visualizations output.
     """
+    # Portfolio value history
     if st.session_state.get("show_historical", True):
         with st.container(border=False):
             subheader("Resultados históricos de la cartera antes de inversión", font_size="1.8rem")
             dict_pf_returns = st.session_state.get("dict_pf_returns")
+
             if dict_pf_returns is None:
                 st.info("Pulsa **Generar cartera** para calcular los resultados históricos.")
                 return
 
             plot_portfolio_values(dict_pf_returns, key="historic_portfolio")
-    if st.session_state.get("show_historical_stocks", True):
 
+    # Under-the-hood: individual assets inside the investor portfolio
+    if st.session_state.get("show_historical_stocks", True):
         with st.container(border=False):
             subheader("Resultados históricos de los activos de la cartera", font_size="1.8rem")
             dict_stock_results = st.session_state.get("dict_stock_results")
+
             if dict_stock_results is None:
                 st.info("Pulsa **Generar cartera** para calcular los resultados históricos de los activos.")
                 return
@@ -648,6 +718,7 @@ def reset_portfolio_results():
     -------
     Any: reset portfolio results output.
     """
+    # Clear out the main computed bits so the user can start fresh
     keys_to_reset = [
         "initial_data",
         "initial_results",
@@ -673,7 +744,7 @@ def render_sidebar_display_options():
     -------
     Any: render sidebar display options output.
     """
-    # Robust init
+    # Make sure these keys exist so the sidebar doesn't crash on first load
     st.session_state.setdefault("data_ready", False)
     st.session_state.setdefault("viz_ready", False)
     st.session_state.setdefault("step2_enabled", False)
@@ -682,16 +753,18 @@ def render_sidebar_display_options():
 
     st.sidebar.header("Navegación")
 
+    # Back button: wipe results and return to questionnaire
     if st.sidebar.button("Volver a cuestionario", use_container_width=True):
         reset_portfolio_results()
         st.session_state["route"] = "questionnaire"
         st.rerun()
 
+    # Back to the initial portfolio screen
     if st.sidebar.button("Volver a cartera inicial", width="stretch"):
         st.session_state["route"] = "portfolio"
         st.rerun()
 
-    # Buttons are  enabled once visualizations were rendered at least once
+    # Navigation buttons only unlock once we've rendered charts at least once
     nav_enabled = bool(st.session_state.get("viz_ready", False))
 
     if st.sidebar.button(
@@ -703,6 +776,7 @@ def render_sidebar_display_options():
         st.session_state["route"] = "results"
         st.rerun()
 
+    # Analysis unlocks only if we have both data + portfolio results
     analysis_enabled = (
             nav_enabled
             and st.session_state.get("initial_data") is not None
@@ -717,12 +791,14 @@ def render_sidebar_display_options():
         st.session_state["route"] = "analysis"
         st.rerun()
 
+    # Little hints so user knows why buttons are disabled
     if not nav_enabled:
         st.sidebar.caption(
             "Genera la cartera y espera a que se carguen las visualizaciones para desbloquear navegación.")
     elif not analysis_enabled:
         st.sidebar.caption("El análisis se desbloquea cuando existen datos y resultados de cartera.")
 
+    # Chart toggles
     st.sidebar.markdown("---")
     st.sidebar.header("Selecciona visualizaciones")
 
@@ -740,6 +816,7 @@ def render_sidebar_display_options():
     st.sidebar.checkbox("Histórico (valor cartera)", key="show_historical")
     st.sidebar.checkbox("Histórico (valor activos)", key="show_historical_stocks")
 
+    # Investor profile block
     st.sidebar.markdown("---")
     st.sidebar.header("Perfil del inversor")
 
@@ -788,6 +865,7 @@ def forecast_portfolio():
     -------
     Any: forecast portfolio output.
     """
+    # Grab test returns + weights and run the out-of-sample portfolio results
     df_returns = st.session_state["initial_data"]["test_set"]
     weights = st.session_state["initial_results"][2]
     rf_annual = st.session_state["investor_constraints_draft"]["risk_free_rate"]
@@ -800,16 +878,22 @@ def forecast_portfolio():
         periods_per_year=PERIODS_PER_YEAR,
         rf_annual=rf_annual
     )
+
+    # Store everything so other pages can use it
     st.session_state["dict_pf_returns_forecast"] = dict_pf_returns_forecast
     st.session_state["dict_stock_results_forecast"] = dict_stock_results_forecast
     st.session_state["dict_pf_results_forecasts"] = dict_pf_results_forecasts
 
+    # Enable next steps
     st.session_state["data_ready"] = True
     st.session_state["step2_enabled"] = True
+
+    # Compute final sector + asset weights at end date (to see drift)
     resultados_forecast = st.session_state["dict_pf_returns_forecast"]
     end_date = resultados_forecast["investor"].index[-1]
     resultados = st.session_state["initial_data"]
     sectors = resultados["sectors"]
+
     st.session_state["forecast_sector_weights"] = get_sector_weights_at_date(dict_stock_results_forecast["investor"],
                                                                              sectors, end_date)
     st.session_state["forecast_asset_weights"] = check_portfolio_weights(dict_stock_results_forecast["investor"],
@@ -830,7 +914,7 @@ def render_constraints_portfolio():
     """
     header("AJUSTES DE LA CARTERA INICIAL")
 
-    # Session state initialization
+    # Make sure session_state has all the keys we rely on
     st.session_state.setdefault("data_ready", False)
 
     st.session_state.setdefault("viz_ready", False)
@@ -848,25 +932,25 @@ def render_constraints_portfolio():
     st.session_state.setdefault("step2_enabled", False)
     st.session_state.setdefault("custom_tickers", [])
 
-    # Sidebar must be rendered every run (logo + nav + options)
+    # Sidebar always gets rendered (navigation + options + profile)
     render_sidebar_display_options()
 
-    # Inputs
+    # Inputs (sliders, dates, etc.)
     with st.container(border=False):
         render_investor_constraints()
 
-    # Main action button
+    # Main "go" button in the center
     c1, c2, c3 = st.columns(3)
     with c2:
         clicked = st.button("Generar cartera", width="stretch", type="primary")
 
-    # Compute block (only when clicked)
+    # Only run heavy computations when user clicks the button
     if clicked:
-        # Disable navigation until charts are drawn
+        # Lock navigation until charts are ready
         st.session_state["viz_ready"] = False
 
         with st.spinner("Procesando datos..."):
-            # Compute + store
+            # Pull data and build the portfolio
             get_initial_data()
             get_initial_portfolio()
 
@@ -874,6 +958,7 @@ def render_constraints_portfolio():
             weights = st.session_state["initial_results"][2]
             rf_annual = st.session_state["investor_constraints_draft"]["risk_free_rate"]
 
+            # Historical results for portfolios (normalized to 1 unit here)
             dict_pf_returns, dict_stock_results, _ = render_historical_portfolios_results(
                 df_returns_train,
                 1,
@@ -884,21 +969,22 @@ def render_constraints_portfolio():
             st.session_state["dict_pf_returns"] = dict_pf_returns
             st.session_state["dict_stock_results"] = dict_stock_results
 
-            # Forecast/test calculations (writes dict_pf_returns_forecast, etc.)
+            # Out-of-sample / test period calculations
             forecast_portfolio()
 
+            # Flags to say data is ready
             st.session_state["data_ready"] = True
             st.session_state["step2_enabled"] = True
 
-        # Re-run to render charts in a clean branch
+        # Rerun so we land in the "render charts" branch cleanly
         st.rerun()
 
-    # If nothing computed yet
+    # If user hasn't generated anything yet, show a gentle reminder
     if not st.session_state.get("data_ready", False):
         st.info("Configura parámetros y pulsa **Generar cartera**.")
         return
 
-    # Render results + visualizations
+    # Render results + charts
     st.write("")
     header("RESULTADOS")
 
@@ -906,8 +992,8 @@ def render_constraints_portfolio():
         create_historical_portfolio_visualizations()
         create_historical_results_visualizations()
 
-    # At this point, all visualizations on this page have been rendered once
+    # Once charts are rendered once, unlock navigation buttons
     if not st.session_state.get("viz_ready", False):
         st.session_state["viz_ready"] = True
-        # Re-run so sidebar buttons become enabled immediately
+        # Rerun so sidebar buttons enable instantly
         st.rerun()
