@@ -28,7 +28,7 @@ def min_max_percentage_renormalize(w: np.ndarray,
 
     w2 = np.array(w, dtype=float, copy=True)
 
-    # 1) Numeric cleanup
+    # Numeric cleanup
     w2[np.abs(w2) < tol] = 0.0
 
     mask_small = (w2 > 0) & (w2 < min_w)
@@ -37,7 +37,7 @@ def min_max_percentage_renormalize(w: np.ndarray,
     if max_w < 1.0:
         w2 = np.minimum(w2, max_w)
 
-    # 4) Renormalizar
+    # Renormalize
     s = w2.sum()
     if s <= tol:
         raise ValueError("All waits are equal to 0. Relax percentages")
@@ -87,6 +87,7 @@ def minimize_volatility(target_return: float,
         {"type": "eq", "fun": lambda w: np.sum(w) - 1},
         {"type": "eq", "fun": lambda w: portfolio_returns(w, returns, method, periods_per_year) - target_return}
     )
+    # we run optimizer
     result = minimize(lambda w: (portfolio_volatility(w, covmat, periods_per_year)),
                       init_guess,
                       method='SLSQP',
@@ -94,6 +95,7 @@ def minimize_volatility(target_return: float,
                       constraints=constraints,
                       bounds=bounds)
 
+    # we get the weights
     weights = min_max_percentage_renormalize(result.x, min_w, max_w)
     return weights
 
@@ -186,6 +188,7 @@ def maximize_return(target_volatility: float,
                 }
             )
 
+    # run optimizer
     result = minimize(lambda w: -portfolio_returns(w, returns, method, periods_per_year),
                       init_guess,
                       method='SLSQP',
@@ -193,6 +196,7 @@ def maximize_return(target_volatility: float,
                       constraints=constraints,
                       bounds=bounds)
 
+    # return weights
     weights = min_max_percentage_renormalize(result.x, min_w, max_w)
     return weights
 
@@ -288,6 +292,7 @@ def msr(returns,
                        bounds=bounds
                        )
 
+    # return weights
     weights = min_max_percentage_renormalize(weights.x, min_w, max_w)
     return weights
 
@@ -334,6 +339,7 @@ def gmv(covmat: pd.DataFrame,
 
     if not weights.success:
         raise ValueError(f"GMV optimization failed: {weights.message}")
+    # we get and returns weights
     weights = min_max_percentage_renormalize(weights.x, min_w, max_w)
     return weights
 
@@ -395,10 +401,14 @@ def compute_efficient_frontier(
     -------
     pd.DataFrame: compute efficient frontier output.
     """
+    # we get the covariance matrix
     covmat = calculate_covariance(returns)
+    # we get the weights
     weights = get_weights(n_returns, returns, covmat, method, periods_per_year)
 
+    # We get returns
     retornos = [portfolio_returns(w, returns, method, periods_per_year) for w in weights]
+    # we get volatilities
     volatilities = [portfolio_volatility(w, covmat, periods_per_year) for w in weights]
 
     return pd.DataFrame({
