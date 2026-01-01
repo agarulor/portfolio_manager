@@ -4,6 +4,7 @@ import base64
 from pathlib import Path
 from interface.constants import ASSETS_PATH, PROJECT_ROOT
 
+# checking and prepare folders
 current_file_path = Path(__file__).resolve()
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
@@ -21,7 +22,9 @@ def _img_to_base64(img_path: Path) -> str:
     -------
     str:  img to base64 output.
     """
+    # Read the image file as bytes
     data = img_path.read_bytes()
+    # Convert it to base64 so we can embed it directly in HTML
     return base64.b64encode(data).decode("utf-8")
 
 
@@ -38,6 +41,7 @@ def add_separation(margin_top: str = "1rem", margin_bottom: str = "1rem"):
     -------
     Any: add separation output.
     """
+    # Just a visual separator to make sections easier to read
     st.markdown(f"""
     <hr style="
         border: none;
@@ -67,11 +71,13 @@ def render():
     -------
     Any: render output.
     """
+    # Load the cover image and logo and convert both to base64
     portada_path = ASSETS_PATH / "portada.png"
     portada_b64 = _img_to_base64(portada_path)
     logo_path = ASSETS_PATH / "202-nova-marca-uoc.jpg"
     logo_b64 = _img_to_base64(logo_path)
 
+    # Main header section with background image, title and logo
     st.markdown(f"""
     <div style="
     background-image: url('data:image/jpeg;base64,{portada_b64}');
@@ -121,6 +127,7 @@ def render():
     </div>
     """, unsafe_allow_html=True)
 
+    # Short intro text before starting the questionnaire
     st.markdown("""
     <div style="text-align: center; margin-top: -0.5rem; margin-bottom: -1.5rem";>
         <h3 style="color:#FFFFFF; font-weight:500;">
@@ -129,6 +136,7 @@ def render():
     </div>
     """, unsafe_allow_html=True)
 
+    # Centered button that sends the user to the questionnaire
     with st.container():
         st.markdown(
             """<div style="margin-top:-0.5rem; margin-bottom: -0.5rem"></div>""",
@@ -138,6 +146,7 @@ def render():
         c1, c2, c3 = st.columns([2, 1, 2])
         with c2:
             if st.button("Completar cuestionario personal", width="stretch"):
+                # Change route and force Streamlit to reload
                 st.session_state["route"] = "questionnaire"
                 st.rerun()
 
@@ -152,6 +161,7 @@ def render():
     c1, c2, c3 = st.columns(3)
 
     with c1:
+        # Diversification card
         st.markdown("""
         <div class="card" style="border-left: 6px solid #73EDFF; text-align:center">
             <h3 style="color:#000078; margin-top:0"> Diversificación</h3>
@@ -162,6 +172,7 @@ def render():
         """, unsafe_allow_html=True)
 
     with c2:
+        # Risk profile card
         st.markdown("""
         <div class="card" style="border-left: 6px solid #73EDFF; text-align:center">
             <h3 style="color:#000078; margin-top:0;"> Perfil de riesgo</h3>
@@ -172,6 +183,7 @@ def render():
         """, unsafe_allow_html=True)
 
     with c3:
+        # Portfolio tracking card
         st.markdown("""
         <div class="card" style="border-left: 6px solid #73EDFF; text-align:center">
             <h3 style="color:#000078; margin-top:0;"> Seguimiento</h3>
@@ -183,6 +195,7 @@ def render():
 
     add_separation()
 
+    # Section explaining the flow of the app
     st.markdown("""
        <div style="text-align:center; margin-top: 0rem; margin-bottom: 0rem;">
          <h2 style="color:#000078; margin-bottom:0.25rem;">Cómo funciona</h2>
@@ -191,6 +204,7 @@ def render():
 
     s1, s2, s3 = st.columns(3)
     with s1:
+        # First step: questionnaire
         st.markdown("""
         <div class="card" style="border-left: 6px solid #73EDFF; text-align:center">
             <h3 style="color:#000078; margin-top:0;">Cuestionario</h3>
@@ -201,6 +215,7 @@ def render():
         """, unsafe_allow_html=True)
 
     with s2:
+        # Second step: calculate risk profile
         st.markdown("""
         <div class="card" style="border-left: 6px solid #73EDFF; text-align:center;">
             <h3 style="color:#000078; margin-top:0;">Perfil</h3>
@@ -211,6 +226,7 @@ def render():
         """, unsafe_allow_html=True)
 
     with s3:
+        # Final step: generate the portfolio
         st.markdown("""
         <div class="card" style="border-left: 6px solid #73EDFF; text-align:center;">
             <h3 style="color:#000078; margin-top:0;">Cartera</h3>
@@ -222,7 +238,7 @@ def render():
 
     add_separation()
 
-    # --------------- DISCLAIMER ---------------
+    # DISCLAIMER
     st.markdown("""
     <div style="
         display:flex;

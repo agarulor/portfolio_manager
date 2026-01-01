@@ -1,4 +1,3 @@
-from types import MappingProxyType
 import streamlit as st
 from interface.landing_page import add_separation
 from interface.main_interface import header, subheader
@@ -106,6 +105,7 @@ def render_risk_scale(
     blocks_html = ""
     labels_html = ""
 
+    # we itereate from 1 to 7
     for i in range(1, 7):
         active = i == rt_value
 
@@ -249,9 +249,7 @@ def render_investor_questionnaire():
     subheader("Por favor, responda a las siguientes preguntas para poder determinar su perfil de riesgo.\
             De esta forma podremos recomendarle una cartera de inversión acorde a sus necesidades")
 
-    # ----------------------------------------------------------
-    # RISK APPETITE
-    # ----------------------------------------------------------
+   # we get risk apetite
     render_sub_section("Cuestionario sobre apetito de riesgo")
 
     # We first create the dictionaries with the answers for each dropdown menu
@@ -280,6 +278,7 @@ def render_investor_questionnaire():
         4: "4 - Compraría más para aprovechar la caída"
     }
 
+    # we create the radio questions
     knowledge = radio_question(
         number=1,
         text="Conocimiento financiero y experiencia",
@@ -303,11 +302,11 @@ def render_investor_questionnaire():
         key="downside_reaction",
         default_index=None,
     )
-    # ----------------------------------------------------------
-    # RISK CAPACITY
-    # ----------------------------------------------------------
+
+    # Risk capacity
     render_sub_section("Cuestionario sobre capacidad de asumir riesgo")
 
+   # Questionnaires for risk capacity
     liquidity_options = {
         1: "1 - Inmediata (muy alta necesidad de liquidez)",
         2: "2 - Alta",
@@ -346,6 +345,7 @@ def render_investor_questionnaire():
         3: "3 - Flexible"
     }
 
+    # radio questions for risk appetite
     liquidity_need = radio_question(
         number=1,
         text="Liquidez necesaria",
@@ -388,12 +388,14 @@ def render_investor_questionnaire():
 
     st.markdown("---")
 
+    # submitted botton
     submitted = st.button("Obtener perfil de riesgo", width="stretch")
 
     if not submitted:
         # Button not yet pushed
         return None
 
+    # we check questions answered
     if any(st.session_state.get(k) is None for k in QUESTION_KEYS):
         st.warning("Por favor, responde todas las preguntas antes de continuar.")
         return None
@@ -431,6 +433,7 @@ def render_investor_profile_view(RA, RC, RT, sigma_min, sigma_max):
     """
     c1, c2 = st.columns(2)
 
+   # We show scales
     with c1:
         render_risk_scale(
             rt_value=RA,
@@ -470,6 +473,7 @@ def render_investor_profile_view(RA, RC, RT, sigma_min, sigma_max):
         """,
         unsafe_allow_html=True)
 
+    # We create button
     submitted_cartera = st.button("Ir a creación de carteras recomendadas", width="stretch")
     if submitted_cartera:
         st.session_state["route"] = "portfolio"

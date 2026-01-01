@@ -78,7 +78,6 @@ def get_stock_prices(file_path: str,
         return None
 
     # We build the ticker list
-
     tickers = list(df_tickers[ticker_col])
     if additional_tickers is not None:
         tickers = tickers + additional_tickers
