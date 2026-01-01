@@ -7,11 +7,11 @@ Alberto Garulo Rodríguez (agarulor@uoc.edu)
 ## Project description
 The project is a prototype of a robo-advisor.
 
-The app has been developed in python and includes, among others, the following: 
--  **potfolio.py** --> This file is, as the name suggests, the main program, and it is the one that needs to executed in order to use the app. You can run this file by typing (if you have python installed in your computer) **python portfolio.py**.  
--  **srcy** --> Folder including all the required tools and code to run the app 
+The app has been developed in python and Streamlit includes, among others, the following: 
+-  **potfolio.py** --> This file is, as the name suggests, the main program, and it is the one that needs to executed in order to use the app. You can run this file by typing (if you have python installed in your computer) **streamlit run portfolio.py**.  
+-  **src** --> Folder including all the required tools and code to run the app 
 -  **requirements.txt** --> Finally, all the libraries required for the web scraper to work are included in this file. Ideally this is the first file to be run (try with python -m pip install -r requirements.txt)  
-
+-  **streamlit** --> folder with some basic settings for streamlit
 There is a folder, data, with a .csv file including the initial assets, based on IBEX-35 and EURO STOXX (**data/input/ibex_eurostoxx.csv**). 
 
 License for the APP is Creative Commons Zero v1.0 Universal and the present README file
