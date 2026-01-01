@@ -66,7 +66,6 @@ def render():
     Parameters
     ----------
 
-
     Returns
     -------
     Any: render output.

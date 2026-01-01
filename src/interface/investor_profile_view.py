@@ -204,7 +204,6 @@ def render_investor_questionnaire():
     Parameters
     ----------
 
-
     Returns
     -------
     Any: render investor questionnaire output.
