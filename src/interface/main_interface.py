@@ -150,16 +150,6 @@ def render_sidebar():
     Any: render sidebar output.
     """
     render_sidebar_header()
-    """
-    st.sidebar.title("Menú")
-
-    page = st.sidebar.radio(
-        "Opciones",
-        options=["Perfil de riesgo", "Cartera de inversión"],
-        index=0
-    )
-
-    return page"""
 
 
 def render_portfolio():
