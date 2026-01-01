@@ -46,7 +46,6 @@ def risk_appetite(knowledge: int, risk_level: int, downside_reaction: int) -> in
 
     # We ensure that we are within the values
     risk_appetite_score = max(1, min(6, risk_appetite_score))
-    print(risk_appetite_score)
 
     return risk_appetite_score
 
