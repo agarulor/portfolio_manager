@@ -261,11 +261,23 @@ def render():
                 <span style="display:block; font-weight:700; margin-bottom:0.3rem;">
                 Disclaimer:
                 </span>
-                Esta aplicación es una herramienta desarrollada exclusivamente con fines académicos
-                en el marco de un Trabajo de Fin de Grado (TFG).
-                No constituye asesoramiento financiero, recomendación de inversión ni oferta de
-                productos financieros.
-                Cualquier decisión tomada a partir de esta herramienta es responsabilidad exclusiva del usuario.
+                Esta herramienta ha sido desarrollada exclusivamente con fines académicos en el marco de un
+                Trabajo de Fin de Grado (TFG). Su objetivo es proporcionar análisis e información con carácter
+                meramente educativo para ilustrar la aplicación de modelos teóricos y técnicas de análisis
+                financiero, y no constituye asesoramiento financiero, recomendación de inversión, ni oferta
+                o solicitud de productos financieros.                
+                Los resultados, simulaciones o análisis generados por la herramienta se basan en datos
+                históricos, supuestos teóricos y modelos simplificados. Los beneficios pasados no garantizan
+                beneficios futuros, y los resultados obtenidos mediante el uso de esta herramienta no
+                garantizan resultados similares en el futuro.
+                El usuario es el único responsable de cualquier decisión de inversión que adopte basándose,
+                total o parcialmente, en la información proporcionada por esta herramienta. Se recomienda
+                encarecidamente que, antes de tomar cualquier decisión de inversión, el usuario busque
+                asesoramiento financiero independiente y profesional.
+                Ni esta herramienta ni sus desarrolladores asumen responsabilidad alguna por posibles
+                pérdidas, daños o perjuicios derivados directa o indirectamente del uso de la aplicación.
+                La inversión en los mercados financieros conlleva riesgos y puede implicar la pérdida parcial
+                o total del capital invertido.
             </p>
         </div>
     </div>
