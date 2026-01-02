@@ -31,23 +31,31 @@ def show_portfolio(
     -------
     None: None.
     """
+
+    # If we don't have data, we can't plot anything
     if df_weights is None or df_weights.empty:
         st.warning("No hay datos para mostrar.")
         return
 
+    # Grab only the weights column we want to plot
     df_plot = df_weights[[weight_col]].copy()
 
+    # Force weights to be numeric (anything weird turns into NaN)
     df_plot[weight_col] = pd.to_numeric(df_plot[weight_col], errors="coerce")
-    df_plot = df_plot.dropna(subset=[weight_col])
+    df_plot = df_plot.dropna(subset=[weight_col])  # kick out rows without valid weight
 
+    # Convert to % if they are not in percent already
     if not weights_in_percent:
         df_plot[weight_col] = df_plot[weight_col] * 100
 
+    # Reset index so the “names” become a normal column for Plotly
     df_plot = df_plot.reset_index()
     df_plot.columns = [label_name, "Peso"]
 
+    # Sort so the chart looks nicer (small weights at the bottom)
     df_plot = df_plot.sort_values("Peso", ascending=True)
 
+    # Horizontal bar chart with nice labels
     fig = px.bar(
         df_plot,
         x="Peso",
@@ -56,6 +64,8 @@ def show_portfolio(
         text="Peso",
         title=title,
     )
+
+    # Show % labels outside + color bars by weight
     fig.update_traces(
         texttemplate="%{text:.2f}%",
         textposition="outside",
@@ -68,6 +78,8 @@ def show_portfolio(
             colorscale=colorscale
         )
     )
+
+    # Small style tweaks so it matches the app vibe
     axis_color = "#000078"
     fig.update_layout(
         title=dict(
@@ -94,6 +106,7 @@ def show_portfolio(
         hovermode="y",
     )
 
+    # Push chart to Streamlit
     st.plotly_chart(fig, width="stretch")
 
 
@@ -118,16 +131,20 @@ def render_results_table(
     -------
     None: None.
     """
+    # If the table is empty,
     if df is None or df.empty:
         st.warning("No hay datos para mostrar")
         return
 
+    # Colors to keep the same style across the app
     PRIMARY = "#000078"
     SECONDARY = "#1f3a5f"
 
+    # Default formatting rules if nothing is passed in
     percent_cols = percent_cols or ["Retorno anualizado", "Volatilidad", "Max Drawdown"]
     float_cols = float_cols or ["Ratio de Sharpe"]
 
+    # Build a per-column formatting map
     fmt: Dict[str, str] = {}
     for c in percent_cols:
         if c in df.columns:
@@ -136,6 +153,7 @@ def render_results_table(
         if c in df.columns:
             fmt[c] = "{:.4f}"
 
+    # Pandas Styler = quick way to make tables look decent in HTML
     styler = (
         df.style
         .format(fmt, na_rep="—")
@@ -170,9 +188,11 @@ def render_results_table(
         ])
     )
 
+    # Hide the index if you don't want that extra column
     if hide_index:
         styler = styler.hide(axis="index")
 
+    # Add gradients so you can “read” the table faster at a glance
     if highlight:
         if "Retorno anualizado" in df.columns:
             styler = styler.background_gradient(subset=["Retorno anualizado"], cmap="Greens", low=0.6, high=0.0)
@@ -183,6 +203,7 @@ def render_results_table(
         if "Max Drawdown" in df.columns:
             styler = styler.background_gradient(subset=["Max Drawdown"], cmap="Reds", low=0.6, high=0.0)
 
+    # Turn it into HTML and display it
     html_table = styler.to_html()
     st.markdown(html_table, unsafe_allow_html=True)
 
@@ -210,6 +231,7 @@ def show_markowitz_results(
     -------
     Any: show markowitz results output.
     """
+    # If we want the efficient frontier, compute it and plot it as a line
     if not no_ef:
         ef = compute_efficient_frontier(returns, n_returns, method, periods_per_year)
         fig = px.line(
@@ -218,11 +240,14 @@ def show_markowitz_results(
             y="Retorno anualizado"
         )
     else:
+        # No frontier: just show the points we already have
         fig = px.scatter()
         df_results.index.name = "Tipo de portfolio"
 
+    # Reset index so portfolio type is a normal column
     dfp = df_results.reset_index().rename(columns={"Tipo de portfolio": "Tipo de portfolio"})
 
+    # Investor point gets special treatment so it pops out
     df_investor = dfp[dfp["Tipo de portfolio"].str.lower() == "investor"]
     if not df_investor.empty:
         fig.add_trace(
@@ -241,6 +266,7 @@ def show_markowitz_results(
             )
         )
 
+    # Everything else (benchmarks etc.) goes with a different style
     df_others = dfp[dfp["Tipo de portfolio"].str.lower() != "investor"]
     if not df_others.empty:
         fig.add_trace(
@@ -258,6 +284,7 @@ def show_markowitz_results(
             )
         )
 
+    # Make it look clean and readable
     fig.update_layout(
         template="plotly_white",
         xaxis_title="Volatilidad (anualizada)",
@@ -266,6 +293,7 @@ def show_markowitz_results(
         height=500,
     )
 
+    # Keep axes sensible and the grid visible
     fig.update_xaxes(
         rangemode="tozero",
         showgrid=True
@@ -275,6 +303,7 @@ def show_markowitz_results(
         showgrid=True
     )
 
+    # Display the figure
     st.plotly_chart(fig, width="stretch")
 
 
@@ -295,6 +324,7 @@ def plot_portfolio_values(
     -------
     None: None.
     """
+    # "global" = dict of portfolios
     if portfolio_type == "global":
         if not isinstance(results, dict):
             st.error("Para portfolio_type=\"global\", results debe ser un diccionario.")
@@ -302,6 +332,7 @@ def plot_portfolio_values(
 
         names = list(results.keys())
 
+        # Let user choose which portfolios to show
         selected = st.multiselect(
             "Carteras a comparar",
             options=names,
@@ -312,17 +343,20 @@ def plot_portfolio_values(
             st.info("Por favor, seleccione al menos una cartera")
             return
 
+    # "stock" = dataframe of assets
     elif portfolio_type == "stock":
         if not isinstance(results, pd.DataFrame):
             st.error("Para portfolio_type=\"stock\", results debe ser un DataFrame de Pandas.")
             return
 
+        # Drop dead columns (all zeros / all NaNs)
         df_clean = results.copy()
         df_clean = df_clean.drop(columns=df_clean.columns[(df_clean == 0).all()], errors="ignore")
         df_clean = df_clean.drop(columns=df_clean.columns[df_clean.isna().all()], errors="ignore")
 
         names = list(df_clean.columns)
 
+        # Let user pick which assets to plot
         selected = st.multiselect(
             "Evolución de activos de la cartera",
             options=names,
@@ -335,12 +369,16 @@ def plot_portfolio_values(
 
         results = df_clean
     else:
+        # Unknown type -> we do nothing
         return
 
+    # Create the plot and add one line per selected series
     fig = go.Figure()
 
     for i, name in enumerate(selected):
         series = results[name]
+
+        # Sometimes series is a DF (1 col), sometimes it's already a Series
         if isinstance(series, pd.DataFrame):
             y = series.iloc[:, 0].to_numpy()
             x = series.index
@@ -348,6 +386,7 @@ def plot_portfolio_values(
             x = series.index
             y = series.to_numpy()
 
+        # First line thicker so it stands out
         fig.add_trace(
             go.Scatter(
                 x=x,
@@ -358,6 +397,7 @@ def plot_portfolio_values(
             )
         )
 
+    # Clean layout + unified hover
     fig.update_layout(
         template="plotly_white",
         xaxis_title="Fecha",
@@ -394,6 +434,7 @@ def plot_portfolio_values_select(
     -------
     None: None.
     """
+    # Same as plot_portfolio_values but “selected” can come from outside
     if portfolio_type == "global":
         if not isinstance(results, dict):
             st.error("Para portfolio_type=\"global\", results debe ser un diccionario.")
@@ -401,6 +442,7 @@ def plot_portfolio_values_select(
 
         names = list(results.keys())
 
+        # If selected isn't passed, user chooses it here (unless selector is hidden)
         if selected is None and show_selector:
             selected = st.multiselect(
                 "Carteras a comparar",
@@ -411,6 +453,7 @@ def plot_portfolio_values_select(
         elif selected is None:
             selected = names[:1] if names else []
 
+        # Separate valid selections from “oops, doesn't exist”
         valid = [s for s in selected if s in results]
         invalid = [s for s in selected if s not in results]
 
@@ -419,12 +462,14 @@ def plot_portfolio_values_select(
             st.error("Para portfolio_type=\"stock\", results debe ser un DataFrame de Pandas.")
             return
 
+        # Remove columns that are useless
         df_clean = results.copy()
         df_clean = df_clean.drop(columns=df_clean.columns[(df_clean == 0).all()], errors="ignore")
         df_clean = df_clean.drop(columns=df_clean.columns[df_clean.isna().all()], errors="ignore")
 
         names = list(df_clean.columns)
 
+        # If selected isn't passed, user chooses it here (unless selector is hidden)
         if selected is None and show_selector:
             selected = st.multiselect(
                 "Evolución de activos de la cartera",
@@ -444,18 +489,21 @@ def plot_portfolio_values_select(
         st.error("Por favor, elige \"stock\" o \"global\".")
         return
 
+    # Tell the user if some selected series have no data
     if invalid:
         st.warning(
             "Las siguientes selecciones no tienen datos disponibles y se han omitido:\n"
             + ", ".join(invalid)
         )
 
+    # If nothing valid remains, nothing to plot
     if not valid:
         st.info("No hay series válidas para mostrar con la selección actual.")
         return
 
     fig = go.Figure()
 
+    # One line per valid series
     for i, name in enumerate(valid):
         series = results[name]
 
@@ -512,10 +560,12 @@ def plot_daily_returns_scatter_base_only(
     -------
     Any: plot daily returns scatter base only output.
     """
+    # No base selected = no plot
     if not base:
         st.info("Selecciona una serie base en el lateral.")
         return
 
+    # Pick the right series depending on what we got (dict vs dataframe)
     if data_type == "global":
         if not isinstance(results, dict):
             st.error("Para data_type='global', results debe ser dict.")
@@ -527,18 +577,23 @@ def plot_daily_returns_scatter_base_only(
             return
         series = results[base]
 
+    # If the base series doesn't exist, warn and stop
     if series is None:
         st.warning("No hay datos disponibles para la serie seleccionada.")
         return
 
+    # Sometimes it comes as a 1-col DF, sometimes as a Series
     if isinstance(series, pd.DataFrame):
         s = series.iloc[:, 0]
     else:
         s = series
 
+    # Clean NaNs, convert to array, and transform to % if needed
     s = s.dropna()
     y = (s.to_numpy() * 100.0) if y_in_percent else s.to_numpy()
     x = s.index
+
+    # Color points: green-ish idea (blue for up days, red for down days)
     colors = np.where(y >= 0, "blue", "red")
 
     fig = go.Figure()
@@ -552,6 +607,7 @@ def plot_daily_returns_scatter_base_only(
         )
     )
 
+    # Zero line so you can see the split instantly
     fig.add_hline(y=0, line_width=2, line_color="black")
 
     fig.update_layout(
@@ -592,10 +648,12 @@ def plot_daily_returns_distribution(
     -------
     None: None.
     """
+    # Without a base series we can't build the histogram
     if not base:
         st.info("Selecciona un activo/cartera base en el lateral.")
         return
 
+    # Grab the data depending on where it is
     if data_type == "global":
         if not isinstance(results, dict):
             st.error("Para data_type='global', results debe ser un diccionario.")
@@ -614,13 +672,16 @@ def plot_daily_returns_distribution(
             return
         s = results[base]
 
+    # Clean missing values and convert to % if requested
     s = s.dropna()
     x = (s.to_numpy() * 100.0) if y_in_percent else s.to_numpy()
 
+    # If there's literally nothing to plot, say it and stop
     if x.size == 0:
         st.warning("No hay retornos suficientes para mostrar la distribución.")
         return
 
+    # Mean + std so we can draw a couple of helpful guide lines
     mu = float(np.mean(x))
     sigma = float(np.std(x, ddof=1)) if x.size > 1 else 0.0
     left = mu - sigma
@@ -628,6 +689,7 @@ def plot_daily_returns_distribution(
 
     fig = go.Figure()
 
+    # Histogram itself
     fig.add_trace(
         go.Histogram(
             x=x,
@@ -637,6 +699,7 @@ def plot_daily_returns_distribution(
         )
     )
 
+    # Reference line at 0
     fig.add_vline(
         x=0,
         line_width=2,
@@ -646,6 +709,7 @@ def plot_daily_returns_distribution(
         annotation_position="top left",
     )
 
+    # Mean line
     mean_color = "orange"
     fig.add_vline(
         x=mu,
@@ -656,6 +720,7 @@ def plot_daily_returns_distribution(
         annotation_position="top right",
     )
 
+    # +-1 standard deviation lines
     std_color = "purple"
     fig.add_vline(
         x=left,
@@ -674,6 +739,7 @@ def plot_daily_returns_distribution(
         annotation_position="top left",
     )
 
+    # Final layout polish
     fig.update_layout(
         template="plotly_white",
         xaxis_title="Retorno diario (%)" if y_in_percent else "Retorno diario",
@@ -685,4 +751,5 @@ def plot_daily_returns_distribution(
     fig.update_xaxes(showgrid=False)
     fig.update_yaxes(showgrid=False)
 
+    # Show it
     st.plotly_chart(fig, key=key)
