@@ -363,8 +363,8 @@ def render_investor_constraints():
 
         with c2:
             # Max single stock weight slider
-            max_stock_pct = render_slider(text="Selecciona peso máximo por acción",
-                                          text_slider="% máximo asignado a una acción",
+            max_stock_pct = render_slider(text="Selecciona peso máximo por activo",
+                                          text_slider="% máximo asignado a una activo",
                                           key="max_stock_pct",
                                           min_value=0.0,
                                           max_value=100.0,
@@ -373,8 +373,8 @@ def render_investor_constraints():
 
         with c3:
             # Min single stock weight slider
-            min_stock_pct = render_slider(text="Selecciona peso mínimo por acción",
-                                          text_slider="% mínimo asignado a una acción",
+            min_stock_pct = render_slider(text="Selecciona peso mínimo por activo",
+                                          text_slider="% mínimo asignado a una activo",
                                           key="min_stock_pct",
                                           min_value=0.0,
                                           max_value=100.0,
