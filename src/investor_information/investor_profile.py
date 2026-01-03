@@ -153,5 +153,3 @@ def investor_target_volatility(knowledge: int,
     # return volatility level
     return VOLATILITY_MAPPING[RT], RA, RC, RT
 
-
-

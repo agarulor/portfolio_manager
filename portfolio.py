@@ -1,15 +1,12 @@
 import sys
 import os
-
 sys.path.append(os.path.join(os.path.dirname(__file__), "src"))
 from interface.run_app import run_app
-
 import os
 import random
 import numpy as np
 
 SEED = 42
-
 # To avoid changes in hash
 os.environ["PYTHONHASHSEED"] = str(SEED)
 
@@ -24,7 +21,6 @@ def main():
 
     Parameters
     ----------
-
 
     Returns
     -------

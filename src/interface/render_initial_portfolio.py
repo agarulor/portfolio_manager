@@ -28,11 +28,6 @@ from interface.constants import (RISK_PROFILE_DICTIONARY,
                                  END_DATE_PORTFOLIO)
 
 
-
-
-
-
-
 def render_slider(text: str,
                   text_slider: str,
                   key: str,
