@@ -1,47 +1,47 @@
 #!/bin/bash
 
-echo "=== Running ROBO UOC ADVISOR - TFG Alberto Garulo ==="
+echo "=== Ejecucion del programa ROBO UOC ADVISOR - TFG Alberto Garulo ==="
 
-# Make sure we are in the script directory
+# Aseguramos que el script está en el directorio
 cd "$(dirname "$0")" || exit 1
 
-# Check Python
+# comprobamos Python
 if ! command -v python3 >/dev/null 2>&1; then
-    echo "ERROR: Python3 is not installed."
-    echo "Install it with: sudo apt install python3 python3-pip python3-venv"
+    echo "ERROR: Python3 no esta instalado."
+    echo "Instalar con: sudo apt install python3 python3-pip python3-venv"
     exit 1
 fi
 
-# Create virtual environment if it does not exist
+# Creamos el entorno virtual, si no existe
 if [ ! -d ".venv" ]; then
-    echo "=== Creating virtual environment ==="
+    echo "=== Creando entorno virtual ==="
     python3 -m venv .venv || {
-        echo "ERROR: Failed to create virtual environment."
+        echo "ERROR: Error a la hora de crear el entorno."
         echo "On Debian/Ubuntu run:"
         echo "  sudo apt install python3-venv"
         exit 1
     }
 fi
 
-# Activate virtual environment
-echo "=== Activating virtual environment ==="
+# Activamos el entorno virtual
+echo "=== Activando entorno virtual ==="
 source .venv/bin/activate
 
-# Upgrade pip
-echo "=== Upgrading pip ==="
+# Actualizamos pip
+echo "=== Actualizando pip ==="
 python -m pip install --upgrade pip
 
-# Install requirements
+# Instalar requerimientos
 if [ ! -f "requirements.txt" ]; then
-    echo "ERROR: requirements.txt not found."
+    echo "ERROR: no se encontró requirements.txt"
     exit 1
 fi
 
-echo "=== Installing requirements ==="
+echo "=== Instalando requerimientos ==="
 pip install -r requirements.txt
 
 # Run Streamlit app
-echo "=== Starting Streamlit application ==="
+echo "=== Ejecutando aplicacion ==="
 streamlit run portfolio.py
 
-echo "=== Application finished ==="
+echo "=== Aplicación finalizada ==="
